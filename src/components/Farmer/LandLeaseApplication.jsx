@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { notificationService, getCurrentFarmer } from '../../services/notificationService';
+import LandRegistration from './LandRegistration';
+import LandLeaseOffering from './LandLeaseOffering';
+
 import {
   MapPin,
   FileText,
@@ -25,9 +28,14 @@ import {
 } from 'lucide-react';
 
 const LandLeaseApplication = ({ isOpen, onClose }) => {
-  const [activeTab, setActiveTab] = useState('new-application');
+  const [activeTab, setActiveTab] = useState('land-registration');
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
+
+  // Modal states for new components
+  const [showLandRegistration, setShowLandRegistration] = useState(false);
+  const [showLeaseOffering, setShowLeaseOffering] = useState(false);
+
   
   // Application Form State
   const [applicationForm, setApplicationForm] = useState({
@@ -68,34 +76,8 @@ const LandLeaseApplication = ({ isOpen, onClose }) => {
     additionalNotes: ''
   });
 
-  // Mock existing applications
-  const [myApplications, setMyApplications] = useState([
-    {
-      id: 'LA001',
-      applicantName: 'Rajesh Kumar',
-      desiredLocation: 'Kottayam, Kerala',
-      landSize: '5 hectares',
-      leaseDuration: '10 years',
-      proposedRent: '₹50,000/year',
-      status: 'under_review',
-      submittedDate: '2024-01-15',
-      lastUpdated: '2024-01-20',
-      reviewComments: 'Application is being reviewed by the land committee.'
-    },
-    {
-      id: 'LA002',
-      applicantName: 'Rajesh Kumar',
-      desiredLocation: 'Wayanad, Kerala',
-      landSize: '3 hectares',
-      leaseDuration: '7 years',
-      proposedRent: '₹35,000/year',
-      status: 'approved',
-      submittedDate: '2024-01-01',
-      lastUpdated: '2024-01-25',
-      reviewComments: 'Application approved. Please proceed with documentation.',
-      approvalDate: '2024-01-25'
-    }
-  ]);
+  // Existing applications - will be loaded from API
+  const [myApplications, setMyApplications] = useState([]);
 
   const showNotification = (message, type = 'success') => {
     setNotification({ show: true, message, type });
@@ -254,8 +236,8 @@ const LandLeaseApplication = ({ isOpen, onClose }) => {
               <MapPin className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Land Lease Application</h2>
-              <p className="text-green-100">Apply for agricultural land lease</p>
+              <h2 className="text-xl font-bold text-white">Rubber Tapping Tenancy</h2>
+              <p className="text-green-100">Register your land and offer it for rubber tapping tenancy</p>
             </div>
           </div>
           <button
@@ -271,31 +253,84 @@ const LandLeaseApplication = ({ isOpen, onClose }) => {
           <div className="flex">
             <button
               className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'new-application'
+                activeTab === 'land-registration'
                   ? 'border-green-500 text-green-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
-              onClick={() => setActiveTab('new-application')}
+              onClick={() => setActiveTab('land-registration')}
             >
               <Plus className="h-4 w-4 inline mr-2" />
-              New Application
+              Land Registration
             </button>
             <button
               className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'my-applications'
+                activeTab === 'lease-offering'
                   ? 'border-green-500 text-green-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
-              onClick={() => setActiveTab('my-applications')}
+              onClick={() => setActiveTab('lease-offering')}
             >
-              <FileText className="h-4 w-4 inline mr-2" />
-              My Applications ({myApplications.length})
+              <MapPin className="h-4 w-4 inline mr-2" />
+              Tenancy Offering
             </button>
+
           </div>
         </div>
 
         {/* Content */}
         <div className="p-6 max-h-[calc(90vh-200px)] overflow-y-auto">
+          {activeTab === 'land-registration' && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
+              className="text-center py-12"
+            >
+              <div className="bg-green-50 rounded-2xl p-8 border border-green-200">
+                <MapPin className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Register Your Land</h3>
+                <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+                  First, register your land with complete details and documentation.
+                  Once verified, you can offer it for rubber tapping tenancy to potential tenants.
+                </p>
+                <button
+                  onClick={() => setShowLandRegistration(true)}
+                  className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center space-x-2 mx-auto"
+                >
+                  <Plus className="h-5 w-5" />
+                  <span>Register New Land</span>
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'lease-offering' && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
+              className="text-center py-12"
+            >
+              <div className="bg-blue-50 rounded-2xl p-8 border border-blue-200">
+                <MapPin className="h-16 w-16 text-blue-500 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Offer Land for Rubber Tapping Tenancy</h3>
+                <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+                  Create tenancy offerings for your verified lands. Set terms, conditions,
+                  and tenancy rates to attract potential rubber tapping tenants.
+                </p>
+                <button
+                  onClick={() => setShowLeaseOffering(true)}
+                  className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center space-x-2 mx-auto"
+                >
+                  <MapPin className="h-5 w-5" />
+                  <span>Create Tenancy Offering</span>
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+
+
           {activeTab === 'new-application' && (
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -874,6 +909,19 @@ const LandLeaseApplication = ({ isOpen, onClose }) => {
           )}
         </div>
       </motion.div>
+
+      {/* New Component Modals */}
+      <LandRegistration
+        isOpen={showLandRegistration}
+        onClose={() => setShowLandRegistration(false)}
+      />
+
+      <LandLeaseOffering
+        isOpen={showLeaseOffering}
+        onClose={() => setShowLeaseOffering(false)}
+      />
+
+
     </div>
   );
 };

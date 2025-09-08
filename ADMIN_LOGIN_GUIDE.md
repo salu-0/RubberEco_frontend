@@ -5,8 +5,8 @@
 Your RubberEco admin login is now fully configured and ready to use!
 
 ### **🎯 Admin Login Credentials:**
-- **Email:** `salumanoj2026@mca.ajce.in`
-- **Password:** `salu@09`
+- **Email:** `admin@gmail.com`
+- **Password:** `admin@47`
 - **Role:** `admin`
 - **Redirect:** `/admin-dashboard`
 
@@ -32,8 +32,8 @@ npm run dev
 2. You'll see the beautiful RubberEco login form
 
 ### **3. Login as Admin:**
-1. **Enter Email:** `salumanoj2026@mca.ajce.in`
-2. **Enter Password:** `salu@09`
+1. **Enter Email:** `admin@gmail.com`
+2. **Enter Password:** `admin@47`
 3. **Click "Sign In"**
 4. **Success!** You'll be automatically redirected to the admin dashboard
 
@@ -74,8 +74,8 @@ npm run dev
 - **Settings** - System settings
 
 ### **👤 User Profile Display:**
-- **Name:** Salu manoj
-- **Email:** salumanoj2026@mca.ajce.in
+- **Name:** System Administrator
+- **Email:** admin@gmail.com
 - **Role:** Admin
 - **Logout Button:** Available
 
@@ -93,9 +93,9 @@ npm run dev
    - `other` → `/dashboard`
 
 ### **Database Updates Made:**
-- **User:** salumanoj2026@mca.ajce.in
-- **Password:** Updated to `salu@09` (bcrypt hashed)
-- **Role:** Changed from `farmer` to `admin`
+- **User:** admin@gmail.com
+- **Password:** Updated to `admin@47` (bcrypt hashed)
+- **Role:** Set to `admin`
 - **Verified:** Set to `true`
 
 ### **Routes Added:**
@@ -110,8 +110,8 @@ npm run dev
 - [ ] Form fields are responsive
 
 ### **✅ Login Process:**
-- [ ] Enter: `salumanoj2026@mca.ajce.in`
-- [ ] Enter: `salu@09`
+- [ ] Enter: `admin@gmail.com`
+- [ ] Enter: `admin@47`
 - [ ] Click "Sign In"
 - [ ] See success notification
 - [ ] Automatic redirect to admin dashboard

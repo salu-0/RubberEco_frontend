@@ -39,25 +39,20 @@ const Login = () => {
   useEffect(() => {
     const { user, isLoggedIn } = getUserData();
     if (isLoggedIn) {
-      console.log('🔄 User already authenticated, redirecting...');
       // Staff users always go to staff dashboard
       if (user?.role === 'staff' && user?.useStaffDashboard) {
-        console.log('🚀 Staff user already logged in - redirecting to staff dashboard');
         guardedNavigate('/staff-dashboard');
       }
       // Admin users always go to admin dashboard
       else if (user?.role === 'admin') {
-        console.log('🚀 Admin user already logged in - redirecting to admin dashboard');
         guardedNavigate('/admin-dashboard');
       }
       // Broker users always go to broker dashboard
       else if (user?.role === 'broker') {
-        console.log('🚀 Broker user already logged in - redirecting to broker dashboard');
         guardedNavigate('/broker-dashboard');
       }
       // Regular users go to home
       else {
-        console.log('🚀 Regular user already logged in - redirecting to home');
         guardedNavigate('/home');
       }
     }
@@ -176,13 +171,9 @@ const Login = () => {
 
     setLoading(true);
     try {
-      console.log('🔍 Attempting login with:', formData.email);
-      console.log('🌐 Environment API URL:', import.meta.env.VITE_API_BASE_URL);
-      console.log('🌐 Making request to:', `${import.meta.env.VITE_API_BASE_URL}/auth/login`);
 
       // Call backend API to login user - TEMPORARY HARDCODED URL FOR TESTING
       const loginUrl = 'http://localhost:5000/api/auth/login';
-      console.log('🎯 Using hardcoded login URL:', loginUrl);
 
       const response = await fetch(loginUrl, {
         method: 'POST',
@@ -195,20 +186,11 @@ const Login = () => {
         })
       });
 
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response ok:', response.ok);
-
       const data = await response.json();
-      console.log('📦 Response data:', data);
 
       if (!response.ok) {
-        console.log('❌ Login failed:', data.message);
         throw new Error(data.message || 'Login failed. Please try again.');
       }
-
-      console.log('✅ Login successful!');
-      console.log('👤 User data:', data.user);
-      console.log('🔑 User role:', data.user.role);
 
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
@@ -220,7 +202,6 @@ const Login = () => {
 
       // Add delay to show success message before redirect
       const role = data.user.role ? data.user.role.toLowerCase().trim() : '';
-      console.log('🎯 Redirecting based on role:', role);
 
       // Clear browser history to prevent back navigation to login
       window.history.replaceState(null, '', window.location.pathname);
@@ -229,19 +210,16 @@ const Login = () => {
       setTimeout(() => {
         // Staff users always go to staff dashboard, regardless of redirect
         if (role === 'staff' && data.user.useStaffDashboard) {
-          console.log('🚀 Staff user - redirecting to /staff-dashboard for staff role:', data.user.staffRole);
           localStorage.removeItem('redirectAfterLogin'); // Clean up any stored redirect
           guardedNavigate('/staff-dashboard');
         }
         // Admin users always go to admin dashboard
         else if (role === 'admin') {
-          console.log('🚀 Admin user - redirecting to /admin-dashboard');
           localStorage.removeItem('redirectAfterLogin'); // Clean up any stored redirect
           guardedNavigate('/admin-dashboard');
         }
         // Broker users always go to broker dashboard
         else if (role === 'broker') {
-          console.log('🚀 Broker user - redirecting to /broker-dashboard');
           localStorage.removeItem('redirectAfterLogin'); // Clean up any stored redirect
           guardedNavigate('/broker-dashboard');
         }
@@ -251,11 +229,9 @@ const Login = () => {
           const redirectAfterLogin = localStorage.getItem('redirectAfterLogin');
 
           if (redirectAfterLogin) {
-            console.log('🚀 Regular user - redirecting to stored URL:', redirectAfterLogin);
             localStorage.removeItem('redirectAfterLogin'); // Clean up
             guardedNavigate(redirectAfterLogin);
           } else {
-            console.log('🚀 Regular user - redirecting to /home');
             guardedNavigate('/home');
           }
         }
@@ -263,8 +239,6 @@ const Login = () => {
 
     } catch (error) {
       console.error('❌ Login error:', error);
-      console.error('❌ Error message:', error.message);
-      console.error('❌ Error stack:', error.stack);
       showNotification(error.message || 'Login failed. Please try again.', 'error');
     } finally {
       setLoading(false);

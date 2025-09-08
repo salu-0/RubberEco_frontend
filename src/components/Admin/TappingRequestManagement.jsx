@@ -21,6 +21,7 @@ import {
   FileText,
   Star,
   MessageSquare,
+  MessageCircle,
   X
 } from 'lucide-react';
 
@@ -115,7 +116,11 @@ const TappingRequestManagement = ({ darkMode }) => {
     const statusConfig = {
       submitted: { color: 'bg-blue-100 text-blue-800', icon: Clock, text: 'Submitted' },
       under_review: { color: 'bg-yellow-100 text-yellow-800', icon: Eye, text: 'Under Review' },
+      negotiating: { color: 'bg-orange-100 text-orange-800', icon: MessageCircle, text: 'Negotiating' },
       assigned: { color: 'bg-purple-100 text-purple-800', icon: UserPlus, text: 'Assigned' },
+      tapper_inspecting: { color: 'bg-indigo-100 text-indigo-800', icon: Eye, text: 'Tapper Inspecting' },
+      tree_count_pending: { color: 'bg-amber-100 text-amber-800', icon: TreePine, text: 'Tree Count Pending' },
+      accepted: { color: 'bg-green-100 text-green-800', icon: CheckCircle, text: 'Accepted' },
       in_progress: { color: 'bg-orange-100 text-orange-800', icon: Clock, text: 'In Progress' },
       completed: { color: 'bg-green-100 text-green-800', icon: CheckCircle, text: 'Completed' },
       cancelled: { color: 'bg-gray-100 text-gray-800', icon: XCircle, text: 'Cancelled' },

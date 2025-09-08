@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { notificationService } from '../../services/notificationService';
 
-const NotificationPanel = ({ isOpen, onClose, darkMode }) => {
+const NotificationPanel = ({ isOpen, onClose, darkMode, pendingStaffRequests = 0, pendingTappingRequests = 0, pendingLandRegistrations = 0 }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [filter, setFilter] = useState('all');
@@ -44,20 +44,70 @@ const NotificationPanel = ({ isOpen, onClose, darkMode }) => {
     return unsubscribe;
   }, []);
 
+  // Create pending request notifications
+  const getPendingRequestNotifications = () => {
+    const pendingNotifications = [];
+
+    if (pendingStaffRequests > 0) {
+      pendingNotifications.push({
+        id: 'pending-staff-requests',
+        type: 'staff_request',
+        title: 'Staff Applications',
+        message: `${pendingStaffRequests} new staff application${pendingStaffRequests > 1 ? 's' : ''} pending review`,
+        timestamp: new Date().toISOString(),
+        read: false,
+        priority: 'high',
+        actionable: true
+      });
+    }
+
+    if (pendingTappingRequests > 0) {
+      pendingNotifications.push({
+        id: 'pending-tapping-requests',
+        type: 'tapper_request',
+        title: 'Tapping Requests',
+        message: `${pendingTappingRequests} new tapping request${pendingTappingRequests > 1 ? 's' : ''} pending assignment`,
+        timestamp: new Date().toISOString(),
+        read: false,
+        priority: 'high',
+        actionable: true
+      });
+    }
+
+    if (pendingLandRegistrations > 0) {
+      pendingNotifications.push({
+        id: 'pending-land-registrations',
+        type: 'land_registration',
+        title: 'Land Registration',
+        message: `${pendingLandRegistrations} new land registration${pendingLandRegistrations > 1 ? 's' : ''} pending verification`,
+        timestamp: new Date().toISOString(),
+        read: false,
+        priority: 'high',
+        actionable: true
+      });
+    }
+
+    return pendingNotifications;
+  };
+
   const getFilteredNotifications = () => {
+    const pendingRequestNotifications = getPendingRequestNotifications();
+
     switch (filter) {
       case 'unread':
-        return notifications.filter(n => !n.read);
+        return [...pendingRequestNotifications, ...notifications.filter(n => !n.read)];
+      case 'staff_request':
+        return pendingRequestNotifications.filter(n => n.type === 'staff_request');
       case 'tapper_request':
-        return notifications.filter(n => n.type === 'tapper_request');
+        return [...pendingRequestNotifications.filter(n => n.type === 'tapper_request'), ...notifications.filter(n => n.type === 'tapper_request')];
       case 'land_lease':
         return notifications.filter(n => n.type === 'land_lease');
       case 'service_request':
         return notifications.filter(n => n.type === 'service_request');
       case 'high_priority':
-        return notifications.filter(n => n.priority === 'high');
+        return [...pendingRequestNotifications.filter(n => n.priority === 'high'), ...notifications.filter(n => n.priority === 'high')];
       default:
-        return notifications;
+        return [...pendingRequestNotifications, ...notifications];
     }
   };
 
@@ -85,6 +135,10 @@ const NotificationPanel = ({ isOpen, onClose, darkMode }) => {
     switch (type) {
       case 'tapper_request':
         return <Users className="h-5 w-5 text-blue-500" />;
+      case 'staff_request':
+        return <FileText className="h-5 w-5 text-purple-500" />;
+      case 'land_registration':
+        return <TreePine className="h-5 w-5 text-green-600" />;
       case 'land_lease':
         return <Home className="h-5 w-5 text-green-500" />;
       case 'service_request':
@@ -180,6 +234,7 @@ const NotificationPanel = ({ isOpen, onClose, darkMode }) => {
   };
 
   const filteredNotifications = getFilteredNotifications();
+  const allNotifications = filteredNotifications;
 
   if (!isOpen) return null;
 
@@ -206,7 +261,7 @@ const NotificationPanel = ({ isOpen, onClose, darkMode }) => {
                   Notifications
                 </h2>
                 <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {unreadCount} unread notifications
+                  {unreadCount + pendingStaffRequests + pendingTappingRequests} total notifications
                 </p>
               </div>
             </div>
@@ -223,9 +278,10 @@ const NotificationPanel = ({ isOpen, onClose, darkMode }) => {
           {/* Filter Tabs */}
           <div className="flex space-x-2 overflow-x-auto">
             {[
-              { key: 'all', label: 'All', count: notifications.length },
-              { key: 'unread', label: 'Unread', count: unreadCount },
-              { key: 'tapper_request', label: 'Tapper', count: notifications.filter(n => n.type === 'tapper_request').length },
+              { key: 'all', label: 'All', count: allNotifications.length },
+              { key: 'unread', label: 'Unread', count: unreadCount + pendingStaffRequests + pendingTappingRequests },
+              { key: 'staff_request', label: 'Staff', count: pendingStaffRequests },
+              { key: 'tapper_request', label: 'Tapper', count: pendingTappingRequests + notifications.filter(n => n.type === 'tapper_request').length },
               { key: 'land_lease', label: 'Land', count: notifications.filter(n => n.type === 'land_lease').length },
               { key: 'service_request', label: 'Services', count: notifications.filter(n => n.type === 'service_request').length }
             ].map(tab => (
@@ -274,7 +330,7 @@ const NotificationPanel = ({ isOpen, onClose, darkMode }) => {
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
             </div>
-          ) : filteredNotifications.length === 0 ? (
+          ) : allNotifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-6">
               <Bell className={`h-12 w-12 ${darkMode ? 'text-gray-600' : 'text-gray-400'} mb-4`} />
               <h3 className={`text-lg font-medium ${darkMode ? 'text-gray-300' : 'text-gray-900'} mb-2`}>
@@ -290,7 +346,7 @@ const NotificationPanel = ({ isOpen, onClose, darkMode }) => {
           ) : (
             <div className="space-y-1 p-2">
               <AnimatePresence>
-                {filteredNotifications.map((notification, index) => (
+                {allNotifications.map((notification, index) => (
                   <motion.div
                     key={notification.id}
                     initial={{ opacity: 0, y: 20 }}

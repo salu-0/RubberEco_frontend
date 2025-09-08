@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { trainingAPI, getUserData } from '../utils/api';
+import { trainingAPI, getUserData, certificateAPI } from '../utils/api';
 import enrollmentManager from '../utils/enrollmentManager';
 import mockAPI from '../utils/mockAPI';
+// import { generateCertificatePDF, canGenerateCertificate, formatCertificateData } from '../utils/certificateGenerator';
 import { 
   ArrowLeft, 
   Play, 
@@ -19,7 +20,9 @@ import {
   Download,
   Share2,
   Heart,
-  MessageCircle
+  MessageCircle,
+  Award,
+  Trophy
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import LocalVideoPlayer from '../components/LocalVideoPlayer';
@@ -72,8 +75,13 @@ const TrainingModule = () => {
   const [completedLessons, setCompletedLessons] = useState(new Set());
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrollmentLoading, setEnrollmentLoading] = useState(true);
+  const [currentEnrollment, setCurrentEnrollment] = useState(null);
+  const [showCertificateModal, setShowCertificateModal] = useState(false);
+  const [certificateData, setCertificateData] = useState(null);
+  const [isGeneratingCertificate, setIsGeneratingCertificate] = useState(false);
 
   // Training module data
+  const placeholderThumb = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360"><rect width="640" height="360" fill="%23f3f4f6"/><g fill="%239ca3af" font-family="Arial, Helvetica, sans-serif"><rect x="220" y="120" width="200" height="120" rx="12" ry="12" fill="%23e5e7eb"/><text x="320" y="190" font-size="18" text-anchor="middle">Thumbnail</text><text x="320" y="215" font-size="14" text-anchor="middle">640x360</text></g></svg>';
   const modules = {
     1: {
       id: 1,
@@ -94,7 +102,7 @@ const TrainingModule = () => {
           type: "local", // "local" for uploaded videos, "youtube" for YouTube embeds
           videoUrl: trainingVideos.rubberTappingKnife, // Imported video file
           youtubeUrl: "https://www.youtube.com/embed/YOUR_VIDEO_ID_HERE", // Fallback YouTube URL
-          thumbnailUrl: "/api/placeholder/640/360",
+          thumbnailUrl: placeholderThumb,
           completed: false
         },
         {
@@ -106,43 +114,43 @@ const TrainingModule = () => {
           type: "local", // Using local video
           videoUrl: trainingVideos.rubberTappingKnifePart2, // Now properly imported
           youtubeUrl: "https://www.youtube.com/embed/VIDEO_ID_2",
-          thumbnailUrl: "/api/placeholder/640/360",
+          thumbnailUrl: placeholderThumb,
           completed: false
         },
         {
           id: 3,
-          title: "പാഠം 3: ഉപകരണങ്ങളും ഉപകരണങ്ങളും",
-          titleEnglish: "Lesson 3: Tools and Equipment",
-          description: "Understanding the essential tools for rubber tapping",
-          duration: "8:45",
+          title: "പാഠം 3: റബ്ബർ ടാപ്പിംഗിൽ ഈ 5 കാര്യങ്ങൾ ശ്രദ്ധിച്ചാൽ പേടിക്കേണ്ട",
+          titleEnglish: "Lesson 3: 5 rubber tapping rules - Don't worry if you follow these",
+          description: "Learn the 5 essential rules for safe and effective rubber tapping with expert guidance from Sasidharan Kannali",
+          duration: "6:35",
           type: "youtube",
-          videoUrl: "https://www.youtube.com/embed/VIDEO_ID_3",
-          youtubeUrl: "https://www.youtube.com/embed/VIDEO_ID_3",
-          thumbnailUrl: "/api/placeholder/640/360",
+          videoUrl: "https://www.youtube.com/embed/o1sc0iVBRT4",
+          youtubeUrl: "https://www.youtube.com/embed/o1sc0iVBRT4",
+          thumbnailUrl: placeholderThumb,
           completed: false
         },
         {
           id: 4,
-          title: "പാഠം 4: സുരക്ഷാ നടപടികൾ",
-          titleEnglish: "Lesson 4: Safety Measures",
-          description: "Important safety guidelines for rubber tapping",
-          duration: "10:20",
+          title: "പാഠം 4: റബ്ബർ ടാപ്പിംഗ് - സുരക്ഷാ നടപടികൾ",
+          titleEnglish: "Lesson 4: Rubber Tapping - Safety Measures",
+          description: "Essential safety guidelines and precautions for safe rubber tapping practices with Sasidharan Kannali",
+          duration: "Unknown",
           type: "youtube",
-          videoUrl: "https://www.youtube.com/embed/VIDEO_ID_4",
-          youtubeUrl: "https://www.youtube.com/embed/VIDEO_ID_4",
-          thumbnailUrl: "/api/placeholder/640/360",
+          videoUrl: "https://www.youtube.com/embed/w_XlgbZz1SQ",
+          youtubeUrl: "https://www.youtube.com/embed/w_XlgbZz1SQ",
+          thumbnailUrl: placeholderThumb,
           completed: false
         },
         {
           id: 5,
-          title: "പാഠം 5: മികച്ച രീതികൾ",
-          titleEnglish: "Lesson 5: Best Practices",
-          description: "Advanced tips and best practices from experienced tappers",
-          duration: "15:15",
+          title: "പാഠം 5: റബ്ബർ ടാപ്പിംഗ് - മികച്ച രീതികൾ",
+          titleEnglish: "Lesson 5: Rubber Tapping - Best Practices",
+          description: "Advanced techniques and best practices for optimal rubber tapping results with expert guidance",
+          duration: "Unknown",
           type: "youtube",
-          videoUrl: "https://www.youtube.com/embed/VIDEO_ID_5",
-          youtubeUrl: "https://www.youtube.com/embed/VIDEO_ID_5",
-          thumbnailUrl: "/api/placeholder/640/360",
+          videoUrl: "https://www.youtube.com/embed/TL9Z3QF_2Y0",
+          youtubeUrl: "https://www.youtube.com/embed/TL9Z3QF_2Y0",
+          thumbnailUrl: placeholderThumb,
           completed: false
         }
       ]
@@ -168,7 +176,7 @@ const TrainingModule = () => {
           type: "youtube",
           videoUrl: "https://www.youtube.com/embed/PLANTATION_1",
           youtubeUrl: "https://www.youtube.com/embed/PLANTATION_1",
-          thumbnailUrl: "/api/placeholder/640/360",
+          thumbnailUrl: placeholderThumb,
           completed: false
         },
         {
@@ -180,7 +188,7 @@ const TrainingModule = () => {
           type: "youtube",
           videoUrl: "https://www.youtube.com/embed/PLANTATION_2",
           youtubeUrl: "https://www.youtube.com/embed/PLANTATION_2",
-          thumbnailUrl: "/api/placeholder/640/360",
+          thumbnailUrl: placeholderThumb,
           completed: false
         }
       ]
@@ -206,7 +214,7 @@ const TrainingModule = () => {
           type: "youtube",
           videoUrl: "https://www.youtube.com/embed/DISEASE_1",
           youtubeUrl: "https://www.youtube.com/embed/DISEASE_1",
-          thumbnailUrl: "/api/placeholder/640/360",
+          thumbnailUrl: placeholderThumb,
           completed: false
         }
       ]
@@ -232,7 +240,7 @@ const TrainingModule = () => {
           type: "youtube",
           videoUrl: "https://www.youtube.com/embed/MARKET_1",
           youtubeUrl: "https://www.youtube.com/embed/MARKET_1",
-          thumbnailUrl: "/api/placeholder/640/360",
+          thumbnailUrl: placeholderThumb,
           completed: false
         }
       ]
@@ -325,6 +333,62 @@ const TrainingModule = () => {
       setIsEnrolled(enrolled);
       setEnrollmentLoading(false);
 
+      // If enrolled, fetch enrollment details
+      if (enrolled) {
+        try {
+          const { user } = getUserData();
+          const enrollments = await trainingAPI.getUserEnrollments(user.id);
+          const currentEnrollmentData = enrollments.enrollments?.find(
+            enrollment => enrollment.moduleId === parseInt(moduleId)
+          );
+          setCurrentEnrollment(currentEnrollmentData);
+
+          // Load completed lessons from enrollment data
+          if (currentEnrollmentData && currentEnrollmentData.completedLessons) {
+            const completedSet = new Set(currentEnrollmentData.completedLessons);
+            setCompletedLessons(completedSet);
+            console.log('📚 Loaded completed lessons from backend:', currentEnrollmentData.completedLessons);
+
+            // Also save to localStorage as backup
+            const progressKey = `progress_${user.id}_${moduleId}`;
+            localStorage.setItem(progressKey, JSON.stringify(currentEnrollmentData.completedLessons));
+          } else {
+            // Fallback: Load from localStorage if backend data is not available
+            console.log('⚠️ No backend progress data found, checking localStorage...');
+            const progressKey = `progress_${user.id}_${moduleId}`;
+            const savedProgress = localStorage.getItem(progressKey);
+            if (savedProgress) {
+              try {
+                const completedArray = JSON.parse(savedProgress);
+                const completedSet = new Set(completedArray);
+                setCompletedLessons(completedSet);
+                console.log('📚 Loaded completed lessons from localStorage fallback:', completedArray);
+              } catch (error) {
+                console.error('Error parsing saved progress:', error);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching enrollment details:', error);
+
+          // Fallback: Load from localStorage if API fails
+          console.log('⚠️ API failed, checking localStorage for progress...');
+          const { user } = getUserData();
+          const progressKey = `progress_${user.id}_${moduleId}`;
+          const savedProgress = localStorage.getItem(progressKey);
+          if (savedProgress) {
+            try {
+              const completedArray = JSON.parse(savedProgress);
+              const completedSet = new Set(completedArray);
+              setCompletedLessons(completedSet);
+              console.log('📚 Loaded completed lessons from localStorage after API error:', completedArray);
+            } catch (parseError) {
+              console.error('Error parsing saved progress after API error:', parseError);
+            }
+          }
+        }
+      }
+
       // If not enrolled in a paid course, redirect back to training page
       if (!enrolled && currentModule.isFree === false) {
         console.log('🚫 User not enrolled in paid course, redirecting to training page');
@@ -332,14 +396,28 @@ const TrainingModule = () => {
         return;
       }
 
-      // Calculate progress based on completed lessons
-      const completedCount = completedLessons.size;
-      const totalLessons = currentModule.videos.length;
-      setProgress((completedCount / totalLessons) * 100);
+
     };
 
     checkAndSetEnrollment();
-  }, [completedLessons, currentModule, moduleId, navigate]);
+  }, [currentModule, moduleId, navigate]);
+
+  // Calculate progress when completed lessons or module changes
+  useEffect(() => {
+    if (currentModule && currentModule.videos) {
+      const completedCount = completedLessons.size;
+      const totalLessons = currentModule.videos.length;
+      const newProgress = totalLessons > 0 ? (completedCount / totalLessons) * 100 : 0;
+      setProgress(newProgress);
+
+      console.log(`📊 Progress calculated: ${completedCount}/${totalLessons} = ${newProgress.toFixed(1)}%`);
+
+      // Check if course is completed and certificate can be generated
+      if (newProgress >= 100 && currentEnrollment && !currentEnrollment.certificateIssued) {
+        setShowCertificateModal(true);
+      }
+    }
+  }, [completedLessons, currentModule, currentEnrollment?.certificateIssued]);
 
   // Debug: Log video URLs to console
   useEffect(() => {
@@ -355,8 +433,62 @@ const TrainingModule = () => {
     }
   }, [currentModule, currentVideo]);
 
-  const markAsCompleted = (videoId) => {
-    setCompletedLessons(prev => new Set([...prev, videoId]));
+  // Load progress from localStorage on component mount (additional fallback)
+  useEffect(() => {
+    const { user } = getUserData();
+    if (user && moduleId && completedLessons.size === 0) {
+      const progressKey = `progress_${user.id}_${moduleId}`;
+      const savedProgress = localStorage.getItem(progressKey);
+      if (savedProgress) {
+        try {
+          const completedArray = JSON.parse(savedProgress);
+          if (completedArray.length > 0) {
+            const completedSet = new Set(completedArray);
+            setCompletedLessons(completedSet);
+            console.log('🔄 Loaded progress from localStorage on mount:', completedArray);
+          }
+        } catch (error) {
+          console.error('Error parsing saved progress on mount:', error);
+        }
+      }
+    }
+  }, [moduleId]); // Only run when moduleId changes
+
+  const markAsCompleted = async (videoId) => {
+    const newCompletedLessons = new Set([...completedLessons, videoId]);
+    setCompletedLessons(newCompletedLessons);
+
+    const { user } = getUserData();
+    const completedArray = Array.from(newCompletedLessons);
+
+    // Always save to localStorage as backup
+    const progressKey = `progress_${user.id}_${moduleId}`;
+    localStorage.setItem(progressKey, JSON.stringify(completedArray));
+    console.log('💾 Progress saved to localStorage:', completedArray);
+
+    // Also update enrollment manager
+    const totalLessons = currentModule.videos.length;
+    enrollmentManager.updateProgress(user.id, moduleId, completedArray, totalLessons);
+    console.log('📊 Progress updated in enrollment manager');
+
+    // Update backend progress if enrolled
+    if (currentEnrollment) {
+      try {
+        const totalLessons = currentModule.videos.length;
+
+        await trainingAPI.updateProgress(currentEnrollment.id, {
+          completedLessons: completedArray,
+          totalLessons: totalLessons
+        });
+
+        console.log('✅ Progress updated in backend');
+      } catch (error) {
+        console.error('Error updating progress in backend:', error);
+        console.log('📝 Progress still saved locally as fallback');
+      }
+    } else {
+      console.log('📝 No enrollment found, progress saved locally only');
+    }
   };
 
   const togglePlay = () => {
@@ -365,6 +497,46 @@ const TrainingModule = () => {
 
   const toggleMute = () => {
     setIsMuted(!isMuted);
+  };
+
+  // Certificate generation function
+  const handleGenerateCertificate = async () => {
+    if (!currentEnrollment) {
+      console.error('No enrollment data available');
+      return;
+    }
+
+    setIsGeneratingCertificate(true);
+
+    try {
+      // Generate certificate via API
+      const certificateResponse = await certificateAPI.generateCertificate(currentEnrollment.id);
+
+      if (certificateResponse.success) {
+        // Format certificate data for PDF generation
+        const formattedData = formatCertificateData(currentEnrollment, certificateResponse.certificate);
+        setCertificateData(formattedData);
+
+        // Generate and download PDF
+        await generateCertificatePDF(formattedData);
+
+        // Update enrollment state to reflect certificate issued
+        setCurrentEnrollment(prev => ({
+          ...prev,
+          certificateIssued: true,
+          certificateIssuedDate: new Date()
+        }));
+
+        console.log('✅ Certificate generated successfully');
+        alert('🎉 Congratulations! Your certificate has been generated and downloaded.');
+      }
+    } catch (error) {
+      console.error('Error generating certificate:', error);
+      alert('Failed to generate certificate. Please try again.');
+    } finally {
+      setIsGeneratingCertificate(false);
+      setShowCertificateModal(false);
+    }
   };
 
   if (!currentModule) {
@@ -430,14 +602,26 @@ const TrainingModule = () => {
               
               <div className="mt-4 lg:mt-0">
                 <div className="bg-gray-200 rounded-full h-2 w-48 mb-2">
-                  <div 
-                    className="bg-primary-500 h-2 rounded-full transition-all duration-300"
+                  <div
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      progress >= 100 ? 'bg-green-500' : 'bg-primary-500'
+                    }`}
                     style={{ width: `${progress}%` }}
                   ></div>
                 </div>
-                <p className="text-sm text-gray-600 text-center">
-                  {Math.round(progress)}% Complete
-                </p>
+                <div className="text-center">
+                  <p className="text-sm text-gray-600">
+                    {Math.round(progress)}% Complete
+                  </p>
+                  {progress >= 100 && (
+                    <div className="flex items-center justify-center space-x-1 mt-1">
+                      <Award className="w-4 h-4 text-green-600" />
+                      <span className="text-xs text-green-600 font-medium">
+                        {currentEnrollment?.certificateIssued ? 'Certificate Issued' : 'Certificate Available'}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -604,6 +788,69 @@ const TrainingModule = () => {
           </div>
         </div>
       </div>
+
+      {/* Certificate Generation Modal */}
+      {showCertificateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-xl p-8 max-w-md mx-4 text-center"
+          >
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trophy className="w-8 h-8 text-green-600" />
+            </div>
+
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">
+              🎉 Congratulations!
+            </h3>
+
+            <p className="text-gray-600 mb-6">
+              You have successfully completed the <strong>{currentModule.title}</strong> course!
+              You can now generate and download your certificate.
+            </p>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowCertificateModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Later
+              </button>
+              <button
+                onClick={handleGenerateCertificate}
+                disabled={isGeneratingCertificate}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              >
+                {isGeneratingCertificate ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Generating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Award className="w-4 h-4" />
+                    <span>Generate Certificate</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Certificate Download Button (if already issued) */}
+      {currentEnrollment?.certificateIssued && progress >= 100 && (
+        <div className="fixed bottom-6 right-6 z-40">
+          <button
+            onClick={handleGenerateCertificate}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+          >
+            <Download className="w-4 h-4" />
+            <span>Download Certificate</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

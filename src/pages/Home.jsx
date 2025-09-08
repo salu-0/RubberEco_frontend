@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Zap, Leaf, TreePine, Droplets, Sun, Wind, Sparkles, ArrowRight,
@@ -8,6 +8,8 @@ import {
   Clock, Users, Award, TrendingUp
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import RecruitmentBanner from '../components/Recruitment/RecruitmentBanner';
+import RubberAIChatbot from '../components/RubberAIChatbot';
 import plantImage from '../assets/images/img6.jpeg';
 import { useNavigationGuard } from '../hooks/useNavigationGuard';
 
@@ -222,33 +224,7 @@ const Hero = () => {
             </motion.p>
 
             {/* Animated CTA Button */}
-            <motion.div
-              className="flex justify-center"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.2, duration: 0.8 }}
-            >
-              <motion.button
-                className="px-8 py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-                whileHover={{
-                  scale: 1.05,
-                  boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-                }}
-                whileTap={{ scale: 0.95 }}
-                animate={{
-                  y: [0, -5, 0]
-                }}
-                transition={{
-                  y: {
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }
-                }}
-              >
-                Get Started Today
-              </motion.button>
-            </motion.div>
+
 
 
 
@@ -816,6 +792,20 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Recruitment Section */}
+      <section className="py-20 bg-gradient-to-br from-gray-50 via-white to-green-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+          >
+            <RecruitmentBanner darkMode={false} />
+          </motion.div>
+        </div>
+      </section>
+
       {/* Contact Section */}
       <section id="contact" className="relative py-20 bg-gradient-to-br from-gray-900 via-gray-800 to-primary-900 text-white overflow-hidden">
         {/* Background Elements */}
@@ -962,6 +952,7 @@ export default function Home() {
         </div>
       </section>
 
+
       {/* Footer */}
       <footer className="bg-gray-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1057,7 +1048,8 @@ export default function Home() {
                     'Plantation Management',
                     'Tapping Services',
                     'Market Analytics',
-                    'Training Programs',
+                    'Online Training',
+                    'Practical Training',
                     'Broker Network',
                     'AI Predictions'
                   ].map((service, index) => (
@@ -1074,36 +1066,47 @@ export default function Home() {
                 </ul>
               </motion.div>
 
-              {/* Contact Info */}
+              {/* Newsletter & Contact */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
                 viewport={{ once: true }}
               >
-                <h3 className="text-lg font-semibold mb-6">Contact Info</h3>
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <Mail className="w-5 h-5 text-primary-400 mt-1" />
-                    <div>
-                      <p className="text-gray-400">info@rubbereco.com</p>
-                      <p className="text-gray-400">support@rubbereco.com</p>
-                    </div>
+                <h3 className="text-lg font-semibold mb-6">Stay Connected</h3>
+
+                {/* Newsletter Signup */}
+                <div className="mb-6">
+                  <p className="text-gray-400 mb-4">Get updates on new features and training programs</p>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="email"
+                      placeholder="Enter your email"
+                      className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                    <motion.button
+                      className="px-6 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-colors duration-300"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      Subscribe
+                    </motion.button>
                   </div>
-                  <div className="flex items-start space-x-3">
-                    <Phone className="w-5 h-5 text-primary-400 mt-1" />
-                    <div>
-                      <p className="text-gray-400">+1 (555) 123-4567</p>
-                      <p className="text-gray-400">+1 (555) 987-6543</p>
-                    </div>
+                </div>
+
+                {/* Contact Info */}
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <Mail className="w-4 h-4 text-primary-400" />
+                    <p className="text-gray-400 text-sm">info@rubbereco.com</p>
                   </div>
-                  <div className="flex items-start space-x-3">
-                    <MapPin className="w-5 h-5 text-primary-400 mt-1" />
-                    <p className="text-gray-400">
-                      123 Plantation Avenue<br />
-                      Rubber City, RC 12345<br />
-                      United States
-                    </p>
+                  <div className="flex items-center space-x-3">
+                    <Phone className="w-4 h-4 text-primary-400" />
+                    <p className="text-gray-400 text-sm">+91 (484) 123-4567</p>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <MapPin className="w-4 h-4 text-primary-400" />
+                    <p className="text-gray-400 text-sm">Kottayam, Kerala, India</p>
                   </div>
                 </div>
               </motion.div>
@@ -1143,6 +1146,9 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* AI Chatbot */}
+      <RubberAIChatbot />
     </div>
   );
 }

@@ -10,7 +10,7 @@ import {
   Loader2
 } from 'lucide-react';
 
-const VideoUpload = ({ onVideoUploaded, onCancel }) => {
+const VideoUpload = ({ onVideoUploaded, onCancel, darkMode = true }) => {
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -152,7 +152,9 @@ const VideoUpload = ({ onVideoUploaded, onCancel }) => {
 
   return (
     <motion.div
-      className="bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto"
+      className={`${darkMode ? 'bg-gray-800/50 border-green-500/20' : 'bg-white'} backdrop-blur-sm rounded-2xl shadow-xl border p-6 max-w-2xl mx-auto ${
+        darkMode ? 'border-green-500/20' : 'border-gray-100'
+      }`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}

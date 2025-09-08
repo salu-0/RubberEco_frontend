@@ -51,20 +51,56 @@ export default function AuthCallback() {
           console.error('Error fetching user:', fetchError);
         }
 
-        // If user doesn't exist, create them
+        // If user doesn't exist, create them in both Supabase and MongoDB
         if (!existingUser || fetchError?.code === 'PGRST116') {
+          const userName = session.user.user_metadata?.full_name || session.user.email.split('@')[0];
+
+          // Insert into Supabase
           const { error: insertError } = await supabase
             .from('users')
             .insert([{
               id: session.user.id,
               email: session.user.email,
-              name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+              name: userName,
               provider: session.app_metadata?.provider || 'email'
             }]);
 
           if (insertError) {
-            console.error('Error inserting user:', insertError);
+            console.error('Error inserting user into Supabase:', insertError);
             throw insertError;
+          }
+
+          // Also register in MongoDB via backend API
+          try {
+            const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+            console.log('🔄 Registering Google OAuth user in MongoDB via:', `${backendUrl}/auth/register`);
+
+            const mongoResponse = await fetch(`${backendUrl}/auth/register`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                name: userName,
+                email: session.user.email,
+                password: 'google-oauth-user', // Placeholder password for OAuth users
+                role: isFromRegister ? 'farmer' : 'farmer', // Default to farmer for Google users
+                googleId: session.user.id,
+                isVerified: true // Google users are pre-verified
+              })
+            });
+
+            const mongoData = await mongoResponse.json();
+
+            if (mongoResponse.ok) {
+              console.log('✅ Google OAuth user successfully registered in MongoDB:', mongoData.user?.email);
+            } else {
+              console.warn('⚠️ Failed to register Google OAuth user in MongoDB:', mongoData.message);
+              // Don't throw error - continue with Supabase auth even if MongoDB fails
+            }
+          } catch (mongoError) {
+            console.warn('⚠️ MongoDB registration failed for Google OAuth user:', mongoError.message);
+            // Don't throw error - continue with Supabase auth even if MongoDB fails
           }
         }
 

@@ -25,12 +25,10 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
       if (token && userData) {
         try {
           const user = JSON.parse(userData);
-          console.log('✅ JWT authentication found, user role:', user.role);
           setUserRole(user.role);
 
           // Check role-based access if required
           if (requiredRole && user.role !== requiredRole) {
-            console.log('🚫 Insufficient permissions for role:', user.role, 'required:', requiredRole);
             setIsAuthenticated(false);
             return;
           }
@@ -47,14 +45,12 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
       // Check for Supabase session (Google OAuth)
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        console.log('✅ Supabase authentication found');
         // For Supabase users, we might need to fetch role from user metadata
         const role = session.user?.user_metadata?.role || 'user';
         setUserRole(role);
 
         // Check role-based access if required
         if (requiredRole && role !== requiredRole) {
-          console.log('🚫 Insufficient permissions for role:', role, 'required:', requiredRole);
           setIsAuthenticated(false);
           return;
         }
@@ -63,7 +59,6 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
         return;
       }
 
-      console.log('❌ No authentication found');
       setIsAuthenticated(false);
     };
     checkAuth();

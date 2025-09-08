@@ -39,86 +39,11 @@ const PaymentStatus = ({ isOpen, onClose }) => {
 
   const loadPayments = async () => {
     try {
-      // Mock data - replace with actual API call
-      const mockPayments = [
-        {
-          id: 'PAY001',
-          type: 'rubber_sale',
-          description: 'Rubber Sale Payment - Lot #RT001',
-          amount: '₹45,000',
-          status: 'completed',
-          date: '2024-01-25',
-          dueDate: '2024-01-20',
-          paymentMethod: 'Bank Transfer',
-          transactionId: 'TXN123456789',
-          buyer: 'Kerala Rubber Trading Co.',
-          buyerContact: '+91 9876543210',
-          quantity: '250 kg',
-          rate: '₹180/kg',
-          invoiceNumber: 'INV-2024-001',
-          taxAmount: '₹2,250',
-          netAmount: '₹42,750'
-        },
-        {
-          id: 'PAY002',
-          type: 'service_payment',
-          description: 'Tapping Service Payment',
-          amount: '₹8,500',
-          status: 'pending',
-          date: '2024-01-28',
-          dueDate: '2024-01-30',
-          paymentMethod: 'UPI',
-          transactionId: null,
-          serviceProvider: 'Ravi Kumar (Tapper)',
-          serviceContact: '+91 9876543211',
-          serviceDetails: 'Daily tapping for 30 days',
-          invoiceNumber: 'SRV-2024-002'
-        },
-        {
-          id: 'PAY003',
-          type: 'subsidy',
-          description: 'Government Subsidy - Organic Certification',
-          amount: '₹12,000',
-          status: 'approved',
-          date: '2024-01-20',
-          dueDate: '2024-02-05',
-          paymentMethod: 'Direct Benefit Transfer',
-          transactionId: 'DBT987654321',
-          department: 'Department of Agriculture',
-          schemeCode: 'ORG-CERT-2024',
-          applicationId: 'APP-ORG-001'
-        },
-        {
-          id: 'PAY004',
-          type: 'training_fee',
-          description: 'Training Program Fee - Advanced Cultivation',
-          amount: '₹5,000',
-          status: 'overdue',
-          date: '2024-01-15',
-          dueDate: '2024-01-25',
-          paymentMethod: 'Online Payment',
-          transactionId: null,
-          trainingCenter: 'Kottayam Training Center',
-          programCode: 'ADV-CULT-2024',
-          lateFee: '₹250'
-        },
-        {
-          id: 'PAY005',
-          type: 'equipment_purchase',
-          description: 'Equipment Purchase - Tapping Tools',
-          amount: '₹3,200',
-          status: 'completed',
-          date: '2024-01-18',
-          dueDate: '2024-01-18',
-          paymentMethod: 'Credit Card',
-          transactionId: 'CC456789123',
-          vendor: 'AgriTools Kerala',
-          vendorContact: '+91 9876543212',
-          items: ['Tapping Knife Set', 'Collection Cups', 'Measuring Tools']
-        }
-      ];
-      
-      setPayments(mockPayments);
+      // TODO: Replace with actual API call to fetch real payment data
+      // For now, setting empty array - no mock data
+      const payments = [];
+
+      setPayments(payments);
       setLoading(false);
     } catch (error) {
       console.error('Error loading payments:', error);

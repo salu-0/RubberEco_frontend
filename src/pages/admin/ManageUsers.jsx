@@ -16,6 +16,7 @@ import {
   RefreshCw,
   Database
 } from 'lucide-react';
+import { adminTheme } from '../../utils/adminTheme';
 // import { supabase } from '../../supabaseClient'; // Commented out for now
 
 const ManageUsers = ({ darkMode }) => {
@@ -277,121 +278,133 @@ const ManageUsers = ({ darkMode }) => {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-      className="space-y-6"
-    >
-      {/* Users Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <motion.div
-          className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
-            darkMode ? 'border-gray-700' : 'border-gray-100'
-          }`}
-          whileHover={{ scale: 1.02 }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Total Users
-              </p>
-              <p className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {users.length}
-              </p>
-              <p className="text-sm text-blue-500 font-medium">
-                All registered users
-              </p>
-            </div>
-            <div className="p-3 rounded-xl bg-blue-50">
-              <Users className="h-8 w-8 text-blue-600" />
+    <div className={`min-h-screen ${adminTheme.backgrounds.main(darkMode)} p-6`}>
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Modern Header */}
+        <div className="relative overflow-hidden">
+          <div className={`absolute inset-0 ${adminTheme.utils.getGradientBackground(darkMode)} rounded-3xl blur-3xl`}></div>
+          <div className={`relative ${adminTheme.components.card.header(darkMode)}`}>
+            <div className="flex items-center space-x-6">
+              <div className={`p-4 rounded-2xl ${adminTheme.colors.primary.gradient} shadow-lg shadow-green-500/25`}>
+                <Users className="h-10 w-10 text-white" />
+              </div>
+              <div>
+                <h1 className={`text-4xl font-bold bg-gradient-to-r ${darkMode ? 'from-green-400 to-emerald-300' : 'from-gray-900 to-gray-600'} bg-clip-text text-transparent mb-2`}>
+                  Manage Users
+                </h1>
+                <p className={`text-lg ${adminTheme.utils.getTextColor(darkMode, 'primary')}`}>
+                  Comprehensive user management and analytics
+                </p>
+              </div>
             </div>
           </div>
+        </div>
+
+        {/* Users Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <motion.div
+            className={adminTheme.components.card.content(darkMode)}
+            whileHover={{ y: -4, scale: 1.02 }}
+            {...adminTheme.animations.fadeInUp}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={`text-sm font-medium ${adminTheme.utils.getTextColor(darkMode, 'secondary')}`}>
+                  Total Users
+                </p>
+                <p className={`text-3xl font-bold ${adminTheme.utils.getTextColor(darkMode)}`}>
+                  {users.length}
+                </p>
+                <p className={`text-sm font-medium ${adminTheme.utils.getTextColor(darkMode, 'primary')}`}>
+                  All registered users
+                </p>
+              </div>
+              <div className={`p-3 rounded-xl ${adminTheme.colors.primary.gradient} shadow-lg shadow-green-500/25`}>
+                <Users className="h-8 w-8 text-white" />
+              </div>
+            </div>
         </motion.div>
 
+          <motion.div
+            className={adminTheme.components.card.content(darkMode)}
+            whileHover={{ y: -4, scale: 1.02 }}
+            {...adminTheme.animations.fadeInUp}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={`text-sm font-medium ${adminTheme.utils.getTextColor(darkMode, 'secondary')}`}>
+                  Email Users
+                </p>
+                <p className={`text-3xl font-bold ${adminTheme.utils.getTextColor(darkMode)}`}>
+                  {users.filter(u => u.provider === 'email').length}
+                </p>
+                <p className={`text-sm font-medium ${adminTheme.utils.getTextColor(darkMode, 'primary')}`}>
+                  MongoDB registered
+                </p>
+              </div>
+              <div className={`p-3 rounded-xl ${adminTheme.colors.primary.gradient} shadow-lg shadow-green-500/25`}>
+                <Mail className="h-8 w-8 text-white" />
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className={adminTheme.components.card.content(darkMode)}
+            whileHover={{ y: -4, scale: 1.02 }}
+            {...adminTheme.animations.fadeInUp}
+            transition={{ duration: 0.3, delay: 0.2 }}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={`text-sm font-medium ${adminTheme.utils.getTextColor(darkMode, 'secondary')}`}>
+                  Google Users
+                </p>
+                <p className={`text-3xl font-bold ${adminTheme.utils.getTextColor(darkMode)}`}>
+                  {users.filter(u => u.provider === 'google').length}
+                </p>
+                <p className={`text-sm font-medium ${adminTheme.utils.getTextColor(darkMode, 'primary')}`}>
+                  Supabase OAuth
+                </p>
+              </div>
+              <div className={`p-3 rounded-xl ${adminTheme.colors.primary.gradient} shadow-lg shadow-green-500/25`}>
+                <Shield className="h-8 w-8 text-white" />
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className={adminTheme.components.card.content(darkMode)}
+            whileHover={{ y: -4, scale: 1.02 }}
+            {...adminTheme.animations.fadeInUp}
+            transition={{ duration: 0.3, delay: 0.3 }}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={`text-sm font-medium ${adminTheme.utils.getTextColor(darkMode, 'secondary')}`}>
+                  Verified Users
+                </p>
+                <p className={`text-3xl font-bold ${adminTheme.utils.getTextColor(darkMode)}`}>
+                  {users.filter(u => u.email_verified).length}
+                </p>
+                <p className={`text-sm font-medium ${adminTheme.utils.getTextColor(darkMode, 'primary')}`}>
+                  Email verified
+                </p>
+              </div>
+              <div className={`p-3 rounded-xl ${adminTheme.colors.primary.gradient} shadow-lg shadow-green-500/25`}>
+                <CheckCircle className="h-8 w-8 text-white" />
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Users Management Table */}
         <motion.div
-          className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
-            darkMode ? 'border-gray-700' : 'border-gray-100'
-          }`}
-          whileHover={{ scale: 1.02 }}
+          className={adminTheme.components.card.content(darkMode)}
+          {...adminTheme.animations.fadeInUp}
+          transition={{ duration: 0.6, delay: 0.4 }}
         >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Email Users
-              </p>
-              <p className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {users.filter(u => u.provider === 'email').length}
-              </p>
-              <p className="text-sm text-green-500 font-medium">
-                MongoDB registered
-              </p>
-            </div>
-            <div className="p-3 rounded-xl bg-green-50">
-              <Mail className="h-8 w-8 text-green-600" />
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
-            darkMode ? 'border-gray-700' : 'border-gray-100'
-          }`}
-          whileHover={{ scale: 1.02 }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Google Users
-              </p>
-              <p className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {users.filter(u => u.provider === 'google').length}
-              </p>
-              <p className="text-sm text-blue-500 font-medium">
-                Supabase OAuth
-              </p>
-            </div>
-            <div className="p-3 rounded-xl bg-blue-50">
-              <Shield className="h-8 w-8 text-blue-600" />
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
-            darkMode ? 'border-gray-700' : 'border-gray-100'
-          }`}
-          whileHover={{ scale: 1.02 }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Verified Users
-              </p>
-              <p className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {users.filter(u => u.email_verified).length}
-              </p>
-              <p className="text-sm text-purple-500 font-medium">
-                Email verified
-              </p>
-            </div>
-            <div className="p-3 rounded-xl bg-purple-50">
-              <CheckCircle className="h-8 w-8 text-purple-600" />
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Users Management Table */}
-      <motion.div
-        className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-lg border ${
-          darkMode ? 'border-gray-700' : 'border-gray-100'
-        }`}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.2 }}
-      >
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className={`p-6 border-b ${adminTheme.utils.getBorderColor(darkMode)}`}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-4">
               <h3 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -415,20 +428,16 @@ const ManageUsers = ({ darkMode }) => {
             
             <div className="flex flex-col sm:flex-row gap-3">
               {/* Search */}
-              <div className="relative">
-                <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 ${
-                  darkMode ? 'text-gray-400' : 'text-gray-500'
+              <div className="relative group">
+                <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 transition-colors ${
+                  darkMode ? 'text-gray-400 group-focus-within:text-green-400' : 'text-gray-400 group-focus-within:text-green-500'
                 }`} />
                 <input
                   type="text"
                   placeholder="Search users..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className={`pl-10 pr-4 py-2 rounded-lg border ${
-                    darkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                  } focus:ring-2 focus:ring-primary-500 focus:border-primary-500`}
+                  className={adminTheme.components.input.search(darkMode)}
                 />
               </div>
 
@@ -450,25 +459,25 @@ const ManageUsers = ({ darkMode }) => {
               </select>
 
               {/* Actions */}
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 <button
                   onClick={fetchUsers}
                   disabled={loading}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors flex items-center space-x-2"
+                  className={`px-4 py-2 rounded-xl disabled:opacity-50 transition-all duration-300 flex items-center space-x-2 ${adminTheme.components.button.primary(darkMode)}`}
                 >
                   <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                   <span>Refresh</span>
                 </button>
                 <button
                   onClick={handleAddUser}
-                  className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors flex items-center space-x-2"
+                  className={`px-4 py-2 rounded-xl transition-all duration-300 flex items-center space-x-2 ${adminTheme.components.button.primary(darkMode)}`}
                 >
                   <UserPlus className="h-4 w-4" />
                   <span>Add User</span>
                 </button>
                 <button
                   onClick={handleExportUsers}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center space-x-2"
+                  className={`px-4 py-2 rounded-xl transition-all duration-300 flex items-center space-x-2 ${adminTheme.components.button.secondary(darkMode)}`}
                 >
                   <Download className="h-4 w-4" />
                   <span>Export</span>
@@ -644,8 +653,9 @@ const ManageUsers = ({ darkMode }) => {
             </table>
           </div>
         )}
-      </motion.div>
-    </motion.div>
+        </motion.div>
+      </div>
+    </div>
   );
 };
 

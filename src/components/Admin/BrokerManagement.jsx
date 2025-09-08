@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  FaUserTie, 
-  FaCheck, 
-  FaTimes, 
-  FaEye, 
+import { motion } from 'framer-motion';
+import {
+  FaUserTie,
+  FaCheck,
+  FaTimes,
+  FaEye,
   FaIdCard,
   FaBriefcase,
   FaBuilding,
@@ -15,9 +16,8 @@ import {
   FaFilter,
   FaSearch
 } from 'react-icons/fa';
-import './BrokerManagement.css';
 
-const BrokerManagement = () => {
+const BrokerManagement = ({ darkMode = true }) => {
   const [brokers, setBrokers] = useState([]);
   const [filteredBrokers, setFilteredBrokers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -181,33 +181,44 @@ const BrokerManagement = () => {
   }
 
   return (
-    <div className="broker-management">
-      <div className="management-header">
-        <h2>
-          <FaUserTie className="section-icon" />
+    <div className={`w-full p-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+      <div className="mb-8">
+        <h2 className={`flex items-center gap-3 ${darkMode ? 'text-white' : 'text-gray-800'} text-2xl font-bold mb-2`}>
+          <FaUserTie className="text-green-500 text-xl" />
           Broker Management
         </h2>
-        <p className="section-description">
+        <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} text-base`}>
           Manage broker registrations, verifications, and profiles
         </p>
       </div>
 
       {/* Filters */}
-      <div className="management-filters">
-        <div className="search-bar">
-          <FaSearch className="search-icon" />
+      <div className={`${darkMode ? 'bg-gray-800/50 border-green-500/20' : 'bg-white'} backdrop-blur-sm rounded-2xl shadow-xl border p-6 mb-6 ${
+        darkMode ? 'border-green-500/20' : 'border-gray-100'
+      }`}>
+        <div className="relative mb-5">
+          <FaSearch className={`absolute left-4 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
           <input
             type="text"
             placeholder="Search brokers by name, email, license, or company..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            className={`w-full pl-12 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 ${
+              darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'
+            }`}
           />
         </div>
 
-        <div className="filter-controls">
-          <div className="filter-group">
-            <label>Status</label>
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col">
+            <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Status</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className={`px-4 py-2 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 ${
+                darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+              }`}
+            >
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
               <option value="verified">Verified</option>
@@ -218,16 +229,19 @@ const BrokerManagement = () => {
       </div>
 
       {/* Results Info */}
-      <div className="results-info">
-        <p>Showing {filteredBrokers.length} of {brokers.length} brokers</p>
+      <div className="mb-4">
+        <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} text-sm`}>
+          Showing {filteredBrokers.length} of {brokers.length} brokers
+        </p>
       </div>
 
       {/* Brokers List */}
-      <div className="brokers-list">
+      <div className="space-y-4">
         {filteredBrokers.map(broker => (
-          <BrokerCard 
-            key={broker._id} 
+          <BrokerCard
+            key={broker._id}
             broker={broker}
+            darkMode={darkMode}
             onVerify={(action) => handleVerifyBroker(broker._id, action)}
             onViewDetails={() => {
               setSelectedBroker(broker);
@@ -240,10 +254,12 @@ const BrokerManagement = () => {
       </div>
 
       {filteredBrokers.length === 0 && (
-        <div className="no-results">
-          <FaUserTie className="no-results-icon" />
-          <h3>No brokers found</h3>
-          <p>Try adjusting your search criteria or filters</p>
+        <div className={`text-center py-12 ${darkMode ? 'bg-gray-800/50 border-green-500/20' : 'bg-white'} backdrop-blur-sm rounded-2xl shadow-xl border ${
+          darkMode ? 'border-green-500/20' : 'border-gray-100'
+        }`}>
+          <FaUserTie className={`mx-auto text-6xl mb-4 ${darkMode ? 'text-gray-600' : 'text-gray-400'}`} />
+          <h3 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>No brokers found</h3>
+          <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Try adjusting your search criteria or filters</p>
         </div>
       )}
 
@@ -269,86 +285,111 @@ const BrokerManagement = () => {
 };
 
 // Broker Card Component
-const BrokerCard = ({ broker, onVerify, onViewDetails, getStatusInfo, formatDate }) => {
+const BrokerCard = ({ broker, darkMode, onVerify, onViewDetails, getStatusInfo, formatDate }) => {
   const statusInfo = getStatusInfo(broker.brokerProfile.verificationStatus);
 
   return (
-    <div className="broker-card">
-      <div className="broker-header">
-        <div className="broker-info">
-          <h3>{broker.name}</h3>
-          <p className="company-name">{broker.brokerProfile.companyName}</p>
-          <div className="contact-info">
-            <span><FaEnvelope /> {broker.email}</span>
-            <span><FaPhone /> {broker.phone}</span>
-            <span><FaMapMarkerAlt /> {broker.location}</span>
+    <motion.div
+      className={`${darkMode ? 'bg-gray-800/50 border-green-500/20' : 'bg-white'} backdrop-blur-sm rounded-2xl shadow-xl border p-6 ${
+        darkMode ? 'border-green-500/20' : 'border-gray-100'
+      }`}
+      whileHover={{ scale: 1.02 }}
+      transition={{ duration: 0.2 }}
+    >
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1">
+          <h3 className={`text-xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{broker.name}</h3>
+          <p className={`text-sm font-medium mb-3 ${darkMode ? 'text-green-400' : 'text-green-600'}`}>{broker.brokerProfile.companyName}</p>
+          <div className="space-y-2">
+            <div className={`flex items-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <FaEnvelope className="mr-2 text-green-500" /> {broker.email}
+            </div>
+            <div className={`flex items-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <FaPhone className="mr-2 text-green-500" /> {broker.phone}
+            </div>
+            <div className={`flex items-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <FaMapMarkerAlt className="mr-2 text-green-500" /> {broker.location}
+            </div>
           </div>
         </div>
-        
-        <div className="broker-status">
-          <div 
-            className="status-badge"
-            style={{ 
-              backgroundColor: statusInfo.bgColor, 
-              color: statusInfo.color 
+
+        <div className="text-right">
+          <div
+            className="inline-flex px-3 py-1 rounded-full text-xs font-semibold mb-2"
+            style={{
+              backgroundColor: statusInfo.bgColor,
+              color: statusInfo.color
             }}
           >
             {statusInfo.text}
           </div>
-          <div className="registration-date">
-            <FaCalendarAlt />
+          <div className={`flex items-center text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+            <FaCalendarAlt className="mr-1" />
             <span>Registered: {formatDate(broker.createdAt)}</span>
           </div>
         </div>
       </div>
 
-      <div className="broker-details">
-        <div className="detail-item">
-          <FaIdCard />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div className={`flex items-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          <FaIdCard className="mr-2 text-green-500" />
           <span>License: {broker.brokerProfile.licenseNumber}</span>
         </div>
-        <div className="detail-item">
-          <FaBriefcase />
+        <div className={`flex items-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          <FaBriefcase className="mr-2 text-green-500" />
           <span>Experience: {broker.brokerProfile.experience}</span>
         </div>
-        <div className="detail-item">
-          <FaStar />
+        <div className={`flex items-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          <FaStar className="mr-2 text-yellow-500" />
           <span>Rating: {broker.brokerProfile.rating}/5 ({broker.brokerProfile.totalDeals} deals)</span>
         </div>
       </div>
 
-      <div className="specializations">
+      <div className="flex flex-wrap gap-2 mb-4">
         {broker.brokerProfile.specialization.slice(0, 2).map(spec => (
-          <span key={spec} className="specialization-tag">{spec}</span>
+          <span key={spec} className="px-3 py-1 bg-green-500/20 text-green-400 text-xs rounded-full border border-green-500/30">
+            {spec}
+          </span>
         ))}
         {broker.brokerProfile.specialization.length > 2 && (
-          <span className="more-specs">+{broker.brokerProfile.specialization.length - 2} more</span>
+          <span className={`px-3 py-1 text-xs rounded-full ${darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-600'}`}>
+            +{broker.brokerProfile.specialization.length - 2} more
+          </span>
         )}
       </div>
 
-      <div className="broker-actions">
-        <button className="btn-view" onClick={onViewDetails}>
-          <FaEye /> View Details
-        </button>
-        
+      <div className="flex items-center justify-between">
+        <motion.button
+          className="flex items-center space-x-2 px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors border border-green-500/30"
+          onClick={onViewDetails}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <FaEye /> <span>View Details</span>
+        </motion.button>
+
         {broker.brokerProfile.verificationStatus === 'pending' && (
-          <>
-            <button 
-              className="btn-verify"
+          <div className="flex space-x-2">
+            <motion.button
+              className="flex items-center space-x-1 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
               onClick={() => onVerify('verify')}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              <FaCheck /> Verify
-            </button>
-            <button 
-              className="btn-reject"
+              <FaCheck /> <span>Verify</span>
+            </motion.button>
+            <motion.button
+              className="flex items-center space-x-1 px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
               onClick={() => onVerify('reject')}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              <FaTimes /> Reject
-            </button>
-          </>
+              <FaTimes /> <span>Reject</span>
+            </motion.button>
+          </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 

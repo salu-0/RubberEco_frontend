@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import AssignedWorkersModal from '../components/AssignedWorkers/AssignedWorkersModal';
 import {
   User,
   Mail,
@@ -14,8 +15,6 @@ import {
   Shield,
   Briefcase,
   LogOut,
-  Settings,
-  Bell,
   Eye,
   EyeOff,
   // Farmer module icons
@@ -45,7 +44,6 @@ import TappingSchedule from '../components/Farmer/TappingSchedule';
 import LandLeaseApplication from '../components/Farmer/LandLeaseApplication';
 import ApplicationStatus from '../components/Farmer/ApplicationStatus';
 import TrainingRegistration, { TrainingSchedule } from '../components/Farmer/TrainingRegistration';
-import MarketList from '../components/Farmer/MarketList';
 import PaymentStatus from '../components/Farmer/PaymentStatus';
 import FertilizerRainGuardRequest from '../components/Farmer/FertilizerRainGuardRequest';
 
@@ -62,7 +60,6 @@ const Profile = () => {
   const [isApplicationStatusOpen, setIsApplicationStatusOpen] = useState(false);
   const [isTrainingRegistrationOpen, setIsTrainingRegistrationOpen] = useState(false);
   const [isTrainingScheduleOpen, setIsTrainingScheduleOpen] = useState(false);
-  const [isMarketListOpen, setIsMarketListOpen] = useState(false);
   const [recentActivities, setRecentActivities] = useState([]);
   const [activitiesLoading, setActivitiesLoading] = useState(true);
   const [isPaymentStatusOpen, setIsPaymentStatusOpen] = useState(false);
@@ -75,6 +72,7 @@ const Profile = () => {
     complete: 0,
     loading: true
   });
+  const [showAssignedWorkers, setShowAssignedWorkers] = useState(false);
   const navigate = useNavigate();
 
   // Profile image storage utilities
@@ -95,6 +93,15 @@ const Profile = () => {
   // Function to fetch fresh user data from server
   const fetchUserData = async (userId) => {
     try {
+      // Validate user ID format to determine which endpoint to use
+      const isValidMongoId = userId && userId.match(/^[0-9a-fA-F]{24}$/);
+      const isValidUUID = userId && userId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/i);
+
+      // For Supabase users (UUID), we'll skip the server fetch since they don't exist in MongoDB
+      if (isValidUUID) {
+        return;
+      }
+
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/${userId}`, {
         method: 'GET',
         headers: {
@@ -107,7 +114,7 @@ const Profile = () => {
         const data = await response.json();
         if (data.success) {
           const freshUser = data.user;
-          console.log('✅ Fresh user data from server:', freshUser);
+          
 
           // Update localStorage with fresh data
           localStorage.setItem('user', JSON.stringify(freshUser));
@@ -144,7 +151,7 @@ const Profile = () => {
     try {
       setFarmerStats(prev => ({ ...prev, loading: true }));
 
-      console.log('🔍 Fetching stats for user email:', userEmail);
+      
 
       // Fetch all tapping requests and filter by user email on the frontend
       // This is a temporary solution to ensure we get the correct user's data
@@ -158,7 +165,6 @@ const Profile = () => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('📊 All requests response:', data);
 
         if (data.success && data.data) {
           // Filter requests by the current user's email
@@ -166,12 +172,12 @@ const Profile = () => {
             request.farmerEmail === userEmail
           );
 
-          console.log('📊 User-specific requests:', userRequests);
-          console.log('📊 User email being filtered:', userEmail);
+          
 
           // Calculate statistics from filtered requests
           const stats = {
             submitted: 0,
+            under_review: 0,
             assigned: 0,
             accepted: 0,
             in_progress: 0,
@@ -184,11 +190,11 @@ const Profile = () => {
             }
           });
 
-          console.log('📊 Calculated user statistics:', stats);
+          
 
           setFarmerStats({
-            active: (stats.in_progress || 0) + (stats.assigned || 0) + (stats.accepted || 0), // Active = in_progress + assigned + accepted
-            pending: stats.submitted || 0, // Pending = submitted requests
+            active: (stats.in_progress || 0) + (stats.assigned || 0) + (stats.accepted || 0) + (stats.under_review || 0), // Active = in_progress + assigned + accepted + under_review
+            pending: stats.submitted || 0, // Pending = submitted requests (no applications yet)
             complete: stats.completed || 0, // Complete = completed requests
             loading: false
           });
@@ -202,7 +208,7 @@ const Profile = () => {
       }
 
       // Fallback: set default values if API fails or no data
-      console.log('📊 Setting fallback values (all zeros)');
+      
       setFarmerStats({
         active: 0,
         pending: 0,
@@ -228,7 +234,6 @@ const Profile = () => {
     const userData = localStorage.getItem('user');
     if (userData) {
       const parsedUser = JSON.parse(userData);
-      console.log('📱 User data from localStorage:', parsedUser);
 
       // Set initial data from localStorage
       setUser(parsedUser);
@@ -415,7 +420,6 @@ const Profile = () => {
         .slice(0, 3);
 
       setRecentActivities(sortedActivities);
-      console.log('📋 User activities loaded:', sortedActivities);
 
     } catch (error) {
       console.error('❌ Error fetching user activities:', error);
@@ -477,9 +481,12 @@ const Profile = () => {
         // Save profile image to separate storage (persists across sessions)
         const userId = user._id || user.id;
 
-        // Validate MongoDB ObjectId format
-        if (!userId || !userId.match(/^[0-9a-fA-F]{24}$/)) {
-          throw new Error(`Invalid user ID format: ${userId}. Expected MongoDB ObjectId format.`);
+        // Validate user ID format (MongoDB ObjectId or UUID)
+        const isValidMongoId = userId && userId.match(/^[0-9a-fA-F]{24}$/);
+        const isValidUUID = userId && userId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/i);
+
+        if (!userId || (!isValidMongoId && !isValidUUID)) {
+          throw new Error(`Invalid user ID format: ${userId}. Expected MongoDB ObjectId or UUID format.`);
         }
 
         saveProfileImage(userId, base64Image);
@@ -497,7 +504,12 @@ const Profile = () => {
             profileImage: base64Image
           };
 
-          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/${userId}`, {
+          // Choose the appropriate API endpoint based on user ID format
+          const apiEndpoint = isValidUUID
+            ? `${import.meta.env.VITE_API_BASE_URL}/users/supabase/${userId}`
+            : `${import.meta.env.VITE_API_BASE_URL}/users/${userId}`;
+
+          const response = await fetch(apiEndpoint, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -547,8 +559,11 @@ const Profile = () => {
   const handleImageRemove = async () => {
     const userId = user._id || user.id;
 
-    // Validate MongoDB ObjectId format
-    if (!userId || !userId.match(/^[0-9a-fA-F]{24}$/)) {
+    // Validate user ID format (MongoDB ObjectId or UUID)
+    const isValidMongoId = userId && userId.match(/^[0-9a-fA-F]{24}$/);
+    const isValidUUID = userId && userId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/i);
+
+    if (!userId || (!isValidMongoId && !isValidUUID)) {
       showNotification(`Invalid user ID format: ${userId}. Cannot remove image.`, 'error');
       return;
     }
@@ -569,7 +584,12 @@ const Profile = () => {
         profileImage: '' // Remove profile image
       };
 
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/${userId}`, {
+      // Choose the appropriate API endpoint based on user ID format
+      const apiEndpoint = isValidUUID
+        ? `${import.meta.env.VITE_API_BASE_URL}/users/supabase/${userId}`
+        : `${import.meta.env.VITE_API_BASE_URL}/users/${userId}`;
+
+      const response = await fetch(apiEndpoint, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -618,16 +638,17 @@ const Profile = () => {
   const handleSave = async () => {
     setLoading(true);
     try {
-      console.log('🔍 User object:', user);
-      console.log('🔍 User.id:', user.id);
-      console.log('🔍 User._id:', user._id);
+      
 
-      // Use MongoDB ObjectId (_id) instead of UUID (id)
+      // Use MongoDB ObjectId (_id) or UUID (id)
       let userId = user._id || user.id;
 
-      // Check if we have a valid MongoDB ObjectId format (24 hex characters)
-      if (!userId || !userId.match(/^[0-9a-fA-F]{24}$/)) {
-        console.warn('⚠️ Invalid user ID format:', userId);
+      // Check if we have a valid user ID format (MongoDB ObjectId or UUID)
+      const isValidMongoId = userId && userId.match(/^[0-9a-fA-F]{24}$/);
+      const isValidUUID = userId && userId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/i);
+
+      if (!userId || (!isValidMongoId && !isValidUUID)) {
+        
 
         // Try to find user by email as fallback
         try {
@@ -643,7 +664,7 @@ const Profile = () => {
 
             if (foundUser) {
               userId = foundUser.id;
-              console.log('✅ Found user by email, using ID:', userId);
+              
 
               // Update localStorage with correct user data
               const updatedUserData = { ...user, id: foundUser.id, _id: foundUser.id };
@@ -660,7 +681,7 @@ const Profile = () => {
         }
       }
 
-      console.log('✅ Using valid MongoDB ObjectId:', userId);
+      
 
       // Prepare the update data
       const updateData = {
@@ -674,11 +695,15 @@ const Profile = () => {
         profileImage: user.profileImage // Include current profile image
       };
 
-      console.log('🔄 Updating profile for user:', userId);
-      console.log('📝 Update data:', updateData);
+      
 
       // Make API call to update profile in MongoDB
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/${userId}`, {
+      // Choose the appropriate API endpoint based on user ID format
+      const apiEndpoint = isValidUUID
+        ? `${import.meta.env.VITE_API_BASE_URL}/users/supabase/${userId}`
+        : `${import.meta.env.VITE_API_BASE_URL}/users/${userId}`;
+
+      const response = await fetch(apiEndpoint, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -694,9 +719,6 @@ const Profile = () => {
       }
 
       const data = await response.json();
-
-      console.log('🔍 Server response status:', response.status);
-      console.log('🔍 Server response data:', data);
 
       if (data.success) {
         // Update localStorage with the response from server
@@ -936,19 +958,6 @@ const Profile = () => {
                         <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Market & Finance</h3>
                         <button
                           className="w-full flex items-center p-3 text-left hover:bg-orange-50 rounded-lg transition-colors group"
-                          onClick={() => setIsMarketListOpen(true)}
-                        >
-                          <div className="bg-orange-100 p-2 rounded-lg mr-3">
-                            <ShoppingCart className="h-4 w-4 text-orange-600" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">View Local Market List</div>
-                            <div className="text-xs text-gray-500">Browse markets</div>
-                          </div>
-                          <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-orange-600" />
-                        </button>
-                        <button
-                          className="w-full flex items-center p-3 text-left hover:bg-orange-50 rounded-lg transition-colors group"
                           onClick={() => setIsPaymentStatusOpen(true)}
                         >
                           <div className="bg-orange-100 p-2 rounded-lg mr-3">
@@ -978,7 +987,10 @@ const Profile = () => {
                           </div>
                           <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-red-600" />
                         </button>
-                        <button className="w-full flex items-center p-3 text-left hover:bg-red-50 rounded-lg transition-colors group">
+                        <button
+                          onClick={() => setShowAssignedWorkers(true)}
+                          className="w-full flex items-center p-3 text-left hover:bg-red-50 rounded-lg transition-colors group"
+                        >
                           <div className="bg-red-100 p-2 rounded-lg mr-3">
                             <UserCheck className="h-4 w-4 text-red-600" />
                           </div>
@@ -1331,14 +1343,6 @@ const Profile = () => {
             <div className="mt-8 pt-6 border-t border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Actions</h3>
               <div className="flex flex-wrap gap-4">
-                <button className="flex items-center space-x-2 text-gray-600 hover:text-primary-600 transition-colors">
-                  <Settings className="h-4 w-4" />
-                  <span>Account Settings</span>
-                </button>
-                <button className="flex items-center space-x-2 text-gray-600 hover:text-primary-600 transition-colors">
-                  <Bell className="h-4 w-4" />
-                  <span>Notification Preferences</span>
-                </button>
                 <button
                   onClick={handleLogout}
                   className="flex items-center space-x-2 text-red-600 hover:text-red-700 transition-colors"
@@ -1387,11 +1391,6 @@ const Profile = () => {
         onClose={() => setIsTrainingScheduleOpen(false)}
       />
 
-      <MarketList
-        isOpen={isMarketListOpen}
-        onClose={() => setIsMarketListOpen(false)}
-      />
-
       <PaymentStatus
         isOpen={isPaymentStatusOpen}
         onClose={() => setIsPaymentStatusOpen(false)}
@@ -1400,6 +1399,13 @@ const Profile = () => {
       <FertilizerRainGuardRequest
         isOpen={isFertilizerRequestOpen}
         onClose={() => setIsFertilizerRequestOpen(false)}
+      />
+
+      {/* Assigned Workers Modal */}
+      <AssignedWorkersModal
+        isOpen={showAssignedWorkers}
+        onClose={() => setShowAssignedWorkers(false)}
+        userEmail={user?.email}
       />
     </div>
   );

@@ -107,7 +107,6 @@ const Navbar = ({ transparent = false, fixed = true }) => {
   const navItems = getNavItems();
 
   const handleLogout = () => {
-    console.log('🚪 Navbar logout initiated');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
@@ -191,12 +190,20 @@ const Navbar = ({ transparent = false, fixed = true }) => {
                 <Link
                   to={item.path}
                   onClick={(e) => handleNavClick(item, e)}
-                  className={`font-medium transition-colors relative group ${getTextClasses()} ${getHoverClasses()}`}
+                  className={`font-medium transition-all duration-300 relative group ${
+                    item.highlight
+                      ? item.color === 'orange'
+                        ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-2 rounded-full hover:shadow-lg hover:scale-105 transform hover:from-orange-600 hover:to-orange-700'
+                        : 'bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-2 rounded-full hover:shadow-lg hover:scale-105 transform'
+                      : `${getTextClasses()} ${getHoverClasses()}`
+                  }`}
                 >
                   {item.name}
-                  <span className={`absolute -bottom-1 left-0 w-0 h-0.5 transition-all duration-300 group-hover:w-full ${
-                    transparent && !scrolled ? 'bg-primary-600' : 'bg-primary-600'
-                  }`}></span>
+                  {!item.highlight && (
+                    <span className={`absolute -bottom-1 left-0 w-0 h-0.5 transition-all duration-300 group-hover:w-full ${
+                      transparent && !scrolled ? 'bg-primary-600' : 'bg-primary-600'
+                    }`}></span>
+                  )}
                 </Link>
               </motion.div>
             ))}
@@ -296,7 +303,13 @@ const Navbar = ({ transparent = false, fixed = true }) => {
                 <Link
                   key={item.name}
                   to={item.path}
-                  className="text-gray-700 hover:text-primary-600 font-medium transition-colors py-2"
+                  className={`font-medium transition-all duration-300 py-2 ${
+                    item.highlight
+                      ? item.color === 'orange'
+                        ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-full text-center hover:shadow-lg transform hover:scale-105 hover:from-orange-600 hover:to-orange-700'
+                        : 'bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-full text-center hover:shadow-lg transform hover:scale-105'
+                      : 'text-gray-700 hover:text-primary-600'
+                  }`}
                   onClick={(e) => handleNavClick(item, e)}
                 >
                   {item.name}

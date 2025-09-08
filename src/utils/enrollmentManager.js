@@ -272,6 +272,20 @@ class EnrollmentManager {
     }
   }
 
+  // Update progress specifically
+  updateProgress(userId, moduleId, completedLessons, totalLessons) {
+    const progressPercentage = totalLessons > 0 ? Math.round((completedLessons.length / totalLessons) * 100) : 0;
+
+    return this.updateEnrollment(userId, moduleId, {
+      progress: {
+        completedLessons,
+        totalLessons,
+        progressPercentage,
+        lastAccessedDate: new Date().toISOString()
+      }
+    });
+  }
+
   // Get enrollment statistics
   getEnrollmentStats(userId) {
     const enrollments = this.getUserEnrollments(userId);

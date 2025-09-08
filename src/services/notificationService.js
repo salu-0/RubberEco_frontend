@@ -41,7 +41,6 @@ class NotificationService {
         numberOfTrees: requestData.numberOfTrees,
         tappingType: requestData.tappingType,
         startDate: requestData.startDate,
-        duration: requestData.duration,
         urgency: requestData.urgency,
         preferredTime: requestData.preferredTime,
         budgetRange: requestData.budgetRange,
@@ -116,6 +115,70 @@ class NotificationService {
         { label: 'View Details', action: 'view_details' },
         { label: 'Assign Provider', action: 'assign_provider' },
         { label: 'Contact Farmer', action: 'contact_farmer' }
+      ]
+    };
+
+    return this.addNotification(notification);
+  }
+
+  // Add land registration notification
+  addLandRegistrationNotification(landData, farmerData) {
+    const notification = {
+      type: 'land_registration',
+      title: 'New Land Registration',
+      message: `${farmerData.name} has registered a new land: ${landData.landTitle} in ${landData.district}`,
+      priority: 'normal',
+      data: {
+        registrationId: landData.registrationId || `LR${Date.now()}`,
+        farmerName: farmerData.name,
+        farmerEmail: farmerData.email,
+        farmerPhone: farmerData.phone,
+        landTitle: landData.landTitle,
+        landLocation: landData.landLocation,
+        district: landData.district,
+        totalArea: landData.totalArea,
+        surveyNumber: landData.surveyNumber,
+        status: landData.status || 'pending_verification',
+        submittedAt: new Date().toISOString()
+      },
+      actions: [
+        { label: 'View Details', action: 'view_land_details' },
+        { label: 'Verify Land', action: 'verify_land' },
+        { label: 'Contact Farmer', action: 'contact_farmer' }
+      ]
+    };
+
+    return this.addNotification(notification);
+  }
+
+  // Add tenancy offering notification
+  addTenancyOfferingNotification(offeringData, landData, farmerData) {
+    const notification = {
+      type: 'tenancy_offering',
+      title: 'New Tenancy Offering Available',
+      message: `${farmerData.name} has offered ${landData.landTitle} for rubber tapping tenancy`,
+      priority: 'high',
+      data: {
+        offeringId: offeringData.offeringId || `TO${Date.now()}`,
+        farmerName: farmerData.name,
+        farmerEmail: farmerData.email,
+        farmerPhone: farmerData.phone,
+        landTitle: landData.landTitle,
+        landLocation: landData.landLocation,
+        district: landData.district,
+        totalArea: landData.totalArea,
+        tenancyRate: offeringData.tenancyRate,
+        rateType: offeringData.rateType,
+        leaseDuration: offeringData.leaseDuration,
+        availableFrom: offeringData.availableFrom,
+        allowedActivities: offeringData.allowedActivities,
+        status: 'available',
+        submittedAt: new Date().toISOString()
+      },
+      actions: [
+        { label: 'View Details', action: 'view_offering_details' },
+        { label: 'Contact Owner', action: 'contact_owner' },
+        { label: 'Apply for Tenancy', action: 'apply_tenancy' }
       ]
     };
 
@@ -243,6 +306,41 @@ class NotificationService {
   // Get high priority notifications
   getHighPriorityNotifications() {
     return this.notifications.filter(n => n.priority === 'high' && !n.read);
+  }
+
+  // Add staff leave request notification
+  addStaffLeaveRequestNotification(leaveData, staffData) {
+    const urgencyLevel = leaveData.urgency === 'emergency' ? 'high' :
+                        leaveData.urgency === 'high' ? 'high' : 'normal';
+
+    const notification = {
+      type: 'leave_request',
+      title: 'New Staff Leave Request',
+      message: `${staffData.name} (${staffData.role}) has requested ${leaveData.leaveType} leave for ${leaveData.totalDays} day(s)`,
+      priority: urgencyLevel,
+      data: {
+        requestId: leaveData.requestId,
+        staffName: staffData.name,
+        staffEmail: staffData.email,
+        staffRole: staffData.role,
+        staffDepartment: staffData.department,
+        leaveType: leaveData.leaveType,
+        startDate: leaveData.startDate,
+        endDate: leaveData.endDate,
+        totalDays: leaveData.totalDays,
+        reason: leaveData.reason,
+        urgency: leaveData.urgency,
+        contactDuringLeave: leaveData.contactDuringLeave,
+        submittedAt: leaveData.submittedAt || new Date().toISOString()
+      },
+      actions: [
+        { label: 'Approve', action: 'approve_leave', primary: true },
+        { label: 'Reject', action: 'reject_leave', primary: false },
+        { label: 'View Details', action: 'view_leave_details', primary: false }
+      ]
+    };
+
+    return this.addNotification(notification);
   }
 }
 

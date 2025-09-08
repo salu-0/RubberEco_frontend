@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import AvailableServiceRequests from '../../components/Staff/AvailableServiceRequests';
+import MyApplications from '../../components/Staff/MyApplications';
+import AssignedTasks from '../../components/Staff/AssignedTasks';
+import Attendance from '../../components/Staff/Attendance';
+import AttendanceRecords from '../../components/Staff/AttendanceRecords';
+import AttendanceMarkingForm from '../../components/Staff/AttendanceMarkingForm';
+import Toast from '../../components/Toast';
+
 import {
-  Bell,
   MapPin,
   Plus,
   CheckCircle,
   Clock,
-  AlertTriangle,
   Users,
-  MessageSquare,
   Settings,
   User,
   Calendar,
@@ -22,7 +27,6 @@ import {
   FileText,
   Eye,
   Edit,
-  Send,
   Filter,
   Search,
   MoreVertical,
@@ -30,17 +34,22 @@ import {
   ChevronDown,
   X,
   EyeOff,
-  Camera
+  Camera,
+  Phone,
+  DollarSign,
+  MessageSquare,
+  AlertTriangle
 } from 'lucide-react';
 
 const StaffDashboard = ({ darkMode }) => {
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState('overview');
-  const [notifications, setNotifications] = useState([]);
+  const [serviceRequestsSubTab, setServiceRequestsSubTab] = useState('available');
   const [pendingRequests, setPendingRequests] = useState([]);
   const [collections, setCollections] = useState([]);
   const [assignments, setAssignments] = useState([]);
+  const [assignedTasks, setAssignedTasks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [user, setUser] = useState(null);
@@ -58,10 +67,91 @@ const StaffDashboard = ({ darkMode }) => {
   const [imageUploading, setImageUploading] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [availableRequestsCount, setAvailableRequestsCount] = useState(0);
+  const [showCollectionDetailsModal, setShowCollectionDetailsModal] = useState(false);
+  const [selectedCollection, setSelectedCollection] = useState(null);
+  const [showAttendanceForm, setShowAttendanceForm] = useState(false);
 
   // API base URL
-  const API_BASE_URL = 'http://localhost:5000/api';
-  console.log('🔧 API_BASE_URL configured as:', API_BASE_URL);
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+  const API_BASE_URL = `${BACKEND_URL}/api`;
+
+  // Fetch available service requests count for badge
+  useEffect(() => {
+    const fetchAvailableRequestsCount = async () => {
+      try {
+        const url = `${BACKEND_URL}/api/service-applications/available-requests`;
+        const resp = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (resp.ok) {
+          const result = await resp.json();
+          const availableList = Array.isArray(result?.data) ? result.data : [];
+          
+          // Then get user's applications to filter out already applied requests
+          const applicationsUrl = `${BACKEND_URL}/api/service-applications/my-applications`;
+          console.log(`🔍 Fetching applications from: ${applicationsUrl}`);
+          const applicationsResp = await fetch(applicationsUrl, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (applicationsResp.ok) {
+            const applicationsResult = await applicationsResp.json();
+            console.log(`📋 Raw applications data:`, applicationsResult.data);
+            
+            // Log each application with its status and tappingRequestId
+            applicationsResult.data?.forEach((app, index) => {
+              console.log(`📋 Application ${index + 1}:`, {
+                id: app._id,
+                status: app.status,
+                tappingRequestId: app.tappingRequestId,
+                mappedId: typeof app.tappingRequestId === 'object' && app.tappingRequestId._id ? app.tappingRequestId._id : app.tappingRequestId
+              });
+            });
+            
+            const appliedRequestIds = applicationsResult.data?.map(app => {
+              if (typeof app.tappingRequestId === 'object' && app.tappingRequestId._id) {
+                return app.tappingRequestId._id;
+              }
+              return app.tappingRequestId;
+            }) || [];
+            
+            console.log(`📋 Mapped applied request IDs:`, appliedRequestIds);
+            console.log(`📋 Available requests before filtering:`, availableList.map(r => ({ id: r._id, title: r.title })));
+            
+            // Filter out requests the user has already applied for (regardless of status)
+            const trulyAvailableRequests = availableList.filter(request => {
+              const isApplied = appliedRequestIds.includes(request._id);
+              console.log(`🔍 Request ${request._id} (${request.title}): isApplied = ${isApplied}`);
+              return !isApplied;
+            });
+            
+            setAvailableRequestsCount(trulyAvailableRequests.length);
+            console.log(`📊 Badge count: ${trulyAvailableRequests.length} truly available requests (${availableList.length} total - ${appliedRequestIds.length} already applied)`);
+            console.log(`🔍 Available requests after filtering:`, trulyAvailableRequests.map(r => ({ id: r._id, title: r.title })));
+          } else {
+            // Fallback: show all available requests if can't get applications
+            setAvailableRequestsCount(availableList.length);
+          }
+        } else {
+          setAvailableRequestsCount(0);
+        }
+      } catch (e) {
+        setAvailableRequestsCount(0);
+      }
+    };
+
+    fetchAvailableRequestsCount();
+    // Only refresh available requests count every 5 minutes (300000ms) instead of every minute
+    const timer = setInterval(fetchAvailableRequestsCount, 300000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Show notification function
   const showNotification = (message, type = 'success') => {
@@ -118,6 +208,9 @@ const StaffDashboard = ({ darkMode }) => {
         console.error(`❌ Staff data fetch failed: ${response.status} ${response.statusText}`);
         if (response.status === 404) {
           console.log('❌ Staff member not found by ID, trying to find by email...');
+          console.log('🔍 API_BASE_URL:', API_BASE_URL);
+          console.log('🔍 User email for search:', userData.email);
+          console.log('🔍 Full search URL will be:', `${API_BASE_URL}/staff?search=${encodeURIComponent(userData.email)}`);
 
           // Try to find staff by email as fallback
           try {
@@ -132,6 +225,9 @@ const StaffDashboard = ({ darkMode }) => {
             if (emailResponse.ok) {
               const emailData = await emailResponse.json();
               console.log('✅ Found staff by email:', emailData);
+              console.log('🔍 Search response data structure:', Object.keys(emailData));
+              console.log('🔍 Data array exists:', !!emailData.data);
+              console.log('🔍 Data array length:', emailData.data?.length || 'undefined');
 
               if (emailData.data && emailData.data.length > 0) {
                 const staffInfo = emailData.data[0];
@@ -417,13 +513,70 @@ const StaffDashboard = ({ darkMode }) => {
     // Clear any other stored data
     setUser(null);
     setStaffData(null);
-    setNotifications([]);
     setPendingRequests([]);
     setCollections([]);
     setAssignments([]);
 
     // Navigate to login page
     navigate('/login', { replace: true });
+  };
+
+  // Fetch assigned tasks data
+  const fetchAssignedTasks = async () => {
+    try {
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${backendUrl}/service-applications/assigned-tasks`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.ok) {
+        const result = await response.json();
+        setAssignedTasks(result.data || []);
+        // Also update assignments for the assignments tab
+        setAssignments(result.data || []);
+      } else {
+        console.error('Failed to fetch assigned tasks:', response.status, response.statusText);
+      }
+    } catch (e) {
+      console.error('Failed to load assigned tasks', e);
+    }
+  };
+
+  // Mark attendance for a specific task
+  const markAttendance = (taskId, taskName) => {
+    // For individual task marking, we'll also use the form but pre-select the specific task
+    const specificTask = assignments.find(task => task._id === taskId);
+    if (specificTask) {
+      // Set the assignments to only include this specific task
+      const singleTaskArray = [specificTask];
+      // We'll need to modify the form to handle single task selection
+      setShowAttendanceForm(true);
+    } else {
+      showNotification('Task not found', 'error');
+    }
+  };
+
+  // Mark attendance for all active tasks
+  const markAttendanceForAll = () => {
+    const activeTasks = assignments.filter(task => 
+      ['in_progress', 'tapper_inspecting', 'tree_count_pending'].includes(task.status)
+    );
+
+    if (activeTasks.length === 0) {
+      showNotification('No active tasks to mark attendance for.', 'error');
+      return;
+    }
+
+    // Open the attendance form modal
+    setShowAttendanceForm(true);
+  };
+
+  // Handle successful attendance marking
+  const handleAttendanceSuccess = async () => {
+    // Refresh the tasks to show updated attendance
+    await fetchAssignedTasks();
   };
 
   // Load user data and fetch staff data on component mount
@@ -434,6 +587,9 @@ const StaffDashboard = ({ darkMode }) => {
 
     // Fetch detailed staff data from backend
     fetchStaffData();
+    
+    // Fetch assigned tasks data
+    fetchAssignedTasks();
   }, []);
 
   // Real-time clock
@@ -458,58 +614,11 @@ const StaffDashboard = ({ darkMode }) => {
     };
   }, [showProfileDropdown]);
 
+
   // Sample data - replace with API calls
   useEffect(() => {
-    // Initialize sample data
-    setNotifications([
-      {
-        id: 1,
-        type: 'assignment',
-        title: 'New Tapping Assignment',
-        message: 'You have been assigned to Farm Block A-12',
-        time: '10 minutes ago',
-        read: false
-      },
-      {
-        id: 2,
-        type: 'alert',
-        title: 'Weather Alert',
-        message: 'Heavy rain expected tomorrow. Adjust collection schedule.',
-        time: '1 hour ago',
-        read: false
-      },
-      {
-        id: 3,
-        type: 'update',
-        title: 'Equipment Maintenance',
-        message: 'Tapping tools maintenance scheduled for Friday',
-        time: '2 hours ago',
-        read: true
-      }
-    ]);
 
-    setPendingRequests([
-      {
-        id: 1,
-        farmer: 'Rajesh Kumar',
-        type: 'fertilizer',
-        description: 'Fertilizer application needed for 2 acres',
-        priority: 'high',
-        location: 'Farm Block B-15',
-        requestedDate: '2024-07-25',
-        status: 'pending'
-      },
-      {
-        id: 2,
-        farmer: 'Priya Nair',
-        type: 'rain_guard',
-        description: 'Rain guard installation for new plantation',
-        priority: 'medium',
-        location: 'Farm Block C-08',
-        requestedDate: '2024-07-26',
-        status: 'in_progress'
-      }
-    ]);
+    setPendingRequests([]);
 
     setCollections([
       {
@@ -519,7 +628,7 @@ const StaffDashboard = ({ darkMode }) => {
         latexQuantity: 25.5,
         rubberSheetQuantity: 12.3,
         quality: 'Grade A',
-        collectionDate: '2024-07-24',
+        collectionDate: '2024-01-15',
         status: 'completed'
       },
       {
@@ -529,33 +638,12 @@ const StaffDashboard = ({ darkMode }) => {
         latexQuantity: 18.2,
         rubberSheetQuantity: 8.7,
         quality: 'Grade B',
-        collectionDate: '2024-07-24',
+        collectionDate: '2024-01-14',
         status: 'pending'
       }
     ]);
 
-    setAssignments([
-      {
-        id: 1,
-        task: 'Latex Collection',
-        location: 'Farm Block A-12',
-        assignedTappers: ['Ravi Kumar', 'Anil Varma'],
-        startTime: '06:00 AM',
-        endTime: '12:00 PM',
-        status: 'in_progress',
-        attendance: { present: 2, total: 2 }
-      },
-      {
-        id: 2,
-        task: 'Fertilizer Application',
-        location: 'Farm Block C-15',
-        assignedTappers: ['Deepak Singh'],
-        startTime: '08:00 AM',
-        endTime: '04:00 PM',
-        status: 'scheduled',
-        attendance: { present: 0, total: 1 }
-      }
-    ]);
+    setAssignments([]);
   }, []);
 
   // Quick stats for overview
@@ -570,7 +658,7 @@ const StaffDashboard = ({ darkMode }) => {
     },
     {
       title: 'Today\'s Collections',
-      value: collections.filter(c => c.collectionDate === '2024-07-24').length,
+      value: collections.filter(c => c.collectionDate === new Date().toISOString().split('T')[0]).length,
       icon: Droplets,
       color: 'from-blue-500 to-blue-600',
       bgColor: 'bg-blue-50',
@@ -584,14 +672,6 @@ const StaffDashboard = ({ darkMode }) => {
       bgColor: 'bg-green-50',
       textColor: 'text-green-600'
     },
-    {
-      title: 'Unread Notifications',
-      value: notifications.filter(n => !n.read).length,
-      icon: Bell,
-      color: 'from-purple-500 to-purple-600',
-      bgColor: 'bg-purple-50',
-      textColor: 'text-purple-600'
-    }
   ];
 
   const tabItems = [
@@ -599,7 +679,8 @@ const StaffDashboard = ({ darkMode }) => {
     { id: 'collections', label: 'Collections', icon: Droplets },
     { id: 'requests', label: 'Service Requests', icon: Wrench },
     { id: 'assignments', label: 'Assignments', icon: Users },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'attendance', label: 'Leave Management', icon: Calendar },
+    { id: 'attendance-records', label: 'Attendance Records', icon: UserCheck },
     { id: 'profile', label: 'Profile', icon: User }
   ];
 
@@ -610,6 +691,8 @@ const StaffDashboard = ({ darkMode }) => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
+      {/* Toast Notifications */}
+      <Toast />
       {/* Header */}
       <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b sticky top-0 z-40 backdrop-blur-md bg-opacity-90`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -634,16 +717,6 @@ const StaffDashboard = ({ darkMode }) => {
               {/* Current Time */}
               <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                 {currentTime.toLocaleTimeString()}
-              </div>
-
-              {/* Notifications Badge */}
-              <div className="relative">
-                <Bell className={`h-6 w-6 ${darkMode ? 'text-gray-400' : 'text-gray-500'} cursor-pointer hover:text-green-600 transition-colors`} />
-                {notifications.filter(n => !n.read).length > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {notifications.filter(n => !n.read).length}
-                  </span>
-                )}
               </div>
 
               {/* Profile Dropdown */}
@@ -770,7 +843,14 @@ const StaffDashboard = ({ darkMode }) => {
                 }`}
               >
                 <tab.icon className="h-5 w-5" />
-                <span>{tab.label}</span>
+                <span className="relative flex items-center">
+                  {tab.label}
+                  {tab.id === 'requests' && availableRequestsCount > 0 && (
+                    <span className="ml-2 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-xs h-5 min-w-[1.25rem] px-1">
+                      {availableRequestsCount}
+                    </span>
+                  )}
+                </span>
               </button>
             ))}
           </div>
@@ -819,53 +899,7 @@ const StaffDashboard = ({ darkMode }) => {
               </div>
 
               {/* Recent Activity & Quick Actions */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Recent Notifications */}
-                <motion.div
-                  className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
-                    darkMode ? 'border-gray-700' : 'border-gray-100'
-                  }`}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                >
-                  <h3 className={`text-xl font-semibold mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                    Recent Notifications
-                  </h3>
-                  <div className="space-y-4">
-                    {notifications.slice(0, 3).map((notification) => (
-                      <div
-                        key={notification.id}
-                        className={`p-4 rounded-xl border ${
-                          darkMode ? 'border-gray-700 bg-gray-750' : 'border-gray-100 bg-gray-50'
-                        } ${!notification.read ? 'border-l-4 border-l-green-500' : ''}`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                              {notification.title}
-                            </h4>
-                            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
-                              {notification.message}
-                            </p>
-                            <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'} mt-2`}>
-                              {notification.time}
-                            </p>
-                          </div>
-                          {!notification.read && (
-                            <div className="w-2 h-2 bg-green-500 rounded-full ml-2 mt-2" />
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <button
-                    onClick={() => setActiveTab('notifications')}
-                    className="w-full mt-4 py-2 px-4 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
-                  >
-                    View All Notifications
-                  </button>
-                </motion.div>
+              <div className="grid grid-cols-1 gap-8">
 
                 {/* Today's Tasks */}
                 <motion.div
@@ -880,37 +914,48 @@ const StaffDashboard = ({ darkMode }) => {
                     Today's Tasks
                   </h3>
                   <div className="space-y-4">
-                    {assignments.slice(0, 3).map((assignment) => (
-                      <div
-                        key={assignment.id}
-                        className={`p-4 rounded-xl border ${
-                          darkMode ? 'border-gray-700 bg-gray-750' : 'border-gray-100 bg-gray-50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h4 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                              {assignment.task}
-                            </h4>
-                            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                              {assignment.location}
-                            </p>
-                            <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'} mt-1`}>
-                              {assignment.startTime} - {assignment.endTime}
-                            </p>
-                          </div>
-                          <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            assignment.status === 'in_progress'
-                              ? 'bg-green-100 text-green-800'
-                              : assignment.status === 'scheduled'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {assignment.status.replace('_', ' ').toUpperCase()}
+                    {assignments.slice(0, 3).map((task) => {
+                      const req = typeof task.tappingRequestId === 'object' ? task.tappingRequestId : null;
+                      return (
+                        <div
+                          key={task._id}
+                          className={`p-4 rounded-xl border ${
+                            darkMode ? 'border-gray-700 bg-gray-750' : 'border-gray-100 bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                                {task.applicationId}
+                              </h4>
+                              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                {req ? (typeof req.farmLocation === 'string' ? req.farmLocation : 
+                                        typeof req.farmLocation === 'object' && req.farmLocation?.address ? req.farmLocation.address :
+                                        'Service Request') : 'Service Request'}
+                              </p>
+                              <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'} mt-1`}>
+                                {req && req.startDate ? new Date(req.startDate).toLocaleDateString() : 'Start date not specified'}
+                              </p>
+                            </div>
+                            <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              task.status === 'in_progress'
+                                ? 'bg-blue-100 text-blue-800'
+                                : task.status === 'accepted' || task.status === 'agreed' || task.status === 'selected'
+                                ? 'bg-green-100 text-green-800'
+                                : task.status === 'negotiating'
+                                ? 'bg-orange-100 text-orange-800'
+                                : task.status === 'completed'
+                                ? 'bg-purple-100 text-purple-800'
+                                : task.status === 'rejected'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {task.status?.toUpperCase()}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   <button
                     onClick={() => setActiveTab('assignments')}
@@ -1000,87 +1045,113 @@ const StaffDashboard = ({ darkMode }) => {
                     Collection Records
                   </h3>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className={`${darkMode ? 'bg-gray-750' : 'bg-gray-50'}`}>
-                      <tr>
-                        <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
-                          Farm Location
-                        </th>
-                        <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
-                          Farmer
-                        </th>
-                        <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
-                          Latex (kg)
-                        </th>
-                        <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
-                          Rubber Sheets (kg)
-                        </th>
-                        <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
-                          Quality
-                        </th>
-                        <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
-                          Status
-                        </th>
-                        <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className={`${darkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                      {collections.map((collection) => (
-                        <tr key={collection.id} className={`hover:${darkMode ? 'bg-gray-750' : 'bg-gray-50'} transition-colors`}>
-                          <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                            {collection.farmLocation}
-                          </td>
-                          <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                            {collection.farmer}
-                          </td>
-                          <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                            {collection.latexQuantity}
-                          </td>
-                          <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                            {collection.rubberSheetQuantity}
-                          </td>
-                          <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              collection.quality === 'Grade A'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {collection.quality}
-                            </span>
-                          </td>
-                          <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              collection.status === 'completed'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-orange-100 text-orange-800'
-                            }`}>
-                              {collection.status}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex items-center space-x-2">
-                              <button className="text-blue-600 hover:text-blue-900 transition-colors">
-                                <Eye className="h-4 w-4" />
-                              </button>
-                              <button className="text-green-600 hover:text-green-900 transition-colors">
-                                <Edit className="h-4 w-4" />
-                              </button>
-                              {collection.status === 'pending' && (
-                                <button className="text-green-600 hover:text-green-900 transition-colors">
-                                  <CheckCircle className="h-4 w-4" />
-                                </button>
-                              )}
-                            </div>
-                          </td>
+                {collections.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <div className="p-4 bg-gray-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                      <Droplets className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
+                      No Collection Records
+                    </h3>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-6`}>
+                      No collection records found. Start collecting latex and rubber sheets to see them here.
+                    </p>
+                    <button className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-colors">
+                      Add Collection
+                    </button>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className={`${darkMode ? 'bg-gray-750' : 'bg-gray-50'}`}>
+                        <tr>
+                          <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
+                            Farm Location
+                          </th>
+                          <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
+                            Farmer
+                          </th>
+                          <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
+                            Latex (kg)
+                          </th>
+                          <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
+                            Rubber Sheets (kg)
+                          </th>
+                          <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
+                            Quality
+                          </th>
+                          <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
+                            Status
+                          </th>
+                          <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
+                            Actions
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className={`${darkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                        {collections.map((collection) => (
+                          <tr key={collection.id} className={`hover:${darkMode ? 'bg-gray-750' : 'bg-gray-50'} transition-colors`}>
+                            <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                              {collection.farmLocation}
+                            </td>
+                            <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                              {collection.farmer}
+                            </td>
+                            <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                              {collection.latexQuantity}
+                            </td>
+                            <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                              {collection.rubberSheetQuantity}
+                            </td>
+                            <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                collection.quality === 'Grade A'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {collection.quality}
+                              </span>
+                            </td>
+                            <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                collection.status === 'completed'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-orange-100 text-orange-800'
+                              }`}>
+                                {collection.status}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex items-center space-x-2">
+                                <button 
+                                  onClick={() => {
+                                    setSelectedCollection(collection);
+                                    setShowCollectionDetailsModal(true);
+                                  }}
+                                  className="text-blue-600 hover:text-blue-900 transition-colors"
+                                  title="View Details"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </button>
+                                <button className="text-green-600 hover:text-green-900 transition-colors">
+                                  <Edit className="h-4 w-4" />
+                                </button>
+                                {collection.status === 'pending' && (
+                                  <button className="text-green-600 hover:text-green-900 transition-colors">
+                                    <CheckCircle className="h-4 w-4" />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
+
+
             </motion.div>
           )}
 
@@ -1093,203 +1164,73 @@ const StaffDashboard = ({ darkMode }) => {
               transition={{ duration: 0.3 }}
             >
               {/* Service Requests Header */}
-              <div className="flex justify-between items-center mb-6">
-                <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  Service Requests Management
+              <div className="mb-6">
+                <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-4`}>
+                  Service Requests
                 </h2>
-                <div className="flex items-center space-x-3">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <input
-                      type="text"
-                      placeholder="Search requests..."
-                      className={`pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                        darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
-                      }`}
-                    />
-                  </div>
-                  <button className="flex items-center space-x-2 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
-                    <Filter className="h-4 w-4" />
-                    <span>Filter</span>
-                  </button>
+
+                {/* Sub-tabs */}
+                <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+                  {[
+                    { id: 'available', label: 'Available Requests', icon: Search },
+                    { id: 'my-applications', label: 'My Applications', icon: FileText },
+                    { id: 'assigned', label: 'Assigned Tasks', icon: CheckCircle }
+                  ].map((tab) => {
+                    const Icon = tab.icon;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setServiceRequestsSubTab(tab.id)}
+                        className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                          serviceRequestsSubTab === tab.id
+                            ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span>{tab.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Request Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl p-6 shadow-lg border ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Pending
-                      </p>
-                      <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mt-1`}>
-                        {pendingRequests.filter(r => r.status === 'pending').length}
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-orange-50">
-                      <Clock className="h-6 w-6 text-orange-600" />
-                    </div>
-                  </div>
-                </div>
+              {/* Sub-tab Content */}
+              {serviceRequestsSubTab === 'available' && (
+                <AvailableServiceRequests darkMode={darkMode} />
+              )}
 
-                <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl p-6 shadow-lg border ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                        In Progress
-                      </p>
-                      <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mt-1`}>
-                        {pendingRequests.filter(r => r.status === 'in_progress').length}
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-blue-50">
-                      <Target className="h-6 w-6 text-blue-600" />
-                    </div>
-                  </div>
-                </div>
+              {serviceRequestsSubTab === 'my-applications' && (
+                <MyApplications darkMode={darkMode} />
+              )}
 
-                <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl p-6 shadow-lg border ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                        High Priority
-                      </p>
-                      <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mt-1`}>
-                        {pendingRequests.filter(r => r.priority === 'high').length}
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-red-50">
-                      <AlertTriangle className="h-6 w-6 text-red-600" />
-                    </div>
-                  </div>
-                </div>
+              {serviceRequestsSubTab === 'assigned' && (
+                <AssignedTasks darkMode={darkMode} />
+              )}
+            </motion.div>
+          )}
 
-                <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl p-6 shadow-lg border ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                        This Week
-                      </p>
-                      <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mt-1`}>
-                        {pendingRequests.length}
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-green-50">
-                      <Calendar className="h-6 w-6 text-green-600" />
-                    </div>
-                  </div>
-                </div>
-              </div>
+          {activeTab === 'attendance' && (
+            <motion.div
+              key="attendance"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Attendance darkMode={darkMode} />
+            </motion.div>
+          )}
 
-              {/* Service Requests List */}
-              <div className="space-y-6">
-                {pendingRequests.map((request) => (
-                  <motion.div
-                    key={request.id}
-                    className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
-                      darkMode ? 'border-gray-700' : 'border-gray-100'
-                    } ${request.priority === 'high' ? 'border-l-4 border-l-red-500' : ''}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-3">
-                          <div className={`p-2 rounded-lg ${
-                            request.type === 'fertilizer' ? 'bg-green-100' : 'bg-blue-100'
-                          }`}>
-                            {request.type === 'fertilizer' ? (
-                              <Droplets className={`h-5 w-5 ${
-                                request.type === 'fertilizer' ? 'text-green-600' : 'text-blue-600'
-                              }`} />
-                            ) : (
-                              <Shield className="h-5 w-5 text-blue-600" />
-                            )}
-                          </div>
-                          <div>
-                            <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                              {request.type === 'fertilizer' ? 'Fertilizer Application' : 'Rain Guard Installation'}
-                            </h3>
-                            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                              Requested by {request.farmer}
-                            </p>
-                          </div>
-                        </div>
-
-                        <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-4`}>
-                          {request.description}
-                        </p>
-
-                        <div className="flex items-center space-x-6 text-sm">
-                          <div className="flex items-center space-x-2">
-                            <MapPin className={`h-4 w-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-                            <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
-                              {request.location}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Calendar className={`h-4 w-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-                            <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
-                              {request.requestedDate}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-3">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          request.priority === 'high'
-                            ? 'bg-red-100 text-red-800'
-                            : request.priority === 'medium'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-green-100 text-green-800'
-                        }`}>
-                          {request.priority.toUpperCase()}
-                        </span>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          request.status === 'pending'
-                            ? 'bg-orange-100 text-orange-800'
-                            : request.status === 'in_progress'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-green-100 text-green-800'
-                        }`}>
-                          {request.status.replace('_', ' ').toUpperCase()}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center space-x-4">
-                        <button className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors">
-                          <Eye className="h-4 w-4" />
-                          <span className="text-sm">View Details</span>
-                        </button>
-                        <button className="flex items-center space-x-2 text-green-600 hover:text-green-800 transition-colors">
-                          <MessageSquare className="h-4 w-4" />
-                          <span className="text-sm">Contact Farmer</span>
-                        </button>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {request.status === 'pending' && (
-                          <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
-                            Accept Request
-                          </button>
-                        )}
-                        {request.status === 'in_progress' && (
-                          <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
-                            Mark Complete
-                          </button>
-                        )}
-                        <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
+          {activeTab === 'attendance-records' && (
+            <motion.div
+              key="attendance-records"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <AttendanceRecords darkMode={darkMode} />
             </motion.div>
           )}
 
@@ -1306,7 +1247,10 @@ const StaffDashboard = ({ darkMode }) => {
                 <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   Tapping Assignments & Tasks
                 </h2>
-                <button className="flex items-center space-x-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
+                <button 
+                  onClick={markAttendanceForAll}
+                  className="flex items-center space-x-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors"
+                >
                   <UserCheck className="h-5 w-5" />
                   <span>Mark Attendance</span>
                 </button>
@@ -1321,7 +1265,7 @@ const StaffDashboard = ({ darkMode }) => {
                         Active Tasks
                       </p>
                       <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mt-1`}>
-                        {assignments.filter(a => a.status === 'in_progress').length}
+                        {assignments.filter(a => ['in_progress', 'tapper_inspecting', 'tree_count_pending'].includes(a.status)).length}
                       </p>
                     </div>
                     <div className="p-3 rounded-xl bg-green-50">
@@ -1334,10 +1278,10 @@ const StaffDashboard = ({ darkMode }) => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Total Tappers
+                        Total Assignments
                       </p>
                       <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mt-1`}>
-                        {assignments.reduce((total, a) => total + a.assignedTappers.length, 0)}
+                        {assignments.length}
                       </p>
                     </div>
                     <div className="p-3 rounded-xl bg-blue-50">
@@ -1350,10 +1294,10 @@ const StaffDashboard = ({ darkMode }) => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Present Today
+                        Completed Tasks
                       </p>
                       <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mt-1`}>
-                        {assignments.reduce((total, a) => total + a.attendance.present, 0)}
+                        {assignments.filter(a => a.status === 'completed').length}
                       </p>
                     </div>
                     <div className="p-3 rounded-xl bg-purple-50">
@@ -1381,277 +1325,176 @@ const StaffDashboard = ({ darkMode }) => {
 
               {/* Assignments List */}
               <div className="space-y-6">
-                {assignments.map((assignment) => (
+                {assignments.length === 0 ? (
                   <motion.div
-                    key={assignment.id}
-                    className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
+                    className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-12 shadow-lg border ${
                       darkMode ? 'border-gray-700' : 'border-gray-100'
-                    }`}
-                    initial={{ opacity: 0, y: 10 }}
+                    } text-center`}
+                    initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <div className="p-2 bg-green-100 rounded-lg">
-                            <Target className="h-5 w-5 text-green-600" />
-                          </div>
-                          <div>
-                            <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                              {assignment.task}
-                            </h3>
-                            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                              {assignment.location}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center space-x-6 text-sm mb-4">
-                          <div className="flex items-center space-x-2">
-                            <Clock className={`h-4 w-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-                            <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
-                              {assignment.startTime} - {assignment.endTime}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Users className={`h-4 w-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-                            <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
-                              {assignment.assignedTappers.length} Tappers
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <UserCheck className={`h-4 w-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-                            <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
-                              {assignment.attendance.present}/{assignment.attendance.total} Present
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Assigned Tappers */}
-                        <div className="mb-4">
-                          <h4 className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                            Assigned Tappers:
-                          </h4>
-                          <div className="flex flex-wrap gap-2">
-                            {assignment.assignedTappers.map((tapper, index) => (
-                              <span
-                                key={index}
-                                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                  darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'
-                                }`}
-                              >
-                                {tapper}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-3">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          assignment.status === 'in_progress'
-                            ? 'bg-green-100 text-green-800'
-                            : assignment.status === 'scheduled'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {assignment.status.replace('_', ' ').toUpperCase()}
-                        </span>
-                      </div>
+                    <div className="p-4 bg-gray-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                      <Target className="h-8 w-8 text-gray-400" />
                     </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center space-x-4">
-                        <button className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors">
-                          <UserCheck className="h-4 w-4" />
-                          <span className="text-sm">Mark Attendance</span>
-                        </button>
-                        <button className="flex items-center space-x-2 text-green-600 hover:text-green-800 transition-colors">
-                          <FileText className="h-4 w-4" />
-                          <span className="text-sm">Field Report</span>
-                        </button>
-                        <button className="flex items-center space-x-2 text-purple-600 hover:text-purple-800 transition-colors">
-                          <MessageSquare className="h-4 w-4" />
-                          <span className="text-sm">Send Update</span>
-                        </button>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {assignment.status === 'scheduled' && (
-                          <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
-                            Start Task
-                          </button>
-                        )}
-                        {assignment.status === 'in_progress' && (
-                          <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
-                            Complete Task
-                          </button>
-                        )}
-                        <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
+                    <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
+                      No Assignments Available
+                    </h3>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-6`}>
+                      You don't have any assignments at the moment. Check back later for new tasks.
+                    </p>
+                    <button 
+                      onClick={fetchAssignedTasks}
+                      className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-colors"
+                    >
+                      Refresh Assignments
+                    </button>
                   </motion.div>
-                ))}
+                ) : (
+                  assignments.map((task) => {
+                    const req = typeof task.tappingRequestId === 'object' ? task.tappingRequestId : null;
+                    const current = task.negotiation?.currentProposal;
+                    return (
+                      <motion.div
+                        key={task._id}
+                        className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
+                          darkMode ? 'border-gray-700' : 'border-gray-100'
+                        }`}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-2">
+                              <div className="p-2 bg-green-100 rounded-lg">
+                                <Target className="h-5 w-5 text-green-600" />
+                              </div>
+                              <div>
+                                <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                                  {task.applicationId}
+                                </h3>
+                                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                  {req ? (typeof req.farmLocation === 'string' ? req.farmLocation : 
+                                          typeof req.farmLocation === 'object' && req.farmLocation?.address ? req.farmLocation.address :
+                                          'Service Request') : 'Service Request'}
+                                </p>
+                              </div>
+                            </div>
+
+                            {req && (
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm mb-4">
+                                <div className="flex items-center">
+                                  <MapPin className="h-4 w-4 mr-2" />
+                                  {typeof req.farmLocation === 'string' ? req.farmLocation : 
+                                   typeof req.farmLocation === 'object' && req.farmLocation?.address ? req.farmLocation.address :
+                                   'Location not specified'}
+                                </div>
+                                <div className="flex items-center">
+                                  <TreePine className="h-4 w-4 mr-2" />
+                                  {req.farmerEstimatedTrees || req.numberOfTrees || 'N/A'} trees
+                                </div>
+                                <div className="flex items-center">
+                                  <DollarSign className="h-4 w-4 mr-2" />
+                                  ₹{req.budgetPerTree || '—'} per tree
+                                </div>
+                                <div className="flex items-center">
+                                  <Calendar className="h-4 w-4 mr-2" />
+                                  Start: {req.startDate ? new Date(req.startDate).toLocaleDateString() : '—'}
+                                </div>
+                                <div className="flex items-center">
+                                  <User className="h-4 w-4 mr-2" />
+                                  {req.farmerName || 'Farmer'}
+                                </div>
+                                <div className="flex items-center">
+                                  <Phone className="h-4 w-4 mr-2" />
+                                  {req.farmerPhone || '—'}
+                                </div>
+                              </div>
+                            )}
+
+                            {current && (
+                              <div className={`mb-4 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                <div className="flex items-center space-x-2">
+                                  <DollarSign className="h-4 w-4" />
+                                  <span>
+                                    Agreement: ₹{current.proposedRate || 0} for {current.proposedTreeCount || 0} trees
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex items-center space-x-3">
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              task.status === 'in_progress'
+                                ? 'bg-blue-100 text-blue-800'
+                                : task.status === 'accepted' || task.status === 'agreed' || task.status === 'selected'
+                                ? 'bg-green-100 text-green-800'
+                                : task.status === 'negotiating'
+                                ? 'bg-orange-100 text-orange-800'
+                                : task.status === 'completed'
+                                ? 'bg-purple-100 text-purple-800'
+                                : task.status === 'rejected'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {task.status?.toUpperCase()}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center space-x-4">
+                            <button 
+                              onClick={() => markAttendance(task._id, task.applicationId)}
+                              className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors"
+                            >
+                              <UserCheck className="h-4 w-4" />
+                              <span className="text-sm">Mark Attendance</span>
+                            </button>
+                            <button className="flex items-center space-x-2 text-green-600 hover:text-green-800 transition-colors">
+                              <FileText className="h-4 w-4" />
+                              <span className="text-sm">Field Report</span>
+                            </button>
+                            {req && req.farmerPhone && (
+                              <button className="flex items-center space-x-2 text-purple-600 hover:text-purple-800 transition-colors">
+                                <MessageSquare className="h-4 w-4" />
+                                <span className="text-sm">Contact Farmer</span>
+                              </button>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {['assigned', 'accepted', 'agreed', 'selected'].includes(task.status) && (
+                              <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                                Start Task
+                              </button>
+                            )}
+                            {['in_progress', 'tapper_inspecting', 'tree_count_pending'].includes(task.status) && (
+                              <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                                Complete Task
+                              </button>
+                            )}
+                            {task.status === 'completed' && (
+                              <div className="bg-purple-500 text-white px-4 py-2 rounded-lg text-sm">
+                                Completed
+                              </div>
+                            )}
+                            <button className="text-gray-400 hover:text-gray-600 transition-colors">
+                              <MoreVertical className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })
+                )}
               </div>
 
-              {/* Quick Actions Panel */}
-              <motion.div
-                className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
-                  darkMode ? 'border-gray-700' : 'border-gray-100'
-                } mt-8`}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  Quick Actions
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <button className="flex items-center space-x-3 p-4 bg-green-500 hover:bg-green-600 text-white rounded-xl transition-colors">
-                    <AlertTriangle className="h-5 w-5" />
-                    <span>Report Issue</span>
-                  </button>
-                  <button className="flex items-center space-x-3 p-4 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-colors">
-                    <Send className="h-5 w-5" />
-                    <span>Request Resources</span>
-                  </button>
-                  <button className="flex items-center space-x-3 p-4 bg-purple-500 hover:bg-purple-600 text-white rounded-xl transition-colors">
-                    <MessageSquare className="h-5 w-5" />
-                    <span>Contact Admin</span>
-                  </button>
-                </div>
-              </motion.div>
             </motion.div>
           )}
 
-          {activeTab === 'notifications' && (
-            <motion.div
-              key="notifications"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              {/* Notifications Header */}
-              <div className="flex justify-between items-center mb-6">
-                <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  Notifications & Messages
-                </h2>
-                <button className="flex items-center space-x-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
-                  <CheckCircle className="h-5 w-5" />
-                  <span>Mark All Read</span>
-                </button>
-              </div>
-
-              {/* Notification Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl p-6 shadow-lg border ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Unread
-                      </p>
-                      <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mt-1`}>
-                        {notifications.filter(n => !n.read).length}
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-red-50">
-                      <Bell className="h-6 w-6 text-red-600" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl p-6 shadow-lg border ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Today
-                      </p>
-                      <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mt-1`}>
-                        {notifications.length}
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-blue-50">
-                      <Calendar className="h-6 w-6 text-blue-600" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl p-6 shadow-lg border ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Alerts
-                      </p>
-                      <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mt-1`}>
-                        {notifications.filter(n => n.type === 'alert').length}
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-yellow-50">
-                      <AlertTriangle className="h-6 w-6 text-yellow-600" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Notifications List */}
-              <div className="space-y-4">
-                {notifications.map((notification) => (
-                  <motion.div
-                    key={notification.id}
-                    className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
-                      darkMode ? 'border-gray-700' : 'border-gray-100'
-                    } ${!notification.read ? 'border-l-4 border-l-green-500' : ''}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-4 flex-1">
-                        <div className={`p-2 rounded-lg ${
-                          notification.type === 'assignment' ? 'bg-green-100' :
-                          notification.type === 'alert' ? 'bg-red-100' : 'bg-blue-100'
-                        }`}>
-                          {notification.type === 'assignment' ? (
-                            <Target className={`h-5 w-5 ${
-                              notification.type === 'assignment' ? 'text-green-600' :
-                              notification.type === 'alert' ? 'text-red-600' : 'text-blue-600'
-                            }`} />
-                          ) : notification.type === 'alert' ? (
-                            <AlertTriangle className="h-5 w-5 text-red-600" />
-                          ) : (
-                            <Bell className="h-5 w-5 text-blue-600" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                            {notification.title}
-                          </h3>
-                          <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'} mt-1`}>
-                            {notification.message}
-                          </p>
-                          <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'} mt-2`}>
-                            {notification.time}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {!notification.read && (
-                          <div className="w-2 h-2 bg-green-500 rounded-full" />
-                        )}
-                        <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
 
           {activeTab === 'profile' && (
             <motion.div
@@ -2185,6 +2028,132 @@ const StaffDashboard = ({ darkMode }) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Collection Details Modal */}
+      <AnimatePresence>
+        {showCollectionDetailsModal && selectedCollection && (
+          <motion.div
+            key="collection-details-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowCollectionDetailsModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className={`sticky top-0 ${darkMode ? 'bg-gray-800' : 'bg-white'} border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} px-6 py-4 rounded-t-2xl`}>
+                <div className="flex items-center justify-between">
+                  <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Collection Details</h2>
+                  <button
+                    onClick={() => setShowCollectionDetailsModal(false)}
+                    className={`${darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-400 hover:text-gray-600'} text-2xl`}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 space-y-6">
+                {/* Collection ID */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                      Collection #{selectedCollection.id}
+                    </h3>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        selectedCollection.status === 'completed'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-orange-100 text-orange-800'
+                      }`}>
+                        {selectedCollection.status?.toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Collection Information */}
+                <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg p-4`}>
+                  <h4 className={`font-semibold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Collection Information</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Farm Location</p>
+                      <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{selectedCollection.farmLocation}</p>
+                    </div>
+                    <div>
+                      <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Farmer Name</p>
+                      <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{selectedCollection.farmer}</p>
+                    </div>
+                    <div>
+                      <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Collection Date</p>
+                      <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{selectedCollection.collectionDate}</p>
+                    </div>
+                    <div>
+                      <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Quality Grade</p>
+                      <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{selectedCollection.quality}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Collection Quantities */}
+                <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg p-4`}>
+                  <h4 className={`font-semibold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Collection Quantities</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Latex Quantity</p>
+                      <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{selectedCollection.latexQuantity} kg</p>
+                    </div>
+                    <div>
+                      <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Rubber Sheet Quantity</p>
+                      <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{selectedCollection.rubberSheetQuantity} kg</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex space-x-4">
+                  <button
+                    onClick={() => setShowCollectionDetailsModal(false)}
+                    className={`flex-1 px-4 py-2 border rounded-lg transition-colors ${
+                      darkMode
+                        ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Add edit functionality here
+                      console.log('Edit collection:', selectedCollection.id);
+                    }}
+                    className="flex-1 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+                  >
+                    Edit Collection
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Attendance Marking Form Modal */}
+      <AttendanceMarkingForm
+        isOpen={showAttendanceForm}
+        onClose={() => setShowAttendanceForm(false)}
+        tasks={assignments}
+        onSuccess={handleAttendanceSuccess}
+        darkMode={darkMode}
+      />
     </motion.div>
   );
 };

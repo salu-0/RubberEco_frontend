@@ -18,15 +18,16 @@ import {
   Search,
   Navigation,
   Star,
+  X,
   Phone,
   Route,
   Building2,
-  X,
   Bookmark,
   Share2,
   Award
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import GoogleMapsSetup from '../components/GoogleMapsSetup';
 import { useNavigationGuard } from '../hooks/useNavigationGuard';
 
 // Market images - using public folder for better compatibility
@@ -43,12 +44,14 @@ const marketImages = {
 // Market Finder Component
 const MarketFinder = ({ onMarketClick }) => {
   const [location, setLocation] = useState('');
-  const [markets, setMarkets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedMarket, setSelectedMarket] = useState(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [sortBy, setSortBy] = useState('distance');
   const [filterType, setFilterType] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showNearbyOnly, setShowNearbyOnly] = useState(false);
+  const [maxDistance, setMaxDistance] = useState(50); // km
 
   // Sample market data - includes real Kottayam and Manimala businesses
   const sampleMarkets = [
@@ -193,7 +196,19 @@ const MarketFinder = ({ onMarketClick }) => {
     }
   ];
 
-  // Load Google Maps script
+  // Initialize markets state with sample data
+  const [markets, setMarkets] = useState(sampleMarkets);
+
+  // Initialize component with default data
+  useEffect(() => {
+    console.log('🚀 MarketFinder component initialized with', sampleMarkets.length, 'markets');
+    // Markets are already initialized in useState, but ensure they're set
+    if (markets.length === 0) {
+      setMarkets(sampleMarkets);
+    }
+  }, []);
+
+  // Load Google Maps script with better error handling
   useEffect(() => {
     const loadGoogleMaps = () => {
       if (window.google) {
@@ -204,21 +219,35 @@ const MarketFinder = ({ onMarketClick }) => {
       const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
       if (!apiKey || apiKey === 'YOUR_GOOGLE_MAPS_API_KEY') {
         console.warn('Google Maps API key not configured. Using fallback map.');
+        setMapLoaded(false);
         return;
       }
 
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,marker`;
       script.async = true;
       script.defer = true;
       script.onload = () => {
-        console.log('✅ Google Maps loaded successfully');
-        setMapLoaded(true);
+        // Check if the API loaded successfully
+        if (window.google && window.google.maps) {
+          console.log('✅ Google Maps loaded successfully');
+          setMapLoaded(true);
+        } else {
+          console.error('❌ Google Maps API failed to initialize');
+          setMapLoaded(false);
+        }
       };
       script.onerror = () => {
-        console.error('❌ Failed to load Google Maps');
+        console.error('❌ Failed to load Google Maps script');
         setMapLoaded(false);
       };
+
+      // Add error listener for API key issues
+      window.gm_authFailure = () => {
+        console.error('❌ Google Maps API authentication failed - Invalid API key');
+        setMapLoaded(false);
+      };
+
       document.head.appendChild(script);
     };
 
@@ -226,16 +255,22 @@ const MarketFinder = ({ onMarketClick }) => {
   }, []);
 
   const handleLocationSearch = async () => {
-    if (!location.trim()) return;
+    if (!location.trim()) {
+      // If no location entered, show all markets
+      setMarkets(sampleMarkets);
+      return;
+    }
 
     setLoading(true);
+    console.log('🔍 Searching for location:', location);
 
     // Simulate API call delay
     setTimeout(() => {
-      // Filter markets based on location (in real app, this would be a proper search)
-      let filteredMarkets = sampleMarkets;
+      const searchTerm = location.toLowerCase().trim();
+      let filteredMarkets = [];
 
-      if (location.toLowerCase().includes('manimala')) {
+      // Enhanced location search with better matching
+      if (searchTerm.includes('manimala') || searchTerm.includes('manimalayar')) {
         // Show Manimala-specific markets first
         filteredMarkets = sampleMarkets.filter(market =>
           market.address.toLowerCase().includes('changanacherry') ||
@@ -243,67 +278,133 @@ const MarketFinder = ({ onMarketClick }) => {
           market.name.toLowerCase().includes('manimalayar') ||
           market.address.toLowerCase().includes('oravackal')
         );
-      } else if (location.toLowerCase().includes('kottayam')) {
+        console.log('📍 Found Manimala markets:', filteredMarkets.length);
+      } else if (searchTerm.includes('kottayam')) {
         // Show Kottayam-specific markets first
         filteredMarkets = sampleMarkets.filter(market =>
           market.address.toLowerCase().includes('kottayam')
         );
-      } else if (location.toLowerCase().includes('changanacherry')) {
+        console.log('📍 Found Kottayam markets:', filteredMarkets.length);
+      } else if (searchTerm.includes('changanacherry')) {
         // Show Changanacherry-specific markets
         filteredMarkets = sampleMarkets.filter(market =>
           market.address.toLowerCase().includes('changanacherry') ||
           market.address.toLowerCase().includes('manimalayar')
         );
-      } else if (location.toLowerCase().includes('thrissur')) {
+        console.log('📍 Found Changanacherry markets:', filteredMarkets.length);
+      } else if (searchTerm.includes('thrissur')) {
         filteredMarkets = sampleMarkets.filter(market =>
           market.address.toLowerCase().includes('thrissur')
         );
-      } else if (location.toLowerCase().includes('kerala')) {
+        console.log('📍 Found Thrissur markets:', filteredMarkets.length);
+      } else if (searchTerm.includes('kerala')) {
         // Show all Kerala markets
         filteredMarkets = sampleMarkets;
+        console.log('📍 Showing all Kerala markets:', filteredMarkets.length);
       } else {
-        // General search - look in address and name
+        // Enhanced general search - look in address, name, and type
         filteredMarkets = sampleMarkets.filter(market =>
-          market.address.toLowerCase().includes(location.toLowerCase()) ||
-          market.name.toLowerCase().includes(location.toLowerCase())
+          market.address.toLowerCase().includes(searchTerm) ||
+          market.name.toLowerCase().includes(searchTerm) ||
+          market.type.toLowerCase().includes(searchTerm)
         );
+        console.log('📍 General search results:', filteredMarkets.length);
       }
 
-      // If no specific matches, show all markets
-      setMarkets(filteredMarkets.length > 0 ? filteredMarkets : sampleMarkets);
+      // Always show results - if no matches found, show message but keep some markets
+      if (filteredMarkets.length === 0) {
+        console.log('⚠️ No markets found for:', location, '- showing all markets');
+        filteredMarkets = sampleMarkets;
+      }
+
+      setMarkets(filteredMarkets);
       setLoading(false);
     }, 1000);
   };
 
   const handleGetCurrentLocation = () => {
-    if (navigator.geolocation) {
-      setLoading(true);
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          // In real app, reverse geocode to get address
-          setLocation('Current Location (Kerala, India)');
-          setMarkets(sampleMarkets);
-          setLoading(false);
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          setLocation('Kerala, India');
-          setMarkets(sampleMarkets);
-          setLoading(false);
-        }
-      );
+    if (!navigator.geolocation) {
+      console.log('❌ Geolocation not supported');
+      setLocation('Kerala, India (Geolocation not supported)');
+      setMarkets(sampleMarkets);
+      return;
     }
+
+    setLoading(true);
+    console.log('📍 Getting current location...');
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        console.log('✅ Location obtained:', { latitude, longitude });
+
+        // In real app, reverse geocode to get address
+        // For now, determine closest area based on coordinates
+        let locationName = 'Current Location';
+
+        // Simple distance check to determine area (Kottayam region)
+        if (Math.abs(latitude - 9.5915) < 0.1 && Math.abs(longitude - 76.5222) < 0.1) {
+          locationName = 'Current Location (Kottayam area)';
+        } else {
+          locationName = 'Current Location (Kerala, India)';
+        }
+
+        setLocation(locationName);
+        setMarkets(sampleMarkets);
+        setLoading(false);
+      },
+      (error) => {
+        let errorMessage = 'Location access unavailable';
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Location access denied by user';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Location information unavailable';
+            break;
+          case error.TIMEOUT:
+            errorMessage = 'Location request timed out';
+            break;
+        }
+        console.log(`📍 ${errorMessage}. Using default location.`);
+        setLocation('Kerala, India (Default location)');
+        setMarkets(sampleMarkets);
+        setLoading(false);
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 300000 // 5 minutes cache
+      }
+    );
   };
 
-  // Filter and sort markets
+  // Enhanced filter and sort markets
   const getFilteredAndSortedMarkets = () => {
     let filteredMarkets = markets;
 
-    // Apply filter
+    // Filter by search query
+    if (searchQuery.trim()) {
+      filteredMarkets = filteredMarkets.filter(market =>
+        market.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        market.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        market.type.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Apply type filter
     if (filterType !== 'all') {
-      filteredMarkets = markets.filter(market =>
+      filteredMarkets = filteredMarkets.filter(market =>
         market.type.toLowerCase().includes(filterType.toLowerCase())
       );
+    }
+
+    // Filter by distance (nearby only)
+    if (showNearbyOnly) {
+      filteredMarkets = filteredMarkets.filter(market => {
+        const distance = parseFloat(market.distance.replace(/[^\d.]/g, ''));
+        return distance <= maxDistance;
+      });
     }
 
     // Apply sort
@@ -314,6 +415,8 @@ const MarketFinder = ({ onMarketClick }) => {
                  parseFloat(b.price.replace('₹', '').replace('/kg', ''));
         case 'rating':
           return b.rating - a.rating;
+        case 'name':
+          return a.name.localeCompare(b.name);
         case 'distance':
         default:
           return parseFloat(a.distance) - parseFloat(b.distance);
@@ -357,7 +460,7 @@ const MarketFinder = ({ onMarketClick }) => {
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Enter your location (e.g., Kottayam, Kerala)"
+                  placeholder="Enter location (e.g., Kottayam, Thrissur, Changanacherry, Manimala)"
                   className="w-full pl-10 pr-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-lg"
                   onKeyDown={(e) => e.key === 'Enter' && handleLocationSearch()}
                 />
@@ -402,28 +505,82 @@ const MarketFinder = ({ onMarketClick }) => {
                 Markets Near You ({filteredAndSortedMarkets.length} found)
               </h3>
 
-              {/* Filter and Sort Controls */}
-              <div className="flex gap-3">
-                <select
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                >
-                  <option value="all">All Types</option>
-                  <option value="government">Government</option>
-                  <option value="private">Private</option>
-                  <option value="cooperative">Cooperative</option>
-                </select>
+              {/* Enhanced Search and Filter Controls */}
+              <div className="space-y-4">
+                {/* Search Bar */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search markets by name, location, or type..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                  <Search className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-3.5 h-5 w-5 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
 
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                >
-                  <option value="distance">Sort by Distance</option>
-                  <option value="price">Sort by Price</option>
-                  <option value="rating">Sort by Rating</option>
-                </select>
+                {/* Filter Controls */}
+                <div className="flex flex-wrap gap-3">
+                  <select
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="all">All Types</option>
+                    <option value="government">Government</option>
+                    <option value="private">Private</option>
+                    <option value="cooperative">Cooperative</option>
+                  </select>
+
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="distance">Sort by Distance</option>
+                    <option value="price">Sort by Price</option>
+                    <option value="rating">Sort by Rating</option>
+                    <option value="name">Sort by Name</option>
+                  </select>
+
+                  {/* Nearby Filter Toggle */}
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="nearbyOnly"
+                      checked={showNearbyOnly}
+                      onChange={(e) => setShowNearbyOnly(e.target.checked)}
+                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <label htmlFor="nearbyOnly" className="text-sm text-gray-700">
+                      Nearby only
+                    </label>
+                  </div>
+
+                  {/* Distance Slider */}
+                  {showNearbyOnly && (
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-600">Within:</span>
+                      <input
+                        type="range"
+                        min="1"
+                        max="100"
+                        value={maxDistance}
+                        onChange={(e) => setMaxDistance(parseInt(e.target.value))}
+                        className="w-20"
+                      />
+                      <span className="text-sm text-gray-600">{maxDistance}km</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </motion.div>
 
@@ -562,18 +719,26 @@ const MarketFinder = ({ onMarketClick }) => {
                   </div>
 
                   <div className="h-80 xl:h-96 bg-gray-100 relative">
-                  {mapLoaded && import.meta.env.VITE_GOOGLE_MAPS_API_KEY && import.meta.env.VITE_GOOGLE_MAPS_API_KEY !== 'YOUR_GOOGLE_MAPS_API_KEY' ? (
-                    <GoogleMapComponent markets={filteredAndSortedMarkets} selectedMarket={selectedMarket} />
-                  ) : !mapLoaded && import.meta.env.VITE_GOOGLE_MAPS_API_KEY && import.meta.env.VITE_GOOGLE_MAPS_API_KEY !== 'YOUR_GOOGLE_MAPS_API_KEY' ? (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto mb-4"></div>
-                        <p className="text-gray-600">Loading map...</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <FallbackMapComponent markets={filteredAndSortedMarkets} selectedMarket={selectedMarket} />
-                  )}
+                  {(() => {
+                    const hasApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY &&
+                                     import.meta.env.VITE_GOOGLE_MAPS_API_KEY !== 'YOUR_GOOGLE_MAPS_API_KEY';
+
+                    if (mapLoaded && hasApiKey && window.google && window.google.maps) {
+                      return <GoogleMapComponent markets={filteredAndSortedMarkets} selectedMarket={selectedMarket} />;
+                    } else if (hasApiKey && !mapLoaded) {
+                      return (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto mb-4"></div>
+                            <p className="text-gray-600">Loading interactive map...</p>
+                            <p className="text-xs text-gray-500 mt-2">This may take a few moments</p>
+                          </div>
+                        </div>
+                      );
+                    } else {
+                      return <FallbackMapComponent markets={filteredAndSortedMarkets} selectedMarket={selectedMarket} />;
+                    }
+                  })()}
                 </div>
 
                 {selectedMarket && (
@@ -611,57 +776,215 @@ const MarketFinder = ({ onMarketClick }) => {
   );
 };
 
-// Fallback Map Component (when Google Maps is not available)
+// Enhanced Fallback Map Component (when Google Maps is not available)
 const FallbackMapComponent = ({ markets, selectedMarket }) => {
+  const [selectedFallbackMarket, setSelectedFallbackMarket] = useState(selectedMarket);
+  const [showSetupGuide, setShowSetupGuide] = useState(false);
+
   return (
-    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100">
-      <div className="text-center p-8">
-        <MapPin className="h-16 w-16 text-primary-500 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">Map View</h3>
-        <p className="text-gray-600 mb-6">
-          Interactive map requires Google Maps API key.<br />
-          Showing {markets.length} markets in list view.
-        </p>
-        <div className="grid grid-cols-1 gap-3 max-w-sm mx-auto">
-          {markets.slice(0, 3).map((market) => (
-            <div
-              key={market.id}
-              className={`p-3 rounded-lg border-2 transition-colors ${
-                selectedMarket?.id === market.id
-                  ? 'border-primary-500 bg-primary-50'
-                  : 'border-gray-200 bg-white hover:border-primary-300'
-              }`}
-            >
-              <div className="flex justify-between items-center">
-                <div className="text-left">
-                  <p className="font-medium text-gray-900 text-sm">{market.name}</p>
-                  <p className="text-xs text-gray-500">{market.distance}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-primary-600 text-sm">{market.price}</p>
-                  <div className="flex items-center">
-                    <Star className="h-3 w-3 text-yellow-400 fill-current" />
-                    <span className="text-xs text-gray-500 ml-1">{market.rating}</span>
-                  </div>
-                </div>
+    <div className="w-full h-full flex flex-col bg-gradient-to-br from-primary-50 to-primary-100">
+      {/* Header */}
+      <div className="p-4 bg-white border-b border-gray-200">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <MapPin className="h-5 w-5 text-primary-500" />
+            <h3 className="text-lg font-semibold text-gray-900">Market Locations</h3>
+          </div>
+          <span className="text-sm text-gray-500">{markets.length} markets found</span>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 p-4 overflow-y-auto">
+        <div className="max-w-2xl mx-auto">
+          {/* Info Banner */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start space-x-3">
+              <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-medium text-blue-900">Interactive Map Unavailable</h4>
+                <p className="text-sm text-blue-700 mt-1">
+                  Google Maps requires a valid API key. Showing market list with location details.
+                </p>
               </div>
             </div>
-          ))}
+          </div>
+
+          {/* Market List */}
+          <div className="space-y-4">
+            {markets.map((market) => (
+              <div
+                key={market.id}
+                className={`bg-white rounded-lg border-2 transition-all duration-200 cursor-pointer ${
+                  selectedFallbackMarket?.id === market.id
+                    ? 'border-primary-500 shadow-lg'
+                    : 'border-gray-200 hover:border-primary-300 hover:shadow-md'
+                }`}
+                onClick={() => setSelectedFallbackMarket(market)}
+              >
+                <div className="p-4">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 mb-1">{market.name}</h4>
+                      <p className="text-sm text-gray-600 mb-2">{market.address}</p>
+                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <span className="flex items-center space-x-1">
+                          <MapPin className="h-4 w-4" />
+                          <span>{market.distance}</span>
+                        </span>
+                        <span className="flex items-center space-x-1">
+                          <Clock className="h-4 w-4" />
+                          <span>{market.status}</span>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xl font-bold text-primary-600 mb-1">{market.price}</p>
+                      <div className="flex items-center justify-end">
+                        <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                        <span className="text-sm text-gray-600 ml-1">{market.rating}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Market Type Badge */}
+                  <div className="flex items-center justify-between">
+                    <span className="inline-block px-2 py-1 bg-primary-100 text-primary-700 text-xs font-medium rounded-full">
+                      {market.type}
+                    </span>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(`https://maps.google.com/maps?daddr=${market.coordinates.lat},${market.coordinates.lng}`, '_blank');
+                        }}
+                        className="px-3 py-1 bg-green-500 text-white text-xs rounded-md hover:bg-green-600 transition-colors"
+                      >
+                        Directions
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(`tel:${market.phone}`, '_self');
+                        }}
+                        className="px-3 py-1 bg-blue-500 text-white text-xs rounded-md hover:bg-blue-600 transition-colors"
+                      >
+                        Call
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Expanded Details */}
+                  {selectedFallbackMarket?.id === market.id && (
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-gray-600"><strong>Hours:</strong> {market.hours}</p>
+                          <p className="text-gray-600"><strong>Phone:</strong> {market.phone}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600"><strong>Features:</strong></p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {market.features?.map((feature, index) => (
+                              <span key={index} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                                {feature}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Setup Instructions */}
+          <div className="mt-8 p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-medium text-gray-900">Enable Interactive Map</h4>
+              <button
+                onClick={() => setShowSetupGuide(true)}
+                className="px-3 py-1 bg-blue-500 text-white text-xs rounded-md hover:bg-blue-600 transition-colors"
+              >
+                Setup Guide
+              </button>
+            </div>
+            <p className="text-sm text-gray-600">
+              Get real-time directions, user location detection, and enhanced market discovery with Google Maps integration.
+            </p>
+          </div>
         </div>
-        <p className="text-xs text-gray-500 mt-4">
-          Configure Google Maps API for full map functionality
-        </p>
       </div>
+
+      {/* Setup Guide Modal */}
+      {showSetupGuide && (
+        <GoogleMapsSetup onClose={() => setShowSetupGuide(false)} />
+      )}
     </div>
   );
 };
 
-// Google Map Component
+// Enhanced Google Map Component with Advanced Features
 const GoogleMapComponent = ({ markets, selectedMarket }) => {
-  useEffect(() => {
-    if (!window.google || !markets.length) return;
+  const [userLocation, setUserLocation] = useState(null);
+  const [directionsService, setDirectionsService] = useState(null);
+  const [directionsRenderer, setDirectionsRenderer] = useState(null);
+  const [showDirections, setShowDirections] = useState(false);
+  const [mapInstance, setMapInstance] = useState(null);
+  const [markers, setMarkers] = useState([]);
 
-    // Enhanced map styling
+  // Get user's current location with better error handling
+  useEffect(() => {
+    const getLocation = () => {
+      if (!navigator.geolocation) {
+        console.log('Geolocation is not supported by this browser. Using default location.');
+        setUserLocation({ lat: 9.5915, lng: 76.5222 });
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const userPos = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          console.log('✅ User location detected:', userPos);
+          setUserLocation(userPos);
+        },
+        (error) => {
+          let errorMessage = 'Location access unavailable';
+          switch(error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = 'Location access denied by user';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = 'Location information unavailable';
+              break;
+            case error.TIMEOUT:
+              errorMessage = 'Location request timed out';
+              break;
+          }
+          console.log(`📍 ${errorMessage}. Using Kottayam as default location.`);
+          // Fallback to Kottayam center
+          setUserLocation({ lat: 9.5915, lng: 76.5222 });
+        },
+        {
+          enableHighAccuracy: false, // Less accurate but faster
+          timeout: 5000, // Shorter timeout
+          maximumAge: 600000 // 10 minutes cache
+        }
+      );
+    };
+
+    getLocation();
+  }, []);
+
+  useEffect(() => {
+    if (!window.google || !markets.length || !userLocation) return;
+
+    // Enhanced map styling with better visibility
     const mapStyles = [
       {
         featureType: 'poi',
@@ -682,40 +1005,119 @@ const GoogleMapComponent = ({ markets, selectedMarket }) => {
         featureType: 'landscape',
         elementType: 'geometry',
         stylers: [{ color: '#f0f0f0' }]
+      },
+      {
+        featureType: 'transit',
+        elementType: 'labels',
+        stylers: [{ visibility: 'off' }]
       }
     ];
 
     const map = new window.google.maps.Map(document.getElementById('market-map'), {
       zoom: 10,
-      center: markets[0].coordinates,
+      center: userLocation,
       styles: mapStyles,
-      mapTypeControl: false,
-      streetViewControl: false,
+      mapTypeControl: true,
+      streetViewControl: true,
       fullscreenControl: true,
       zoomControl: true,
-      gestureHandling: 'cooperative'
+      gestureHandling: 'cooperative',
+      mapTypeControlOptions: {
+        style: window.google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+        position: window.google.maps.ControlPosition.TOP_CENTER,
+      }
     });
+
+    setMapInstance(map);
+
+    // Initialize directions service and renderer
+    const dirService = new window.google.maps.DirectionsService();
+    const dirRenderer = new window.google.maps.DirectionsRenderer({
+      suppressMarkers: true,
+      polylineOptions: {
+        strokeColor: '#10B981',
+        strokeWeight: 4,
+        strokeOpacity: 0.8
+      }
+    });
+    dirRenderer.setMap(map);
+    setDirectionsService(dirService);
+    setDirectionsRenderer(dirRenderer);
 
     // Create bounds to fit all markers
     const bounds = new window.google.maps.LatLngBounds();
+    const newMarkers = [];
+
+    // Add user location marker
+    if (userLocation) {
+      bounds.extend(userLocation);
+      const userMarker = new window.google.maps.Marker({
+        position: userLocation,
+        map: map,
+        title: 'Your Location',
+        icon: {
+          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="16" cy="16" r="14" fill="#3B82F6" stroke="white" stroke-width="4"/>
+              <circle cx="16" cy="16" r="6" fill="white"/>
+            </svg>
+          `),
+          scaledSize: new window.google.maps.Size(32, 32),
+          anchor: new window.google.maps.Point(16, 16)
+        }
+      });
+      newMarkers.push(userMarker);
+    }
+
+    // Helper function to calculate distance between two points
+    const calculateDistance = (lat1, lng1, lat2, lng2) => {
+      const R = 6371; // Earth's radius in km
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLng = (lng2 - lng1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLng/2) * Math.sin(dLng/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    };
+
+    // Create custom marker based on market type
+    const getMarkerColor = (type) => {
+      switch (type) {
+        case 'Government Authorized':
+        case 'Government Office': return '#10B981'; // Green
+        case 'Cooperative Society': return '#3B82F6'; // Blue
+        case 'Rubber Products Supplier': return '#8B5CF6'; // Purple
+        case 'Agricultural Service': return '#059669'; // Emerald
+        case 'Wholesaler': return '#F59E0B'; // Orange
+        case 'Private Dealer': return '#EF4444'; // Red
+        default: return '#6B7280'; // Gray
+      }
+    };
+
+    // Function to show directions
+    const showDirectionsToMarket = (market) => {
+      if (!directionsService || !userLocation) return;
+
+      directionsService.route({
+        origin: userLocation,
+        destination: market.coordinates,
+        travelMode: window.google.maps.TravelMode.DRIVING,
+      }, (result, status) => {
+        if (status === 'OK') {
+          directionsRenderer.setDirections(result);
+          setShowDirections(true);
+        }
+      });
+    };
 
     markets.forEach((market) => {
       // Add to bounds
       bounds.extend(market.coordinates);
 
-      // Create custom marker based on market type
-      const getMarkerColor = (type) => {
-        switch (type) {
-          case 'Government Authorized':
-          case 'Government Office': return '#10B981'; // Green
-          case 'Cooperative Society': return '#3B82F6'; // Blue
-          case 'Rubber Products Supplier': return '#8B5CF6'; // Purple
-          case 'Agricultural Service': return '#059669'; // Emerald
-          case 'Wholesaler': return '#F59E0B'; // Orange
-          case 'Private Dealer': return '#EF4444'; // Red
-          default: return '#6B7280'; // Gray
-        }
-      };
+      // Calculate real-time distance from user location
+      const distanceFromUser = userLocation ?
+        calculateDistance(userLocation.lat, userLocation.lng, market.coordinates.lat, market.coordinates.lng) : 0;
 
       const marker = new window.google.maps.Marker({
         position: market.coordinates,
@@ -735,9 +1137,11 @@ const GoogleMapComponent = ({ markets, selectedMarket }) => {
         animation: window.google.maps.Animation.DROP
       });
 
+      newMarkers.push(marker);
+
       const infoWindow = new window.google.maps.InfoWindow({
         content: `
-          <div style="padding: 12px; max-width: 280px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+          <div style="padding: 12px; max-width: 320px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
             <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px; font-weight: bold; line-height: 1.3;">${market.name}</h3>
             <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 13px; line-height: 1.4;">${market.address}</p>
 
@@ -749,59 +1153,142 @@ const GoogleMapComponent = ({ markets, selectedMarket }) => {
               </div>
             </div>
 
-            <div style="margin-bottom: 8px;">
+            <div style="margin-bottom: 10px;">
               <span style="display: inline-block; padding: 2px 8px; background: ${getMarkerColor(market.type)}20; color: ${getMarkerColor(market.type)}; border-radius: 12px; font-size: 11px; font-weight: 500;">${market.type}</span>
-              <span style="display: inline-block; padding: 2px 8px; background: #e5e7eb; color: #374151; border-radius: 12px; font-size: 11px; font-weight: 500; margin-left: 4px;">${market.distance}</span>
+              <span style="display: inline-block; padding: 2px 8px; background: #e5e7eb; color: #374151; border-radius: 12px; font-size: 11px; font-weight: 500; margin-left: 4px;">${distanceFromUser.toFixed(1)} km away</span>
             </div>
 
-            <div style="display: flex; gap: 6px; margin-top: 10px;">
+            <div style="margin-bottom: 10px; padding: 6px; background: #f0f9ff; border-radius: 6px; border-left: 3px solid #3b82f6;">
+              <p style="margin: 0; font-size: 12px; color: #1e40af;"><strong>Hours:</strong> ${market.hours}</p>
+              <p style="margin: 2px 0 0 0; font-size: 12px; color: #1e40af;"><strong>Phone:</strong> ${market.phone}</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-top: 10px;">
+              <button onclick="showDirectionsToMarket_${market.id}()"
+                      style="padding: 6px 8px; background: ${getMarkerColor(market.type)}; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer;">
+                Route
+              </button>
               <button onclick="window.open('https://maps.google.com/maps?daddr=${market.coordinates.lat},${market.coordinates.lng}', '_blank')"
-                      style="flex: 1; padding: 6px 12px; background: ${getMarkerColor(market.type)}; color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer;">
-                Directions
+                      style="padding: 6px 8px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer;">
+                Navigate
               </button>
               <button onclick="window.open('tel:${market.phone}', '_self')"
-                      style="flex: 1; padding: 6px 12px; background: #6b7280; color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer;">
-                Call Now
+                      style="padding: 6px 8px; background: #6b7280; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer;">
+                Call
               </button>
             </div>
           </div>
         `
       });
 
+      // Add global function for directions
+      window[`showDirectionsToMarket_${market.id}`] = () => showDirectionsToMarket(market);
+
       marker.addListener('click', () => {
+        // Close any open info windows
+        markers.forEach(m => {
+          if (m.infoWindow) m.infoWindow.close();
+        });
+
         infoWindow.open(map, marker);
         map.setCenter(market.coordinates);
-        map.setZoom(12);
+        map.setZoom(14);
+
+        // Clear any existing directions
+        if (directionsRenderer) {
+          directionsRenderer.setDirections({routes: []});
+        }
       });
 
-      // Hover effects
+      // Enhanced hover effects
       marker.addListener('mouseover', () => {
         marker.setAnimation(window.google.maps.Animation.BOUNCE);
         setTimeout(() => marker.setAnimation(null), 750);
       });
 
+      // Store info window reference
+      marker.infoWindow = infoWindow;
+
       if (selectedMarket && selectedMarket.id === market.id) {
         infoWindow.open(map, marker);
         map.setCenter(market.coordinates);
-        map.setZoom(12);
+        map.setZoom(14);
       }
     });
 
-    // Fit map to show all markers
-    if (markets.length > 1) {
+    setMarkers(newMarkers);
+
+    // Fit map to show all markers including user location
+    if (markets.length > 0) {
       map.fitBounds(bounds);
       // Set maximum zoom level
       const listener = window.google.maps.event.addListener(map, 'idle', () => {
         if (map.getZoom() > 15) map.setZoom(15);
         window.google.maps.event.removeListener(listener);
       });
-    } else if (markets.length === 1) {
-      map.setCenter(markets[0].coordinates);
-      map.setZoom(12);
     }
-  }, [markets, selectedMarket]);
 
-  return <div id="market-map" className="w-full h-full" />;
+    // Add map click listener to clear directions
+    map.addListener('click', () => {
+      if (directionsRenderer && showDirections) {
+        directionsRenderer.setDirections({routes: []});
+        setShowDirections(false);
+      }
+    });
+
+  }, [markets, selectedMarket, userLocation]);
+
+  return (
+    <div className="relative w-full h-full">
+      <div id="market-map" className="w-full h-full" />
+
+      {/* Map Controls */}
+      <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-2 space-y-2">
+        <button
+          onClick={() => {
+            if (mapInstance && userLocation) {
+              mapInstance.setCenter(userLocation);
+              mapInstance.setZoom(12);
+            }
+          }}
+          className="flex items-center space-x-2 px-3 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+          title="Center on my location"
+        >
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+          </svg>
+          <span>My Location</span>
+        </button>
+
+        {showDirections && (
+          <button
+            onClick={() => {
+              if (directionsRenderer) {
+                directionsRenderer.setDirections({routes: []});
+                setShowDirections(false);
+              }
+            }}
+            className="flex items-center space-x-2 px-3 py-2 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+            <span>Clear Route</span>
+          </button>
+        )}
+      </div>
+
+      {/* Location Status */}
+      <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-3">
+        <div className="flex items-center space-x-2 text-sm">
+          <div className={`w-2 h-2 rounded-full ${userLocation ? 'bg-green-500' : 'bg-red-500'}`}></div>
+          <span className="text-gray-700">
+            {userLocation ? 'Location detected' : 'Location unavailable'}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const Markets = () => {
@@ -810,6 +1297,7 @@ const Markets = () => {
   const [showMarketModal, setShowMarketModal] = useState(false);
   const [modalMarket, setModalMarket] = useState(null);
   const [chartLoading, setChartLoading] = useState(false);
+  const [showSetupGuide, setShowSetupGuide] = useState(false);
 
   // Initialize navigation guard
   const { getUserData } = useNavigationGuard({
@@ -1345,7 +1833,12 @@ const Markets = () => {
 
               {/* Action Buttons */}
               <div className="grid grid-cols-5 gap-4 mb-6">
-                <button className="flex flex-col items-center p-3 rounded-lg bg-primary-50 hover:bg-primary-100 transition-colors">
+                <button
+                  onClick={() => {
+                    window.open(`https://maps.google.com/maps?daddr=${modalMarket.coordinates.lat},${modalMarket.coordinates.lng}`, '_blank');
+                  }}
+                  className="flex flex-col items-center p-3 rounded-lg bg-primary-50 hover:bg-primary-100 transition-colors"
+                >
                   <Navigation className="w-6 h-6 text-primary-600 mb-1" />
                   <span className="text-xs font-medium text-primary-600">Directions</span>
                 </button>
@@ -1357,7 +1850,14 @@ const Markets = () => {
                   <MapPin className="w-6 h-6 text-gray-600 mb-1" />
                   <span className="text-xs font-medium text-gray-600">Nearby</span>
                 </button>
-                <button className="flex flex-col items-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                <button
+                  onClick={() => {
+                    if (modalMarket.phone && modalMarket.phone !== 'No phone listed') {
+                      window.open(`tel:${modalMarket.phone}`, '_self');
+                    }
+                  }}
+                  className="flex flex-col items-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                >
                   <Phone className="w-6 h-6 text-gray-600 mb-1" />
                   <span className="text-xs font-medium text-gray-600">Call</span>
                 </button>
@@ -1438,12 +1938,22 @@ const Markets = () => {
               {/* Call to Action */}
               <div className="mt-8 pt-6 border-t border-gray-200">
                 <div className="flex space-x-4">
-                  <button className="flex-1 bg-primary-600 hover:bg-primary-700 text-white py-3 px-6 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2">
+                  <button
+                    onClick={() => {
+                      window.open(`https://maps.google.com/maps?daddr=${modalMarket.coordinates.lat},${modalMarket.coordinates.lng}`, '_blank');
+                    }}
+                    className="flex-1 bg-primary-600 hover:bg-primary-700 text-white py-3 px-6 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+                  >
                     <Navigation className="w-5 h-5" />
                     <span>Get Directions</span>
                   </button>
                   {modalMarket.phone && modalMarket.phone !== 'No phone listed' && (
-                    <button className="flex-1 border border-primary-600 text-primary-600 hover:bg-primary-50 py-3 px-6 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2">
+                    <button
+                      onClick={() => {
+                        window.open(`tel:${modalMarket.phone}`, '_self');
+                      }}
+                      className="flex-1 border border-primary-600 text-primary-600 hover:bg-primary-50 py-3 px-6 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+                    >
                       <Phone className="w-5 h-5" />
                       <span>Call Now</span>
                     </button>
@@ -1453,6 +1963,22 @@ const Markets = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <p className="text-gray-400 text-sm">
+              © 2024 RubberEco. All rights reserved. Empowering sustainable rubber farming.
+            </p>
+          </div>
+        </div>
+      </footer>
+
+      {/* Google Maps Setup Guide Modal */}
+      {showSetupGuide && (
+        <GoogleMapsSetup onClose={() => setShowSetupGuide(false)} />
       )}
     </div>
   );

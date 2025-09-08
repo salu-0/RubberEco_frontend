@@ -158,71 +158,12 @@ const BrowseTreeLots = () => {
 
   const loadTreeLots = async () => {
     try {
-      // TODO: Replace with actual API call
-      const mockData = [
-        {
-          id: 'RT001',
-          farmerId: 'F001',
-          farmerName: 'John Doe',
-          location: 'Kottayam, Kerala',
-          coordinates: { lat: 9.5916, lng: 76.5222 },
-          numberOfTrees: 150,
-          approximateYield: '2.5 tons',
-          minimumPrice: 75000,
-          currentHighestBid: 78000,
-          bidCount: 3,
-          images: [
-            b1Image,
-            b1Image
-          ],
-          description: 'Mature rubber trees, 15-20 years old, excellent tapping condition',
-          biddingEndDate: '2024-02-15',
-          status: 'active',
-          createdAt: '2024-01-20'
-        },
-        {
-          id: 'RT002',
-          farmerId: 'F002',
-          farmerName: 'Maria Sebastian',
-          location: 'Idukki, Kerala',
-          coordinates: { lat: 9.8312, lng: 76.9447 },
-          numberOfTrees: 200,
-          approximateYield: '3.2 tons',
-          minimumPrice: 95000,
-          currentHighestBid: 95000,
-          bidCount: 1,
-          images: [
-            b2Image
-          ],
-          description: 'Premium quality rubber plantation with high yield potential',
-          biddingEndDate: '2024-02-18',
-          status: 'active',
-          createdAt: '2024-01-22'
-        },
-        {
-          id: 'RT003',
-          farmerId: 'F003',
-          farmerName: 'Ravi Kumar',
-          location: 'Wayanad, Kerala',
-          coordinates: { lat: 11.6854, lng: 76.1320 },
-          numberOfTrees: 100,
-          approximateYield: '1.8 tons',
-          minimumPrice: 55000,
-          currentHighestBid: 62000,
-          bidCount: 5,
-          images: [
-            b3Image,
-            b3Image,
-            b3Image
-          ],
-          description: 'Well-maintained trees in prime location with easy access',
-          biddingEndDate: '2024-02-12',
-          status: 'active',
-          createdAt: '2024-01-18'
-        }
-      ];
-      
-      setTreeLots(mockData);
+      // TODO: Replace with actual API call to fetch real tree lot data
+      // For now, setting empty array - no mock data
+      const lots = [];
+
+
+      setTreeLots(lots);
       setLoading(false);
     } catch (error) {
       console.error('Error loading tree lots:', error);

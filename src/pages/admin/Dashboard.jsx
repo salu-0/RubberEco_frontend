@@ -31,7 +31,9 @@ import {
   BarChart3,
   PieChart,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  TreePine,
+  CalendarDays
 } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import NotificationPanel from '../../components/Admin/NotificationPanel';
@@ -39,8 +41,11 @@ import { notificationService } from '../../services/notificationService';
 import ManageUsers from './ManageUsers';
 import StaffManagement from './StaffManagement';
 import TrainerManagement from './TrainerManagement';
+import StaffRequestManagement from './StaffRequestManagement';
 import BrokerManagement from '../../components/Admin/BrokerManagement';
 import TappingScheduleManagement from '../../components/Admin/TappingScheduleManagement';
+import LandRegistrationVerification from '../../components/Admin/LandRegistrationVerification';
+import LeaveManagement from '../../components/Admin/LeaveManagement';
 import PerformanceTracking from './PerformanceTracking';
 import AssignTasks from './AssignTappers';
 import VideoManagement from './VideoManagement';
@@ -48,14 +53,22 @@ import { useNavigationGuard } from '../../hooks/useNavigationGuard';
 
 const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Force dark mode on component mount
+  useEffect(() => {
+    setDarkMode(true);
+  }, []);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [searchQuery, setSearchQuery] = useState('');
   const [notifications, setNotifications] = useState(3);
   const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [pendingTappingRequests, setPendingTappingRequests] = useState(0);
+  const [pendingStaffRequests, setPendingStaffRequests] = useState(0);
+  const [pendingLandRegistrations, setPendingLandRegistrations] = useState(0);
+  const [pendingLeaveRequests, setPendingLeaveRequests] = useState(0);
   const [dynamicCounts, setDynamicCounts] = useState({
     totalFarmers: 0,
     totalBrokers: 0,
@@ -214,6 +227,79 @@ const Dashboard = () => {
       console.error('Error fetching pending tapping requests:', error);
       // Temporary: Show demo notification for shalumanoj960@gmail.com request
       setPendingTappingRequests(1); // Show 1 pending request from shalumanoj960@gmail.com
+    }
+  };
+
+  // Fetch pending staff requests count
+  const fetchPendingStaffRequests = async () => {
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const response = await fetch(`${backendUrl}/api/staff-requests/pending/count`);
+
+      if (response.ok) {
+        const result = await response.json();
+        setPendingStaffRequests(result.count || 0);
+      } else {
+        console.log('Error fetching pending staff requests count');
+        setPendingStaffRequests(0);
+      }
+    } catch (error) {
+      console.error('Error fetching pending staff requests count:', error);
+      setPendingStaffRequests(0);
+    }
+  };
+
+  // Fetch pending land registrations count
+  const fetchPendingLandRegistrations = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const response = await fetch(`${backendUrl}/api/land-registration`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const pendingCount = (data.data || []).filter(land => land.status === 'pending').length;
+        setPendingLandRegistrations(pendingCount);
+        console.log('🏞️ Pending land registrations:', pendingCount);
+      } else {
+        console.log('Error fetching pending land registrations');
+        setPendingLandRegistrations(0);
+      }
+    } catch (error) {
+      console.error('Error fetching pending land registrations:', error);
+      setPendingLandRegistrations(0);
+    }
+  };
+
+  // Fetch pending leave requests count
+  const fetchPendingLeaveRequests = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const response = await fetch(`${backendUrl}/api/leave-requests`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const pendingCount = (data.data || []).filter(leave => leave.status === 'pending').length;
+        setPendingLeaveRequests(pendingCount);
+        console.log('📅 Pending leave requests:', pendingCount);
+      } else {
+        console.log('Error fetching pending leave requests');
+        setPendingLeaveRequests(0);
+      }
+    } catch (error) {
+      console.error('Error fetching pending leave requests:', error);
+      setPendingLeaveRequests(0);
     }
   };
 
@@ -430,6 +516,7 @@ const Dashboard = () => {
             id: staff._id,
             name: staff.name,
             role: staff.role === 'tapper' ? 'Tapper' :
+                  staff.role === 'latex_collector' ? 'Latex Collector' :
                   staff.role === 'field_officer' ? 'Field Officer' :
                   staff.role === 'trainer' ? 'Trainer' :
                   staff.role === 'supervisor' ? 'Supervisor' : 'Staff Member',
@@ -475,16 +562,22 @@ const Dashboard = () => {
   useEffect(() => {
     fetchDynamicCounts();
     fetchPendingTappingRequests();
+    fetchPendingStaffRequests();
+    fetchPendingLandRegistrations();
+    fetchPendingLeaveRequests();
     loadRecentActivities();
     loadStaffPerformance();
 
-    // Refresh counts and activities every 30 seconds
+    // Refresh counts and activities every 5 minutes instead of every 30 seconds
     const interval = setInterval(() => {
       fetchDynamicCounts();
       fetchPendingTappingRequests();
+      fetchPendingStaffRequests();
+      fetchPendingLandRegistrations();
+      fetchPendingLeaveRequests();
       loadRecentActivities();
       loadStaffPerformance();
-    }, 30000);
+    }, 300000);
     return () => clearInterval(interval);
   }, []);
 
@@ -574,9 +667,9 @@ const Dashboard = () => {
       value: dynamicCounts.loading ? '...' : dynamicCounts.totalUsers.toLocaleString(),
       change: dynamicCounts.totalUsers > 0 ? 'Live Data' : 'No Data',
       icon: Users,
-      color: 'from-blue-500 to-blue-600',
-      bgColor: 'bg-blue-50',
-      textColor: 'text-blue-600',
+      color: 'from-green-500 to-emerald-600',
+      bgColor: 'bg-gradient-to-r from-green-600 to-emerald-600',
+      textColor: 'text-white',
       trend: 'up',
       description: 'from Register collection'
     },
@@ -585,9 +678,9 @@ const Dashboard = () => {
       value: dynamicCounts.loading ? '...' : dynamicCounts.totalFarmers.toLocaleString(),
       change: dynamicCounts.totalFarmers > 0 ? 'Live Data' : 'No Data',
       icon: Users,
-      color: 'from-green-500 to-green-600',
-      bgColor: 'bg-green-50',
-      textColor: 'text-green-600',
+      color: 'from-green-500 to-emerald-600',
+      bgColor: 'bg-gradient-to-r from-green-600 to-emerald-600',
+      textColor: 'text-white',
       trend: 'up',
       description: 'registered farmers'
     },
@@ -596,9 +689,9 @@ const Dashboard = () => {
       value: dynamicCounts.loading ? '...' : dynamicCounts.totalBrokers.toLocaleString(),
       change: dynamicCounts.totalBrokers > 0 ? 'Live Data' : 'No Data',
       icon: Briefcase,
-      color: 'from-purple-500 to-purple-600',
-      bgColor: 'bg-purple-50',
-      textColor: 'text-purple-600',
+      color: 'from-green-500 to-emerald-600',
+      bgColor: 'bg-gradient-to-r from-green-600 to-emerald-600',
+      textColor: 'text-white',
       trend: 'up',
       description: 'registered brokers'
     },
@@ -607,9 +700,9 @@ const Dashboard = () => {
       value: dynamicCounts.loading ? '...' : (dynamicCounts.activeStaff + dynamicCounts.totalTappers).toLocaleString(),
       change: (dynamicCounts.activeStaff + dynamicCounts.totalTappers) > 0 ? 'Live Data' : 'No Data',
       icon: UserCheck,
-      color: 'from-yellow-500 to-yellow-600',
-      bgColor: 'bg-yellow-50',
-      textColor: 'text-yellow-600',
+      color: 'from-green-500 to-emerald-600',
+      bgColor: 'bg-gradient-to-r from-green-600 to-emerald-600',
+      textColor: 'text-white',
       trend: 'up',
       description: 'staff + registered tappers'
     }
@@ -625,9 +718,12 @@ const Dashboard = () => {
     { name: 'Overview', icon: LayoutDashboard, id: 'overview' },
     { name: 'Manage Users', icon: Users, id: 'users' },
     { name: 'Staff & Officers', icon: UserCheck, id: 'staff' },
+    { name: 'Staff Requests', icon: FileText, id: 'staff-requests', notificationCount: pendingStaffRequests },
+    { name: 'Leave Management', icon: CalendarDays, id: 'leave-management', notificationCount: pendingLeaveRequests },
+    { name: 'Land Verification', icon: TreePine, id: 'land-verification', notificationCount: pendingLandRegistrations },
     { name: 'Trainers', icon: Target, id: 'trainers' },
     { name: 'Brokers', icon: Briefcase, id: 'brokers' },
-    { name: 'Assign Tasks', icon: UserPlus, id: 'assign-tasks', notificationCount: pendingTappingRequests },
+    { name: 'Request Management', icon: UserPlus, id: 'assign-tasks', notificationCount: pendingTappingRequests },
     { name: 'Video Management', icon: Video, id: 'videos' },
     { name: 'Tapping Schedules', icon: Calendar, id: 'schedules' },
     { name: 'Payments', icon: CreditCard, id: 'payments' },
@@ -659,31 +755,36 @@ const Dashboard = () => {
     }
   };
 
+
+
   return (
-    <div className={`h-screen flex overflow-hidden ${darkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
+    <div
+      className={`h-screen flex overflow-hidden ${darkMode ? 'dark bg-gradient-to-br from-black via-gray-900 to-black' : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'}`}
+      style={{ backgroundColor: darkMode ? '#000000' : '#f9fafb' }}
+    >
       {/* Sidebar */}
-      <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
-        <div className={`flex flex-col h-full ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-xl`}>
+      <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-64 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
+        <div className={`flex flex-col h-full ${darkMode ? 'bg-gradient-to-b from-black to-gray-900 border-r border-green-500/20' : 'bg-white'} shadow-2xl backdrop-blur-sm`}>
           {/* Logo */}
-          <div className="flex items-center justify-center h-16 px-4 bg-gradient-to-r from-primary-500 to-primary-600">
+          <div className="flex items-center justify-center h-16 px-4 bg-gradient-to-r from-green-600 to-emerald-600 shadow-lg">
             <div className="flex items-center space-x-2">
-              <Leaf className="h-8 w-8 text-white" />
-              <span className="text-xl font-bold text-white">RubberEco Admin</span>
+              <Leaf className="h-8 w-8 text-white drop-shadow-lg" />
+              <span className="text-xl font-bold text-white drop-shadow-lg">RubberEco Admin</span>
             </div>
           </div>
 
           {/* Enhanced Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+          <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
             {sidebarItems.map((item, index) => (
               <motion.button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center px-4 py-3 text-left rounded-xl transition-all duration-200 relative group ${
+                className={`w-full flex items-center px-4 py-3 text-left rounded-xl transition-all duration-300 relative group ${
                   activeTab === item.id
-                    ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg'
+                    ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg shadow-green-500/25 border border-green-500/30'
                     : darkMode
-                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    : 'text-gray-700 hover:bg-primary-50 hover:text-primary-600'
+                    ? 'text-gray-300 hover:bg-green-500/10 hover:text-green-400 hover:border hover:border-green-500/30'
+                    : 'text-gray-700 hover:bg-green-50 hover:text-green-600'
                 }`}
                 whileHover={{ scale: 1.02, x: 4 }}
                 whileTap={{ scale: 0.98 }}
@@ -694,16 +795,18 @@ const Dashboard = () => {
                 {/* Active indicator */}
                 {activeTab === item.id && (
                   <motion.div
-                    className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full"
+                    className="absolute left-0 top-0 bottom-0 w-1 bg-green-400 rounded-r-full shadow-lg shadow-green-400/50"
                     layoutId="activeIndicator"
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   />
                 )}
 
-                <div className={`p-2 rounded-lg mr-3 transition-all duration-200 ${
+                <div className={`p-2 rounded-lg mr-3 transition-all duration-300 ${
                   activeTab === item.id
-                    ? 'bg-white/20'
-                    : 'group-hover:bg-primary-100 dark:group-hover:bg-gray-600'
+                    ? 'bg-white/20 shadow-lg'
+                    : darkMode
+                    ? 'group-hover:bg-green-500/20'
+                    : 'group-hover:bg-green-100'
                 }`}>
                   <item.icon className="h-5 w-5" />
                 </div>
@@ -714,7 +817,7 @@ const Dashboard = () => {
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center ml-2"
+                    className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center ml-2 shadow-lg shadow-green-500/50 border border-green-400/30"
                   >
                     {item.notificationCount > 99 ? '99+' : item.notificationCount}
                   </motion.div>
@@ -722,7 +825,7 @@ const Dashboard = () => {
 
                 {/* Hover effect */}
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-primary-500/10 to-primary-600/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                   initial={false}
                 />
               </motion.button>
@@ -730,24 +833,26 @@ const Dashboard = () => {
           </nav>
 
           {/* User Profile */}
-          <div className={`p-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          <div className={`p-4 border-t ${darkMode ? 'border-green-500/20' : 'border-gray-200'} bg-gradient-to-r ${darkMode ? 'from-green-900/20 to-emerald-900/20' : 'from-green-50 to-emerald-50'}`}>
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-r from-green-600 to-emerald-600 rounded-full flex items-center justify-center shadow-lg shadow-green-500/25">
                 <User className="h-6 w-6 text-white" />
               </div>
               <div className="flex-1">
                 <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   {JSON.parse(localStorage.getItem('user') || '{}').name || 'Admin User'}
                 </p>
-                <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <p className={`text-xs ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
                   {JSON.parse(localStorage.getItem('user') || '{}').email || 'admin@rubbereco.com'}
                 </p>
               </div>
               <button
                 onClick={handleLogout}
-                className={`p-2 rounded-lg transition-colors ${
-                  darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
-                }`}
+                className={`p-2 rounded-lg transition-all duration-300 ${
+                  darkMode
+                    ? 'hover:bg-green-500/20 text-gray-400 hover:text-green-400 border border-transparent hover:border-green-500/30'
+                    : 'hover:bg-green-100 text-gray-600 hover:text-green-600'
+                } shadow-sm hover:shadow-md`}
               >
                 <LogOut className="h-4 w-4" />
               </button>
@@ -759,7 +864,7 @@ const Dashboard = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden lg:ml-0">
         {/* Enhanced Header */}
-        <header className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b backdrop-blur-sm`}>
+        <header className={`${darkMode ? 'bg-gradient-to-r from-black to-gray-900 border-green-500/20' : 'bg-white border-gray-200'} border-b backdrop-blur-sm shadow-lg`}>
           <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center space-x-4">
               <button
@@ -819,14 +924,17 @@ const Dashboard = () => {
                 whileTap={{ scale: 0.95 }}
               >
                 <Bell className="h-6 w-6" />
-                {unreadNotifications > 0 && (
+                {(unreadNotifications + pendingStaffRequests + pendingTappingRequests + pendingLandRegistrations + pendingLeaveRequests) > 0 && (
                   <motion.span
                     className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 rounded-full text-xs text-white flex items-center justify-center font-medium"
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   >
-                    {unreadNotifications}
+                    {(unreadNotifications + pendingStaffRequests + pendingTappingRequests + pendingLandRegistrations + pendingLeaveRequests) > 99
+                      ? '99+'
+                      : (unreadNotifications + pendingStaffRequests + pendingTappingRequests + pendingLandRegistrations + pendingLeaveRequests)
+                    }
                   </motion.span>
                 )}
               </motion.button>
@@ -872,7 +980,7 @@ const Dashboard = () => {
         </header>
 
         {/* Dashboard Content */}
-        <main className={`flex-1 overflow-y-auto p-6 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`} style={{ height: 'calc(100vh - 80px)' }}>
+        <main className={`flex-1 overflow-y-auto p-6 ${darkMode ? 'bg-gradient-to-br from-black via-gray-900 to-black' : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'}`} style={{ height: 'calc(100vh - 80px)' }}>
 
 
           {activeTab === 'overview' && (
@@ -887,9 +995,9 @@ const Dashboard = () => {
                 {stats.map((stat, index) => (
                   <motion.div
                     key={stat.name}
-                    className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
-                      darkMode ? 'border-gray-700' : 'border-gray-100'
-                    } relative overflow-hidden group cursor-pointer`}
+                    className={`${darkMode ? 'bg-gray-800/50 border-green-500/20' : 'bg-white'} backdrop-blur-sm rounded-2xl p-6 shadow-xl border ${
+                      darkMode ? 'border-green-500/20' : 'border-gray-100'
+                    } relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:shadow-green-500/10 transition-all duration-300`}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: index * 0.1 }}
@@ -910,10 +1018,10 @@ const Dashboard = () => {
                         </div>
                         <div className={`text-xs px-2 py-1 rounded-full ${
                           stat.trend === 'up'
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                            ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-300 border border-green-500/30'
                             : stat.trend === 'down'
-                            ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                            : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                            ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-300 border border-green-500/30'
+                            : 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-300 border border-green-500/30'
                         }`}>
                           {stat.trend === 'up' ? '↗' : stat.trend === 'down' ? '↘' : '→'} {stat.change}
                         </div>
@@ -951,8 +1059,8 @@ const Dashboard = () => {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Recent Activities - Enhanced */}
                 <motion.div
-                  className={`lg:col-span-2 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
-                    darkMode ? 'border-gray-700' : 'border-gray-100'
+                  className={`lg:col-span-2 ${darkMode ? 'bg-gray-800/50 border-green-500/20' : 'bg-white'} backdrop-blur-sm rounded-2xl p-6 shadow-xl border ${
+                    darkMode ? 'border-green-500/20' : 'border-gray-100'
                   }`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -962,7 +1070,7 @@ const Dashboard = () => {
                     <h3 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                       Recent Activities
                     </h3>
-                    <button className={`text-sm ${darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>
+                    <button className={`text-sm ${darkMode ? 'text-green-400 hover:text-green-300' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>
                       View All
                     </button>
                   </div>
@@ -971,11 +1079,11 @@ const Dashboard = () => {
                       // Loading state
                       <div className="space-y-4">
                         {[1, 2, 3, 4].map((i) => (
-                          <div key={i} className={`flex items-start space-x-4 p-4 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'} animate-pulse`}>
-                            <div className={`p-3 rounded-xl ${darkMode ? 'bg-gray-600' : 'bg-gray-200'} w-11 h-11`}></div>
+                          <div key={i} className={`flex items-start space-x-4 p-4 rounded-xl ${darkMode ? 'bg-green-900/20 border border-green-500/20' : 'bg-gray-50'} animate-pulse`}>
+                            <div className={`p-3 rounded-xl ${darkMode ? 'bg-green-600/50' : 'bg-gray-200'} w-11 h-11`}></div>
                             <div className="flex-1 min-w-0">
-                              <div className={`h-4 ${darkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded mb-2`}></div>
-                              <div className={`h-3 ${darkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded w-20`}></div>
+                              <div className={`h-4 ${darkMode ? 'bg-green-600/30' : 'bg-gray-200'} rounded mb-2`}></div>
+                              <div className={`h-3 ${darkMode ? 'bg-green-600/30' : 'bg-gray-200'} rounded w-20`}></div>
                             </div>
                           </div>
                         ))}
@@ -985,14 +1093,14 @@ const Dashboard = () => {
                       recentActivities.map((activity, index) => (
                         <motion.div
                           key={activity.id}
-                          className={`flex items-start space-x-4 p-4 rounded-xl ${darkMode ? 'bg-gray-700/50 hover:bg-gray-700' : 'bg-gray-50 hover:bg-gray-100'} transition-colors cursor-pointer group`}
+                          className={`flex items-start space-x-4 p-4 rounded-xl ${darkMode ? 'bg-green-900/20 hover:bg-green-900/30 border border-green-500/20' : 'bg-gray-50 hover:bg-gray-100'} transition-all duration-300 cursor-pointer group`}
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.4, delay: index * 0.1 }}
                           whileHover={{ scale: 1.01 }}
                         >
-                          <div className={`p-3 rounded-xl ${darkMode ? 'bg-gray-600' : 'bg-white'} shadow-sm group-hover:scale-110 transition-transform duration-200`}>
-                            <activity.icon className={`h-5 w-5 ${activity.color}`} />
+                          <div className={`p-3 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 shadow-lg shadow-green-500/25 group-hover:scale-110 transition-transform duration-200`}>
+                            <activity.icon className="h-5 w-5 text-white" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'} mb-1`}>
@@ -1029,8 +1137,8 @@ const Dashboard = () => {
                 transition={{ duration: 0.6, delay: 0.4 }}
               >
                 {/* Revenue Chart */}
-                <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
-                  darkMode ? 'border-gray-700' : 'border-gray-100'
+                <div className={`${darkMode ? 'bg-gray-800/50 border-green-500/20' : 'bg-white'} backdrop-blur-sm rounded-2xl p-6 shadow-xl border ${
+                  darkMode ? 'border-green-500/20' : 'border-gray-100'
                 }`}>
                   <div className="flex items-center justify-between mb-6">
                     <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -1064,7 +1172,7 @@ const Dashboard = () => {
                         <div className="flex-1">
                           <div className={`w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3`}>
                             <motion.div
-                              className="h-3 rounded-full bg-gradient-to-r from-primary-500 to-primary-600"
+                              className="h-3 rounded-full bg-gradient-to-r from-green-600 to-emerald-600"
                               initial={{ width: 0 }}
                               animate={{ width: `${item.percentage}%` }}
                               transition={{ duration: 1, delay: index * 0.1 }}
@@ -1097,8 +1205,8 @@ const Dashboard = () => {
                 </div>
 
                 {/* Top Performers */}
-                <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
-                  darkMode ? 'border-gray-700' : 'border-gray-100'
+                <div className={`${darkMode ? 'bg-gray-800/50 border-green-500/20' : 'bg-white'} backdrop-blur-sm rounded-2xl p-6 shadow-xl border ${
+                  darkMode ? 'border-green-500/20' : 'border-gray-100'
                 }`}>
                   <div className="flex items-center justify-between mb-6">
                     <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -1489,6 +1597,15 @@ const Dashboard = () => {
           {/* Staff Management Section */}
           {activeTab === 'staff' && <StaffManagement darkMode={darkMode} />}
 
+          {/* Staff Requests Section */}
+          {activeTab === 'staff-requests' && <StaffRequestManagement darkMode={darkMode} />}
+
+          {/* Leave Management Section */}
+          {activeTab === 'leave-management' && <LeaveManagement darkMode={darkMode} />}
+
+          {/* Land Registration Verification Section */}
+          {activeTab === 'land-verification' && <LandRegistrationVerification darkMode={darkMode} />}
+
           {/* Trainer Management Section */}
           {activeTab === 'trainers' && <TrainerManagement darkMode={darkMode} />}
 
@@ -1508,7 +1625,7 @@ const Dashboard = () => {
           {activeTab === 'performance' && <PerformanceTracking darkMode={darkMode} />}
 
           {/* Other tab contents */}
-          {activeTab !== 'overview' && activeTab !== 'performance' && activeTab !== 'assign-tasks' && activeTab !== 'users' && activeTab !== 'staff' && activeTab !== 'trainers' && activeTab !== 'brokers' && activeTab !== 'videos' && (
+          {activeTab !== 'overview' && activeTab !== 'performance' && activeTab !== 'assign-tasks' && activeTab !== 'users' && activeTab !== 'staff' && activeTab !== 'staff-requests' && activeTab !== 'leave-management' && activeTab !== 'land-verification' && activeTab !== 'trainers' && activeTab !== 'brokers' && activeTab !== 'videos' && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1541,6 +1658,9 @@ const Dashboard = () => {
         isOpen={notificationPanelOpen}
         onClose={() => setNotificationPanelOpen(false)}
         darkMode={darkMode}
+        pendingStaffRequests={pendingStaffRequests}
+        pendingTappingRequests={pendingTappingRequests}
+        pendingLandRegistrations={pendingLandRegistrations}
       />
     </div>
   );

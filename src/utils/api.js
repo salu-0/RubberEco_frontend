@@ -111,6 +111,50 @@ export const trainingAPI = {
   }
 };
 
+// Certificate API functions
+export const certificateAPI = {
+  // Generate certificate for completed training
+  generateCertificate: async (enrollmentId) => {
+    const response = await fetch(`${API_BASE_URL}/certificates/generate/${enrollmentId}`, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+
+    return handleResponse(response);
+  },
+
+  // Get user's certificates
+  getUserCertificates: async (userId) => {
+    const response = await fetch(`${API_BASE_URL}/certificates/user/${userId}`, {
+      headers: getAuthHeaders()
+    });
+
+    return handleResponse(response);
+  },
+
+  // Verify certificate
+  verifyCertificate: async (certificateNumber, verificationCode) => {
+    const response = await fetch(`${API_BASE_URL}/certificates/verify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ certificateNumber, verificationCode })
+    });
+
+    return handleResponse(response);
+  },
+
+  // Get certificate by ID
+  getCertificateById: async (certificateId) => {
+    const response = await fetch(`${API_BASE_URL}/certificates/${certificateId}`, {
+      headers: getAuthHeaders()
+    });
+
+    return handleResponse(response);
+  }
+};
+
 // User utility functions
 export const getUserData = () => {
   try {

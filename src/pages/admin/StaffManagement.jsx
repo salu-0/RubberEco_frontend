@@ -494,6 +494,8 @@ const StaffManagement = ({ darkMode }) => {
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
       case 'tapper':
         return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'latex_collector':
+        return 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200';
       case 'skilled_worker':
         return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
       case 'trainer':
@@ -511,7 +513,7 @@ const StaffManagement = ({ darkMode }) => {
       className="space-y-6"
     >
       {/* Staff Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <motion.div
           className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
             darkMode ? 'border-gray-700' : 'border-gray-100'
@@ -560,65 +562,19 @@ const StaffManagement = ({ darkMode }) => {
           </div>
         </motion.div>
 
-        <motion.div
-          className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
-            darkMode ? 'border-gray-700' : 'border-gray-100'
-          }`}
-          whileHover={{ scale: 1.02 }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Avg Rating
-              </p>
-              <p className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {staff.length > 0 ? (staff.reduce((sum, s) => sum + s.performance_rating, 0) / staff.length).toFixed(1) : '0.0'}
-              </p>
-              <p className="text-sm text-yellow-500 font-medium">
-                Performance rating
-              </p>
-            </div>
-            <div className="p-3 rounded-xl bg-yellow-50">
-              <Star className="h-8 w-8 text-yellow-600" />
-            </div>
-          </div>
-        </motion.div>
 
-        <motion.div
-          className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
-            darkMode ? 'border-gray-700' : 'border-gray-100'
-          }`}
-          whileHover={{ scale: 1.02 }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Completion Rate
-              </p>
-              <p className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {staff.length > 0 ? Math.round((staff.reduce((sum, s) => sum + s.tasks_completed, 0) / staff.reduce((sum, s) => sum + s.tasks_assigned, 0)) * 100) : 0}%
-              </p>
-              <p className="text-sm text-purple-500 font-medium">
-                Overall performance
-              </p>
-            </div>
-            <div className="p-3 rounded-xl bg-purple-50">
-              <Clock className="h-8 w-8 text-purple-600" />
-            </div>
-          </div>
-        </motion.div>
       </div>
 
       {/* Staff Management Table */}
       <motion.div
-        className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-lg border ${
-          darkMode ? 'border-gray-700' : 'border-gray-100'
+        className={`${darkMode ? 'bg-gray-800/50 border-green-500/20' : 'bg-white'} backdrop-blur-sm rounded-2xl shadow-xl border ${
+          darkMode ? 'border-green-500/20' : 'border-gray-100'
         }`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}
       >
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className={`p-6 border-b ${darkMode ? 'border-green-500/20' : 'border-gray-200'}`}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <h3 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               Staff Members ({filteredStaff.length})
@@ -656,26 +612,35 @@ const StaffManagement = ({ darkMode }) => {
                 <option value="all">All Roles</option>
                 <option value="field_officer">Field Officers</option>
                 <option value="tapper">Tappers</option>
+                <option value="latex_collector">Latex Collectors</option>
                 <option value="skilled_worker">Skilled Workers</option>
                 <option value="trainer">Trainers</option>
               </select>
 
               {/* Actions */}
               <div className="flex gap-2">
-                <button 
+                <motion.button
                   onClick={handleAddStaff}
-                  className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors flex items-center space-x-2"
+                  className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-300 flex items-center space-x-2 shadow-lg shadow-green-500/25"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <UserPlus className="h-4 w-4" />
+                  <UserPlus className="h-5 w-5" />
                   <span>Add Staff</span>
-                </button>
-                <button 
+                </motion.button>
+                <motion.button
                   onClick={handleExportStaff}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center space-x-2"
+                  className={`px-6 py-3 border rounded-xl transition-all duration-300 flex items-center space-x-2 ${
+                    darkMode
+                      ? 'border-green-500/30 hover:bg-green-500/10 text-green-400'
+                      : 'border-gray-300 hover:bg-gray-50 text-gray-700'
+                  }`}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <Download className="h-4 w-4" />
+                  <Download className="h-5 w-5" />
                   <span>Export</span>
-                </button>
+                </motion.button>
               </div>
             </div>
           </div>
@@ -700,25 +665,19 @@ const StaffManagement = ({ darkMode }) => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+            <table className="w-full min-w-[800px]">
+              <thead className={`${darkMode ? 'bg-gray-700/50 border-b border-green-500/20' : 'bg-gray-50'}`}>
                 <tr>
-                  <th className={`px-6 py-4 text-left text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                  <th className={`px-6 py-4 text-left text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`} style={{width: '40%'}}>
                     Staff Member
                   </th>
-                  <th className={`px-6 py-4 text-left text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                  <th className={`px-6 py-4 text-left text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`} style={{width: '25%'}}>
                     Role & Department
                   </th>
-                  <th className={`px-6 py-4 text-left text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                  <th className={`px-6 py-4 text-left text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`} style={{width: '20%'}}>
                     Location
                   </th>
-                  <th className={`px-6 py-4 text-left text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                    Performance
-                  </th>
-                  <th className={`px-6 py-4 text-left text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                    Status
-                  </th>
-                  <th className={`px-6 py-4 text-left text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                  <th className={`px-6 py-4 text-right text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`} style={{width: '15%'}}>
                     Actions
                   </th>
                 </tr>
@@ -768,52 +727,51 @@ const StaffManagement = ({ darkMode }) => {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                        <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                          {member.performance_rating}
-                        </span>
-                      </div>
-                      <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                        {member.tasks_completed}/{member.tasks_assigned} tasks
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        member.status === 'active' 
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                      }`}>
-                        {member.status}
-                      </span>
-                      <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} mt-1`}>
-                        {new Date(member.last_active).toLocaleDateString()}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        <button
+
+
+                    <td className="px-3 py-4 whitespace-nowrap">
+                      <div className="flex items-center justify-end space-x-1">
+                        <motion.button
                           onClick={() => handleViewStaff(member._id || member.id)}
-                          className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300"
-                          title="View Staff"
+                          className={`p-2 rounded-lg transition-all duration-200 ${
+                            darkMode
+                              ? 'text-green-400 bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 hover:border-green-500/40'
+                              : 'text-green-700 bg-green-50 border border-green-200 hover:bg-green-100 hover:border-green-300'
+                          }`}
+                          title="View Details"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.95 }}
                         >
                           <Eye className="h-4 w-4" />
-                        </button>
-                        <button
+                        </motion.button>
+
+                        <motion.button
                           onClick={() => handleEditStaff(member._id || member.id)}
-                          className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
+                          className={`p-2 rounded-lg transition-all duration-200 ${
+                            darkMode
+                              ? 'text-blue-400 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 hover:border-blue-500/40'
+                              : 'text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 hover:border-blue-300'
+                          }`}
                           title="Edit Staff"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.95 }}
                         >
                           <Edit className="h-4 w-4" />
-                        </button>
-                        <button
+                        </motion.button>
+
+                        <motion.button
                           onClick={() => handleDeleteStaff(member._id || member.id)}
-                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                          className={`p-2 rounded-lg transition-all duration-200 ${
+                            darkMode
+                              ? 'text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/40'
+                              : 'text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 hover:border-red-300'
+                          }`}
                           title="Remove Staff"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.95 }}
                         >
                           <Trash2 className="h-4 w-4" />
-                        </button>
+                        </motion.button>
                       </div>
                     </td>
                   </motion.tr>
@@ -969,6 +927,7 @@ const StaffManagement = ({ darkMode }) => {
                     }`}
                   >
                     <option value="tapper">Tapper</option>
+                    <option value="latex_collector">Latex Collector</option>
                     <option value="field_officer">Field Officer</option>
                     <option value="skilled_worker">Skilled Worker</option>
                     <option value="trainer">Trainer</option>
@@ -1541,6 +1500,7 @@ const StaffManagement = ({ darkMode }) => {
                   >
                     <option value="">Select Role</option>
                     <option value="tapper">Tapper</option>
+                    <option value="latex_collector">Latex Collector</option>
                     <option value="field_officer">Field Officer</option>
                     <option value="quality_inspector">Quality Inspector</option>
                     <option value="supervisor">Supervisor</option>

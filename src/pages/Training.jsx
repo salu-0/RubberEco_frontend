@@ -11,12 +11,14 @@ import {
   ArrowRight,
   Download,
   Star,
-  Lock
+  Lock,
+  Leaf
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { useNavigationGuard } from '../hooks/useNavigationGuard';
 import TrainingRegistration from '../components/Farmer/TrainingRegistration';
 import EnrollmentSync from '../components/EnrollmentSync';
+import PracticalTraining from './PracticalTraining';
 import { getUserData } from '../utils/api';
 
 const Training = () => {
@@ -26,6 +28,7 @@ const Training = () => {
   const [isTrainingEnrollmentOpen, setIsTrainingEnrollmentOpen] = useState(false);
   const [selectedModule, setSelectedModule] = useState(null);
   const [isEnrollmentSyncOpen, setIsEnrollmentSyncOpen] = useState(false);
+  const [isPracticalTrainingOpen, setIsPracticalTrainingOpen] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: 'info' });
 
   // Initialize navigation guard
@@ -57,14 +60,12 @@ const Training = () => {
 
     // Staff users should be redirected to their dashboard
     if (isLoggedIn && user?.role === 'staff' && user?.useStaffDashboard) {
-      console.log('🚫 Staff user accessing training page, redirecting to staff dashboard');
       navigate('/staff-dashboard', { replace: true });
       return;
     }
 
     // Admin users should be redirected to their dashboard
     if (isLoggedIn && user?.role === 'admin') {
-      console.log('🚫 Admin user accessing training page, redirecting to admin dashboard');
       navigate('/admin-dashboard', { replace: true });
       return;
     }
@@ -72,11 +73,6 @@ const Training = () => {
     setIsAuthenticated(isLoggedIn);
     setIsLoading(false);
 
-    console.log('🔐 Training page auth check:', {
-      isLoggedIn,
-      userRole: user?.role,
-      userName: user?.name
-    });
   }, [getUserData, navigate]);
 
   // Handle module access - redirect to login if not authenticated, show enrollment for paid courses
@@ -386,47 +382,149 @@ const Training = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-primary-500 to-primary-600 text-white">
-        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+      {/* Practical Training Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
+            className="text-center mb-16"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl font-bold mb-6">
-              Ready to Enhance Your Skills?
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Practical Training Sessions
             </h2>
-            <p className="text-xl mb-8 opacity-90">
-              Join thousands of rubber plantation professionals who have improved their operations through our training programs.
+            <p className="text-xl text-gray-600 mb-8">
+              Hands-on training with expert instructors at real plantation sites
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link to="/register">
-                <motion.button
-                  className="bg-white text-primary-600 px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition-all duration-300 inline-flex items-center space-x-2"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <span>Get Started Today</span>
-                  <ArrowRight className="w-5 h-5" />
-                </motion.button>
-              </Link>
-
-              {/* Enrollment Sync Button for logged-in users */}
-              {getUserData().isLoggedIn && (
-                <motion.button
-                  onClick={() => setIsEnrollmentSyncOpen(true)}
-                  className="bg-transparent border-2 border-white text-white px-6 py-3 rounded-full font-semibold hover:bg-white hover:text-primary-600 transition-all duration-300 inline-flex items-center space-x-2"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <BookOpen className="w-5 h-5" />
-                  <span>My Enrollments</span>
-                </motion.button>
-              )}
-            </div>
+            <motion.button
+              onClick={() => setIsPracticalTrainingOpen(true)}
+              className="bg-gradient-to-r from-green-500 to-green-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition-all duration-300 inline-flex items-center space-x-2"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Users className="w-5 h-5" />
+              <span>View Training Schedules</span>
+            </motion.button>
           </motion.div>
+
+          {/* Quick Preview Cards - All Categories */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Rubber Tapping */}
+            <motion.div
+              className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-2xl border border-green-200"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+            >
+              <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center text-white mb-4">
+                <Users className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Rubber Tapping</h3>
+              <p className="text-gray-600 mb-4">5-day intensive hands-on training</p>
+              <div className="flex items-center text-sm text-gray-500">
+                <Clock className="w-4 h-4 mr-1" />
+                <span>Dec 15-20, 2024</span>
+              </div>
+            </motion.div>
+
+            {/* Plantation Management */}
+            <motion.div
+              className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl border border-blue-200"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              viewport={{ once: true }}
+            >
+              <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center text-white mb-4">
+                <Award className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Plantation Management</h3>
+              <p className="text-gray-600 mb-4">3-day comprehensive field training</p>
+              <div className="flex items-center text-sm text-gray-500">
+                <Clock className="w-4 h-4 mr-1" />
+                <span>Dec 22-24, 2024</span>
+              </div>
+            </motion.div>
+
+            {/* Disease Control */}
+            <motion.div
+              className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-2xl border border-purple-200"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+            >
+              <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center text-white mb-4">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Disease Control</h3>
+              <p className="text-gray-600 mb-4">2-day practical workshop</p>
+              <div className="flex items-center text-sm text-gray-500">
+                <Clock className="w-4 h-4 mr-1" />
+                <span>Jan 5-6, 2025</span>
+              </div>
+            </motion.div>
+
+            {/* Harvesting */}
+            <motion.div
+              className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-2xl border border-orange-200"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
+            >
+              <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center text-white mb-4">
+                <Download className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Harvesting</h3>
+              <p className="text-gray-600 mb-4">4-day latex collection training</p>
+              <div className="flex items-center text-sm text-gray-500">
+                <Clock className="w-4 h-4 mr-1" />
+                <span>Jan 8-11, 2025</span>
+              </div>
+            </motion.div>
+
+            {/* Equipment Maintenance */}
+            <motion.div
+              className="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-2xl border border-red-200"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              viewport={{ once: true }}
+            >
+              <div className="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center text-white mb-4">
+                <Star className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Equipment Maintenance</h3>
+              <p className="text-gray-600 mb-4">3-day machinery & tools workshop</p>
+              <div className="flex items-center text-sm text-gray-500">
+                <Clock className="w-4 h-4 mr-1" />
+                <span>Jan 15-17, 2025</span>
+              </div>
+            </motion.div>
+
+            {/* Safety Protocols */}
+            <motion.div
+              className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-2xl border border-yellow-200"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              viewport={{ once: true }}
+            >
+              <div className="w-12 h-12 bg-yellow-500 rounded-xl flex items-center justify-center text-white mb-4">
+                <CheckCircle className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Safety Protocols</h3>
+              <p className="text-gray-600 mb-4">2-day safety & emergency training</p>
+              <div className="flex items-center text-sm text-gray-500">
+                <Clock className="w-4 h-4 mr-1" />
+                <span>Jan 20-21, 2025</span>
+              </div>
+            </motion.div>
+          </div>
         </div>
       </section>
 
@@ -470,6 +568,42 @@ const Training = () => {
           </motion.div>
         </div>
       )}
+
+      {/* Practical Training Modal */}
+      {isPracticalTrainingOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-white rounded-lg max-w-7xl w-full max-h-[95vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-2xl font-bold text-gray-900">Practical Training Sessions</h2>
+              <button
+                onClick={() => setIsPracticalTrainingOpen(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-6">
+              <PracticalTraining />
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <p className="text-gray-400 text-sm">
+              © 2024 RubberEco. All rights reserved. Empowering sustainable rubber farming.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

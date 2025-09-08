@@ -4,7 +4,6 @@ import {
   UserPlus,
   Calendar,
   Eye,
-  Edit,
   MapPin,
   Star,
   Clock,
@@ -23,20 +22,25 @@ import {
 } from 'lucide-react';
 
 const AssignTasks = ({ darkMode }) => {
+  // Keep these for the assignment interface (still needed for the UI)
   const [selectedFarmer, setSelectedFarmer] = useState('');
   const [selectedStaff, setSelectedStaff] = useState('');
   const [taskType, setTaskType] = useState('tapping');
   const [startDate, setStartDate] = useState('');
   const [duration, setDuration] = useState('');
 
-  // New state for tapping requests
-  const [tappingRequests, setTappingRequests] = useState([]);
-  const [pendingRequests, setPendingRequests] = useState([]);
-  const [availableTappers, setAvailableTappers] = useState([]);
+  // Updated state for new workflow: Staff choose requests, Admin verifies
+  const [pendingRequests, setPendingRequests] = useState([]); // Requests waiting for staff to apply
+  const [staffApplications, setStaffApplications] = useState([]); // Staff applications to requests
+  const [verifiedAssignments, setVerifiedAssignments] = useState([]); // Admin-verified assignments
+  const [availableTappers, setAvailableTappers] = useState([]); // Keep this for the assignment interface
   const [loading, setLoading] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [selectedApplication, setSelectedApplication] = useState(null);
   const [showRequestDetails, setShowRequestDetails] = useState(false);
+  const [showApplicationDetails, setShowApplicationDetails] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
+  const [activeTab, setActiveTab] = useState('pending-requests'); // pending-requests, staff-applications, verified-assignments
 
   // Sample data
   const farmers = [
@@ -57,7 +61,7 @@ const AssignTasks = ({ darkMode }) => {
   const taskTypes = [
     { value: 'tapping', label: 'Rubber Tapping', roles: ['tapper'] },
     { value: 'inspection', label: 'Quality Inspection', roles: ['quality_inspector', 'supervisor'] },
-    { value: 'collection', label: 'Latex Collection', roles: ['field_officer', 'tapper'] },
+    { value: 'collection', label: 'Latex Collection', roles: ['latex_collector', 'field_officer'] },
     { value: 'maintenance', label: 'Equipment Maintenance', roles: ['field_officer', 'supervisor'] },
     { value: 'training', label: 'Training & Support', roles: ['supervisor', 'field_officer'] },
     { value: 'monitoring', label: 'Farm Monitoring', roles: ['field_officer', 'supervisor'] }
@@ -83,8 +87,8 @@ const AssignTasks = ({ darkMode }) => {
     }
   };
 
-  // Load tapping requests from API
-  const loadTappingRequests = async () => {
+  // Load all request data from API
+  const loadAllRequestData = async () => {
     try {
       setLoading(true);
       const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
@@ -93,14 +97,20 @@ const AssignTasks = ({ darkMode }) => {
       const allResponse = await fetch(`${backendUrl}/api/farmer-requests`);
       if (allResponse.ok) {
         const allResult = await allResponse.json();
-        setTappingRequests(allResult.data);
+        const allRequests = allResult.data || [];
+        console.log('✅ Loaded all tapping requests:', allRequests.length || 0);
+
+        // Use these to show current assignments table and counters
+        const verifiableStatuses = ['assigned', 'accepted', 'in_progress', 'completed'];
+        setVerifiedAssignments(allRequests.filter(r => verifiableStatuses.includes(r.status)));
       }
 
       // Load pending requests specifically
       const pendingResponse = await fetch(`${backendUrl}/api/farmer-requests/pending`);
       if (pendingResponse.ok) {
         const pendingResult = await pendingResponse.json();
-        setPendingRequests(pendingResult.data);
+        console.log('✅ Loaded pending requests:', pendingResult.data?.length || 0);
+        setPendingRequests(pendingResult.data || []);
       } else {
         // Demo: Show the request from shalumanoj960@gmail.com
         const demoRequest = {
@@ -122,9 +132,39 @@ const AssignTasks = ({ darkMode }) => {
           specialRequirements: 'Need experienced tapper for high-yield trees',
           contactPreference: 'phone',
           status: 'submitted',
-          submittedAt: new Date().toISOString()
+          submittedAt: new Date().toISOString(),
+          // Add staff applications to demonstrate the workflow
+          staffApplications: [
+            {
+              id: 'app-001',
+              staffName: 'Ravi Kumar',
+              staffId: 'staff-001',
+              email: 'ravi.kumar@rubberai.com',
+              phone: '+91 9876543211',
+              location: 'Kottayam District',
+              rating: 4.8,
+              experience: '5 years',
+              status: 'pending',
+              appliedAt: '2 hours ago',
+              message: 'I have extensive experience with rubber tapping in this area and am available for the requested dates.'
+            },
+            {
+              id: 'app-002',
+              staffName: 'Suresh Menon',
+              staffId: 'staff-002',
+              email: 'suresh.menon@rubberai.com',
+              phone: '+91 9876543212',
+              location: 'Kottayam District',
+              rating: 4.6,
+              experience: '3 years',
+              status: 'pending',
+              appliedAt: '4 hours ago',
+              message: 'I am familiar with the Manimala area and can provide quality tapping services.'
+            }
+          ]
         };
-        setPendingRequests([demoRequest]);
+        setPendingRequests([]);
+        console.log('❌ Failed to load pending requests from API');
       }
 
       console.log('✅ Loaded tapping requests');
@@ -143,17 +183,45 @@ const AssignTasks = ({ darkMode }) => {
         soilType: 'Red soil',
         tappingType: 'daily',
         startDate: '2024-02-01',
-        duration: '30 days',
         preferredTime: 'morning',
         urgency: 'high',
-        budgetRange: '₹15,000 - ₹20,000',
+        budgetPerTree: 3,
         specialRequirements: 'Need experienced tapper for high-yield trees',
         contactPreference: 'phone',
         status: 'submitted',
-        submittedAt: new Date().toISOString()
+        submittedAt: new Date().toISOString(),
+        // Add staff applications to demonstrate the workflow
+        staffApplications: [
+          {
+            id: 'app-001',
+            staffName: 'Ravi Kumar',
+            staffId: 'staff-001',
+            email: 'ravi.kumar@rubberai.com',
+            phone: '+91 9876543211',
+            location: 'Kottayam District',
+            rating: 4.8,
+            experience: '5 years',
+            status: 'pending',
+            appliedAt: '2 hours ago',
+            message: 'I have extensive experience with rubber tapping in this area and am available for the requested dates.'
+          },
+          {
+            id: 'app-002',
+            staffName: 'Suresh Menon',
+            staffId: 'staff-002',
+            email: 'suresh.menon@rubberai.com',
+            phone: '+91 9876543212',
+            location: 'Kottayam District',
+            rating: 4.6,
+            experience: '3 years',
+            status: 'pending',
+            appliedAt: '4 hours ago',
+            message: 'I am familiar with the Manimala area and can provide quality tapping services.'
+          }
+        ]
       };
-      setPendingRequests([demoRequest]);
-      showNotification('Using demo data - API connection failed', 'warning');
+      setPendingRequests([]);
+      showNotification('Failed to load tapping requests', 'error');
     } finally {
       setLoading(false);
     }
@@ -161,7 +229,7 @@ const AssignTasks = ({ darkMode }) => {
 
   // Load data on component mount
   useEffect(() => {
-    loadTappingRequests();
+    loadAllRequestData();
     loadAvailableTappers();
   }, []);
 
@@ -223,6 +291,32 @@ const AssignTasks = ({ darkMode }) => {
     }, 3000);
   };
 
+  // Handle approving staff application
+  const handleApproveApplication = async (applicationId) => {
+    try {
+      // TODO: API call to approve application
+      showNotification('Staff application approved successfully!', 'success');
+      // Reload data
+      loadAllRequestData();
+    } catch (error) {
+      console.error('Error approving application:', error);
+      showNotification('Failed to approve application. Please try again.', 'error');
+    }
+  };
+
+  // Handle rejecting staff application
+  const handleRejectApplication = async (applicationId) => {
+    try {
+      // TODO: API call to reject application
+      showNotification('Staff application rejected.', 'success');
+      // Reload data
+      loadAllRequestData();
+    } catch (error) {
+      console.error('Error rejecting application:', error);
+      showNotification('Failed to reject application. Please try again.', 'error');
+    }
+  };
+
   // Handle request assignment
   const handleAssignTapper = async (requestId, tapperId, tapperName) => {
     try {
@@ -250,7 +344,7 @@ const AssignTasks = ({ darkMode }) => {
           'success'
         );
 
-        loadTappingRequests(); // Reload data
+        loadAllRequestData(); // Reload data
         loadAvailableTappers(); // Reload available tappers
         setSelectedRequest(null);
         setShowRequestDetails(false);
@@ -279,14 +373,20 @@ const AssignTasks = ({ darkMode }) => {
     }
   };
 
-  // Transform tapping requests to current assignments
-  const currentAssignments = tappingRequests.filter(req =>
+  // Transform requests to current assignments (include verified + any pendingRequests that became accepted/in_progress)
+  const assignmentsSource = [...verifiedAssignments, ...pendingRequests];
+  const currentAssignments = assignmentsSource.filter(req =>
     req.status === 'assigned' || req.status === 'accepted' || req.status === 'in_progress'
   ).map(req => ({
     id: req._id,
     farmer: req.farmerName,
     farm: `${req.farmLocation} (${req.farmSize})`,
-    staff: req.assignedTapper?.tapperName || 'Not assigned',
+    staff: (
+      req.assignedTapper?.tapperName ||
+      req.assignedTapper?.name ||
+      (typeof req.assignedTapper?.tapperId === 'object' ? req.assignedTapper?.tapperId?.name : undefined) ||
+      (['assigned','accepted','in_progress','completed'].includes(req.status) ? 'Assigned' : 'Not assigned')
+    ),
     staffRole: 'tapper',
     taskType: 'tapping',
     startDate: new Date(req.startDate).toISOString().split('T')[0],
@@ -298,7 +398,7 @@ const AssignTasks = ({ darkMode }) => {
     location: req.farmLocation,
     requestId: req.requestId,
     urgency: req.urgency,
-    numberOfTrees: req.numberOfTrees,
+    numberOfTrees: req.numberOfTrees || req.farmerEstimatedTrees,
     tappingType: req.tappingType,
     farmerPhone: req.farmerPhone,
     farmerEmail: req.farmerEmail
@@ -398,6 +498,38 @@ const AssignTasks = ({ darkMode }) => {
     }
   };
 
+  // Locate original request object for a given assignment
+  const getRequestFromAssignment = (assignment) => {
+    const byMongoId = assignmentsSource.find(r => r._id === assignment.id);
+    if (byMongoId) return byMongoId;
+    const byRequestId = assignmentsSource.find(r => r.requestId === assignment.requestId);
+    if (byRequestId) return byRequestId;
+    return null;
+  };
+
+  const openViewDetails = (assignment) => {
+    const req = getRequestFromAssignment(assignment) || assignment;
+    console.log('🔍 Opening view details for assignment:', assignment);
+    console.log('🔍 Found request:', req);
+    console.log('🔍 Request assignedTapper:', req.assignedTapper);
+    console.log('🔍 Request negotiation fields:', {
+      tapperProposedTrees: req.tapperProposedTrees,
+      farmerCounterProposal: req.farmerCounterProposal,
+      tapperCounterProposal: req.tapperCounterProposal,
+      finalAgreedTrees: req.finalAgreedTrees,
+      agreedTreeCount: req.agreedTreeCount
+    });
+    setSelectedRequest(req);
+    setShowRequestDetails(true);
+  };
+
+  const openEditDetails = (assignment) => {
+    const req = getRequestFromAssignment(assignment) || assignment;
+    setSelectedRequest(req);
+    setShowRequestDetails(true);
+    setShowApplicationDetails(false);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -433,7 +565,7 @@ const AssignTasks = ({ darkMode }) => {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              Pending Tapping Requests
+              Tapping Requests - Staff Self-Assignment
             </h2>
             {pendingRequests.length > 0 && (
               <div className="relative">
@@ -446,9 +578,11 @@ const AssignTasks = ({ darkMode }) => {
           </div>
           <div className="flex items-center space-x-2 text-sm text-gray-500">
             <TreePine className="h-4 w-4" />
-            <span>{pendingRequests.length} requests awaiting assignment</span>
+            <span>{pendingRequests.length} requests • Staff can self-assign</span>
           </div>
         </div>
+
+        {/* Workflow banner removed as requested */}
 
         {loading ? (
           <div className="text-center py-8">
@@ -516,17 +650,28 @@ const AssignTasks = ({ darkMode }) => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedRequest(request);
-                        setShowRequestDetails(true);
-                      }}
-                      className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
-                    >
-                      <UserPlus className="h-4 w-4" />
-                      Assign Tapper
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        request.staffApplications?.length > 0
+                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                          : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                      }`}>
+                        {request.staffApplications?.length > 0
+                          ? `${request.staffApplications.length} Staff Applied`
+                          : 'Waiting for Staff'}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedRequest(request);
+                          setShowRequestDetails(true);
+                        }}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+                      >
+                        <Eye className="h-4 w-4" />
+                        View Details
+                      </button>
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -586,9 +731,6 @@ const AssignTasks = ({ darkMode }) => {
                   Status
                 </th>
                 <th className={`px-6 py-4 text-left text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                  Progress
-                </th>
-                <th className={`px-6 py-4 text-left text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
                   Actions
                 </th>
               </tr>
@@ -642,30 +784,10 @@ const AssignTasks = ({ darkMode }) => {
                       {assignment.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="flex-1">
-                        <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                          {assignment.progress}%
-                        </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
-                          <div
-                            className={`h-2 rounded-full ${
-                              assignment.progress === 100 ? 'bg-blue-500' : 'bg-green-500'
-                            }`}
-                            style={{ width: `${assignment.progress}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
-                      <button className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300">
+                      <button onClick={() => openViewDetails(assignment)} className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300">
                         <Eye className="h-4 w-4" />
-                      </button>
-                      <button className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300">
-                        <Edit className="h-4 w-4" />
                       </button>
                     </div>
                   </td>
@@ -676,71 +798,7 @@ const AssignTasks = ({ darkMode }) => {
         </div>
       </motion.div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <motion.div
-          className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
-            darkMode ? 'border-gray-700' : 'border-gray-100'
-          }`}
-          whileHover={{ scale: 1.02 }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Available Staff
-              </p>
-              <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {staffMembers.filter(s => s.status === 'available').length}
-              </p>
-            </div>
-            <div className="p-3 rounded-xl bg-green-50">
-              <CheckCircle className="h-6 w-6 text-green-600" />
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
-            darkMode ? 'border-gray-700' : 'border-gray-100'
-          }`}
-          whileHover={{ scale: 1.02 }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Active Assignments
-              </p>
-              <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {currentAssignments.filter(a => a.status === 'active').length}
-              </p>
-            </div>
-            <div className="p-3 rounded-xl bg-blue-50">
-              <Briefcase className="h-6 w-6 text-blue-600" />
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
-            darkMode ? 'border-gray-700' : 'border-gray-100'
-          }`}
-          whileHover={{ scale: 1.02 }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Avg Progress
-              </p>
-              <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {Math.round(currentAssignments.reduce((sum, a) => sum + a.progress, 0) / currentAssignments.length)}%
-              </p>
-            </div>
-            <div className="p-3 rounded-xl bg-purple-50">
-              <Clock className="h-6 w-6 text-purple-600" />
-            </div>
-          </div>
-        </motion.div>
-      </div>
+      {/* Quick Stats removed as requested */}
 
       {/* Request Details Modal */}
       {showRequestDetails && selectedRequest && (
@@ -753,7 +811,7 @@ const AssignTasks = ({ darkMode }) => {
           >
             <div className="flex items-center justify-between mb-6">
               <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                Assign Tapper - {selectedRequest.farmerName}
+                Request Details - {selectedRequest.farmerName}
               </h3>
               <button
                 onClick={() => {
@@ -817,22 +875,19 @@ const AssignTasks = ({ darkMode }) => {
                       📅 Start: {new Date(selectedRequest.startDate).toLocaleDateString()}
                     </p>
                     <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                      ⏱️ Duration: {selectedRequest.duration}
-                    </p>
-                    <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                       🕐 Preferred time: {selectedRequest.preferredTime}
                     </p>
                   </div>
                 </div>
 
-                {selectedRequest.budgetRange && (
+                {(selectedRequest.budgetPerTree || selectedRequest.budgetRange) && (
                   <div>
                     <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      Budget Range
+                      Rate Per Tree
                     </label>
                     <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                       <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                        💰 {selectedRequest.budgetRange}
+                        💰 ₹{selectedRequest.budgetPerTree || selectedRequest.budgetRange}
                       </p>
                     </div>
                   </div>
@@ -840,50 +895,101 @@ const AssignTasks = ({ darkMode }) => {
               </div>
             </div>
 
-            {/* Available Tappers */}
-            <div className="mb-6">
-              <label className={`block text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Select Tapper
-              </label>
-              <div className="grid gap-3">
-                {availableTappers.length > 0 ? (
-                  availableTappers.map((tapper) => (
-                    <div
-                      key={tapper.id}
-                      className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                        darkMode ? 'bg-gray-700 border-gray-600 hover:border-green-500' : 'bg-gray-50 border-gray-200 hover:border-green-500'
-                      }`}
-                      onClick={() => handleAssignTapper(selectedRequest._id, tapper.id, tapper.name)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                            {tapper.name}
-                          </p>
-                          <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                            📍 {tapper.location} • ⭐ {tapper.rating} • 🎯 {tapper.experience}
-                          </p>
-                          <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            📧 {tapper.email} • 📞 {tapper.phone}
-                          </p>
+            {/* Assigned Staff */}
+            {(selectedRequest.assignedTapper || ['assigned','accepted','in_progress','completed'].includes(selectedRequest.status)) && (
+              <div className="mb-6">
+                <label className={`block text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Assigned Staff
+                </label>
+                <div className={`p-4 rounded-lg border ${
+                  darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
+                }`}>
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                      <Users className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <h4 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                        {selectedRequest.assignedTapper?.tapperName || 
+                         selectedRequest.assignedTapper?.name || 
+                         selectedRequest.assignedStaffName ||
+                         selectedRequest.assignedTapper?.staffName ||
+                         selectedRequest.assignedTapper?.staff?.name ||
+                         (typeof selectedRequest.assignedTapper?.tapperId === 'object' ? selectedRequest.assignedTapper?.tapperId?.name : undefined) ||
+                         'Assigned Staff'}
+                      </h4>
+                      <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                        {selectedRequest.assignedTapper?.tapperPhone || 
+                         selectedRequest.assignedTapper?.phone || 
+                         selectedRequest.assignedStaffPhone ||
+                         'Phone not available'}
+                      </p>
+                      <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                        {selectedRequest.assignedTapper?.tapperEmail || 
+                         selectedRequest.assignedTapper?.email || 
+                         selectedRequest.assignedStaffEmail ||
+                         'Email not available'}
+                      </p>
+                      {/* Debug info - remove this after fixing */}
+                      {selectedRequest.assignedTapper && (
+                        <div className="mt-2 p-2 bg-yellow-100 rounded text-xs">
+                          <strong>Debug - assignedTapper keys:</strong> {Object.keys(selectedRequest.assignedTapper).join(', ')}
                         </div>
-                        <button className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
-                          Assign
-                        </button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Negotiation Details */}
+                  {(selectedRequest.tapperProposedTrees || 
+                    selectedRequest.farmerCounterProposal || 
+                    selectedRequest.tapperCounterProposal ||
+                    selectedRequest.farmerEstimatedTrees ||
+                    selectedRequest.numberOfTrees) && (
+                    <div className="mt-4 pt-3 border-t border-gray-300 dark:border-gray-600">
+                      <h5 className={`font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Negotiation Details
+                      </h5>
+                      <div className="space-y-2 text-sm">
+                        {(selectedRequest.farmerEstimatedTrees || selectedRequest.numberOfTrees) && (
+                          <div className="flex justify-between">
+                            <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Farmer's estimate:</span>
+                            <span className={darkMode ? 'text-white' : 'text-gray-900'}>
+                              {selectedRequest.farmerEstimatedTrees || selectedRequest.numberOfTrees} trees
+                            </span>
+                          </div>
+                        )}
+                        {selectedRequest.tapperProposedTrees && (
+                          <div className="flex justify-between">
+                            <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Staff proposed:</span>
+                            <span className={darkMode ? 'text-white' : 'text-gray-900'}>{selectedRequest.tapperProposedTrees} trees</span>
+                          </div>
+                        )}
+                        {selectedRequest.farmerCounterProposal && (
+                          <div className="flex justify-between">
+                            <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Farmer counter:</span>
+                            <span className={darkMode ? 'text-white' : 'text-gray-900'}>{selectedRequest.farmerCounterProposal} trees</span>
+                          </div>
+                        )}
+                        {selectedRequest.tapperCounterProposal && (
+                          <div className="flex justify-between">
+                            <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Staff counter:</span>
+                            <span className={darkMode ? 'text-white' : 'text-gray-900'}>{selectedRequest.tapperCounterProposal} trees</span>
+                          </div>
+                        )}
+                        {(selectedRequest.finalAgreedTrees || selectedRequest.agreedTreeCount || selectedRequest.tapperCounterProposal) && (
+                          <div className="flex justify-between pt-2 border-t border-gray-300 dark:border-gray-600">
+                            <span className={`font-medium ${darkMode ? 'text-green-300' : 'text-green-600'}`}>Final agreement:</span>
+                            <span className={`font-medium ${darkMode ? 'text-green-300' : 'text-green-600'}`}>
+                              {selectedRequest.finalAgreedTrees || selectedRequest.agreedTreeCount || selectedRequest.tapperCounterProposal} trees
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  ))
-                ) : (
-                  <div className={`p-4 rounded-lg border ${
-                    darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
-                  }`}>
-                    <p className={`text-center ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                      No available tappers found. All registered tappers are currently assigned.
-                    </p>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {selectedRequest.specialRequirements && (
               <div className="mb-6">

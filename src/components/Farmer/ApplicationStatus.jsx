@@ -40,96 +40,220 @@ const ApplicationStatus = ({ isOpen, onClose }) => {
   }, [applications, searchTerm, statusFilter, typeFilter]);
 
   const loadApplications = async () => {
+    setLoading(true);
     try {
-      // Mock data - replace with actual API call
-      const mockApplications = [
-        {
-          id: 'LA001',
-          type: 'land_lease',
-          title: 'Land Lease Application',
-          description: 'Application for 5 hectares agricultural land in Kottayam',
-          status: 'under_review',
-          submittedDate: '2024-01-15',
-          lastUpdated: '2024-01-20',
-          estimatedCompletion: '2024-02-15',
-          currentStage: 'Document Verification',
-          progress: 60,
-          reviewerName: 'Mr. Suresh Kumar',
-          reviewerContact: '+91 9876543210',
-          documents: ['ID Proof', 'Address Proof', 'Income Certificate'],
-          comments: 'Application is being reviewed by the land committee. Additional documents may be required.',
-          priority: 'normal'
-        },
-        {
-          id: 'TR001',
-          type: 'tapper_request',
-          title: 'Rubber Tapper Request',
-          description: 'Request for daily tapping service for 250 trees',
-          status: 'approved',
-          submittedDate: '2024-01-10',
-          lastUpdated: '2024-01-25',
-          estimatedCompletion: '2024-01-25',
-          currentStage: 'Completed',
-          progress: 100,
-          reviewerName: 'Ms. Priya Nair',
-          reviewerContact: '+91 9876543211',
-          documents: ['Farm Details', 'Location Map'],
-          comments: 'Tapper has been assigned successfully. Service will start from February 1st.',
-          priority: 'high',
-          assignedTapper: {
-            name: 'Ravi Kumar',
-            phone: '+91 9876543212',
-            rating: 4.8
+      const token = localStorage.getItem('token');
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+      if (!token || !user.id) {
+        console.log('❌ No authentication found');
+        setApplications([]);
+        setLoading(false);
+        return;
+      }
+
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const applications = [];
+
+      // Load different types of applications
+      try {
+        // 1. Load tapping requests
+        const tappingResponse = await fetch(`${backendUrl}/api/farmer-requests/my-requests`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
-        },
-        {
-          id: 'FS001',
-          type: 'fertilizer_service',
-          title: 'Fertilizer Service Request',
-          description: 'Request for organic fertilizer application service',
-          status: 'pending_documents',
-          submittedDate: '2024-01-20',
-          lastUpdated: '2024-01-22',
-          estimatedCompletion: '2024-02-10',
-          currentStage: 'Awaiting Documents',
-          progress: 25,
-          reviewerName: 'Mr. Rajesh Menon',
-          reviewerContact: '+91 9876543213',
-          documents: ['Soil Test Report', 'Farm Registration'],
-          comments: 'Please submit the soil test report to proceed with the application.',
-          priority: 'normal',
-          requiredDocuments: ['Soil Test Report', 'Previous Fertilizer Usage History']
-        },
-        {
-          id: 'TR002',
-          type: 'training_registration',
-          title: 'Training Program Registration',
-          description: 'Registration for Advanced Rubber Cultivation Techniques',
-          status: 'approved',
-          submittedDate: '2024-01-05',
-          lastUpdated: '2024-01-15',
-          estimatedCompletion: '2024-01-15',
-          currentStage: 'Enrolled',
-          progress: 100,
-          reviewerName: 'Dr. Lakshmi Devi',
-          reviewerContact: '+91 9876543214',
-          documents: ['Registration Form', 'Experience Certificate'],
-          comments: 'Successfully enrolled in the training program. Classes start from February 5th.',
-          priority: 'normal',
-          trainingDetails: {
-            startDate: '2024-02-05',
-            duration: '2 weeks',
-            location: 'Kottayam Training Center'
-          }
+        });
+
+        if (tappingResponse.ok) {
+          const tappingData = await tappingResponse.json();
+          const tappingApps = (tappingData.data || []).map(req => ({
+            id: req._id,
+            type: 'tapper_request',
+            title: 'Rubber Tapper Request',
+            description: `Request for ${req.serviceType || 'tapping'} service`,
+            status: req.status,
+            submittedDate: req.createdAt,
+            lastUpdated: req.updatedAt,
+            currentStage: getStageFromStatus(req.status),
+            progress: getProgressFromStatus(req.status),
+            priority: req.priority || 'normal',
+            comments: req.comments || 'Application is being processed.'
+          }));
+          applications.push(...tappingApps);
         }
-      ];
-      
-      setApplications(mockApplications);
-      setLoading(false);
+      } catch (error) {
+        console.warn('Failed to load tapping requests:', error.message);
+      }
+
+      try {
+        // 2. Load land registrations
+        const landResponse = await fetch(`${backendUrl}/api/land-registration/my-lands`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (landResponse.ok) {
+          const landData = await landResponse.json();
+          const landApps = (landData.data || []).map(land => ({
+            id: land._id,
+            type: 'land_registration',
+            title: 'Land Registration',
+            description: `Registration for ${land.area} ${land.areaUnit} in ${land.location}`,
+            status: land.verificationStatus,
+            submittedDate: land.createdAt,
+            lastUpdated: land.updatedAt,
+            currentStage: getStageFromStatus(land.verificationStatus),
+            progress: getProgressFromStatus(land.verificationStatus),
+            priority: 'normal',
+            comments: land.verificationNotes || 'Land registration is being processed.'
+          }));
+          applications.push(...landApps);
+        }
+      } catch (error) {
+        console.warn('Failed to load land registrations:', error.message);
+      }
+
+      try {
+        // 3. Load tenancy offerings
+        const tenancyResponse = await fetch(`${backendUrl}/api/tenancy-offerings/my-offerings`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (tenancyResponse.ok) {
+          const tenancyData = await tenancyResponse.json();
+          const tenancyApps = (tenancyData.data || []).map(offering => ({
+            id: offering._id,
+            type: 'tenancy_offering',
+            title: 'Land Lease Offering',
+            description: `Offering ${offering.area} ${offering.areaUnit} for lease`,
+            status: offering.status,
+            submittedDate: offering.createdAt,
+            lastUpdated: offering.updatedAt,
+            currentStage: getStageFromStatus(offering.status),
+            progress: getProgressFromStatus(offering.status),
+            priority: offering.featured ? 'high' : 'normal',
+            comments: 'Land lease offering is active.'
+          }));
+          applications.push(...tenancyApps);
+        }
+      } catch (error) {
+        console.warn('Failed to load tenancy offerings:', error.message);
+      }
+
+      // 4. Load service requests (fertilizer & rain guard)
+      try {
+        const serviceResponse = await fetch(`${backendUrl}/api/service-requests/my-requests`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (serviceResponse.ok) {
+          const serviceData = await serviceResponse.json();
+          const serviceApps = (serviceData.data || []).map(req => ({
+            id: req._id,
+            type: req.serviceType === 'fertilizer' ? 'fertilizer_service' : 'rain_guard_service',
+            title: req.serviceType === 'fertilizer' ? 'Fertilizer Application Service' : 'Rain Guard Installation Service',
+            description: `${req.serviceType} service for ${req.farmSize} farm with ${req.numberOfTrees} trees`,
+            status: req.status,
+            submittedDate: req.createdAt,
+            lastUpdated: req.updatedAt,
+            currentStage: getStageFromStatus(req.status),
+            progress: getProgressFromStatus(req.status),
+            priority: req.urgency || 'normal',
+            comments: req.specialRequirements || 'Service request is being processed.',
+            assignedProvider: req.assignedProvider,
+            estimatedCost: req.estimatedCost
+          }));
+          applications.push(...serviceApps);
+        }
+      } catch (error) {
+        console.warn('Failed to load service requests:', error.message);
+      }
+
+      // 5. Load training enrollments
+      try {
+        const trainingResponse = await fetch(`${backendUrl}/api/training/user/${user.id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (trainingResponse.ok) {
+          const trainingData = await trainingResponse.json();
+          const trainingApps = (trainingData.data || []).map(enrollment => ({
+            id: enrollment._id,
+            type: 'training_registration',
+            title: 'Training Registration',
+            description: `Enrollment in ${enrollment.moduleTitle || enrollment.trainingTitle || 'training program'}`,
+            status: enrollment.status,
+            submittedDate: enrollment.createdAt,
+            lastUpdated: enrollment.updatedAt,
+            currentStage: getStageFromStatus(enrollment.status),
+            progress: getProgressFromStatus(enrollment.status),
+            priority: 'normal',
+            comments: enrollment.notes || 'Training enrollment is being processed.',
+            trainingDetails: {
+              moduleTitle: enrollment.moduleTitle,
+              startDate: enrollment.startDate,
+              duration: enrollment.duration
+            }
+          }));
+          applications.push(...trainingApps);
+        }
+      } catch (error) {
+        console.warn('Failed to load training enrollments:', error.message);
+      }
+
+      setApplications(applications);
+      console.log(`✅ Loaded ${applications.length} applications from APIs`);
+
     } catch (error) {
       console.error('Error loading applications:', error);
+      setApplications([]);
+    } finally {
       setLoading(false);
     }
+  };
+
+  // Helper functions for status mapping
+  const getStageFromStatus = (status) => {
+    const stageMap = {
+      'submitted': 'Initial Review',
+      'under_review': 'Document Verification',
+      'approved': 'Completed',
+      'rejected': 'Rejected',
+      'pending_documents': 'Awaiting Documents',
+      'in_progress': 'Processing',
+      'verified': 'Verified',
+      'unverified': 'Pending Verification',
+      'active': 'Active',
+      'inactive': 'Inactive'
+    };
+    return stageMap[status] || 'Unknown';
+  };
+
+  const getProgressFromStatus = (status) => {
+    const progressMap = {
+      'submitted': 20,
+      'under_review': 50,
+      'pending_documents': 30,
+      'in_progress': 70,
+      'approved': 100,
+      'verified': 100,
+      'active': 100,
+      'rejected': 0,
+      'inactive': 0
+    };
+    return progressMap[status] || 0;
   };
 
   const filterApplications = () => {
@@ -161,7 +285,11 @@ const ApplicationStatus = ({ isOpen, onClose }) => {
       approved: { color: 'bg-green-100 text-green-800', icon: CheckCircle, text: 'Approved' },
       rejected: { color: 'bg-red-100 text-red-800', icon: AlertCircle, text: 'Rejected' },
       pending_documents: { color: 'bg-orange-100 text-orange-800', icon: FileText, text: 'Pending Documents' },
-      in_progress: { color: 'bg-purple-100 text-purple-800', icon: RefreshCw, text: 'In Progress' }
+      in_progress: { color: 'bg-purple-100 text-purple-800', icon: RefreshCw, text: 'In Progress' },
+      verified: { color: 'bg-green-100 text-green-800', icon: CheckCircle, text: 'Verified' },
+      unverified: { color: 'bg-yellow-100 text-yellow-800', icon: Clock, text: 'Unverified' },
+      active: { color: 'bg-green-100 text-green-800', icon: CheckCircle, text: 'Active' },
+      inactive: { color: 'bg-gray-100 text-gray-800', icon: AlertCircle, text: 'Inactive' }
     };
     
     const config = statusConfig[status] || statusConfig.submitted;
@@ -193,13 +321,15 @@ const ApplicationStatus = ({ isOpen, onClose }) => {
 
   const getTypeLabel = (type) => {
     const typeLabels = {
-      land_lease: 'Land Lease',
+      land_registration: 'Land Registration',
+      tenancy_offering: 'Land Lease',
       tapper_request: 'Tapper Request',
       fertilizer_service: 'Fertilizer Service',
+      rain_guard_service: 'Rain Guard Service',
       training_registration: 'Training Registration',
       payment_request: 'Payment Request'
     };
-    
+
     return typeLabels[type] || type;
   };
 
@@ -282,9 +412,11 @@ const ApplicationStatus = ({ isOpen, onClose }) => {
                 className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">All Types</option>
-                <option value="land_lease">Land Lease</option>
+                <option value="land_registration">Land Registration</option>
+                <option value="tenancy_offering">Land Lease</option>
                 <option value="tapper_request">Tapper Request</option>
                 <option value="fertilizer_service">Fertilizer Service</option>
+                <option value="rain_guard_service">Rain Guard Service</option>
                 <option value="training_registration">Training</option>
               </select>
             </div>
@@ -328,7 +460,7 @@ const ApplicationStatus = ({ isOpen, onClose }) => {
                         <span>•</span>
                         <span>Type: {getTypeLabel(application.type)}</span>
                         <span>•</span>
-                        <span>Submitted: {application.submittedDate}</span>
+                        <span>Submitted: {application.submittedDate ? new Date(application.submittedDate).toLocaleDateString() : 'N/A'}</span>
                       </div>
                     </div>
                     <div className="text-right">
@@ -358,41 +490,47 @@ const ApplicationStatus = ({ isOpen, onClose }) => {
                   </div>
 
                   {/* Reviewer Information */}
-                  <div className="bg-white rounded-xl p-4 mb-4">
-                    <h4 className="text-sm font-medium text-gray-900 mb-3">Assigned Reviewer</h4>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <User className="h-5 w-5 text-blue-600" />
+                  {(application.reviewerName || application.reviewerContact) && (
+                    <div className="bg-white rounded-xl p-4 mb-4">
+                      <h4 className="text-sm font-medium text-gray-900 mb-3">Assigned Reviewer</h4>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <User className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{application.reviewerName || 'Not assigned'}</p>
+                            <p className="text-xs text-gray-500">{application.reviewerContact || 'Contact not available'}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{application.reviewerName}</p>
-                          <p className="text-xs text-gray-500">{application.reviewerContact}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
-                          <Phone className="h-4 w-4" />
-                        </button>
-                        <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
-                          <MessageCircle className="h-4 w-4" />
-                        </button>
+                        {application.reviewerContact && (
+                          <div className="flex items-center space-x-2">
+                            <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
+                              <Phone className="h-4 w-4" />
+                            </button>
+                            <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
+                              <MessageCircle className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Documents */}
-                  <div className="bg-white rounded-xl p-4 mb-4">
-                    <h4 className="text-sm font-medium text-gray-900 mb-3">Submitted Documents</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {application.documents.map((doc, index) => (
-                        <span key={index} className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs">
-                          <FileText className="h-3 w-3 mr-1" />
-                          {doc}
-                        </span>
-                      ))}
+                  {application.documents && application.documents.length > 0 && (
+                    <div className="bg-white rounded-xl p-4 mb-4">
+                      <h4 className="text-sm font-medium text-gray-900 mb-3">Submitted Documents</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {application.documents.map((doc, index) => (
+                          <span key={index} className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs">
+                            <FileText className="h-3 w-3 mr-1" />
+                            {doc}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Required Documents (if any) */}
                   {application.requiredDocuments && application.requiredDocuments.length > 0 && (
@@ -449,11 +587,17 @@ const ApplicationStatus = ({ isOpen, onClose }) => {
                   )}
 
                   {/* Comments */}
-                  <div className="bg-blue-50 rounded-xl p-4 mb-4">
-                    <h4 className="text-sm font-medium text-blue-800 mb-2">Latest Comments</h4>
-                    <p className="text-sm text-blue-700">{application.comments}</p>
-                    <p className="text-xs text-blue-600 mt-2">Last updated: {application.lastUpdated}</p>
-                  </div>
+                  {application.comments && (
+                    <div className="bg-blue-50 rounded-xl p-4 mb-4">
+                      <h4 className="text-sm font-medium text-blue-800 mb-2">Latest Comments</h4>
+                      <p className="text-sm text-blue-700">{application.comments}</p>
+                      {application.lastUpdated && (
+                        <p className="text-xs text-blue-600 mt-2">
+                          Last updated: {new Date(application.lastUpdated).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   {/* Actions */}
                   <div className="flex items-center justify-between pt-4 border-t border-gray-200">

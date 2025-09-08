@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { trainingAPI } from '../../utils/api';
 import enrollmentManager from '../../utils/enrollmentManager';
+import { autoPopulateForm, showProfilePopulationNotification } from '../../utils/userProfileUtils';
 import {
   GraduationCap,
   Calendar,
@@ -37,6 +38,7 @@ const TrainingRegistration = ({ isOpen, onClose, selectedModule, onEnrollmentSuc
     experience: '',
     motivation: ''
   });
+  const [autoPopulatedFields, setAutoPopulatedFields] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [paymentLoading, setPaymentLoading] = useState(false);
 
@@ -198,19 +200,50 @@ const TrainingRegistration = ({ isOpen, onClose, selectedModule, onEnrollmentSuc
     }
   };
 
+  // Auto-populate form with user profile data
+  const populateUserData = async () => {
+    try {
+      const fieldMapping = {
+        name: 'name',
+        email: 'email',
+        phone: 'phone'
+      };
+
+      const result = await autoPopulateForm(
+        setEnrollmentForm,
+        enrollmentForm,
+        fieldMapping,
+        true // Fetch fresh data from server
+      );
+
+      // Track which fields were auto-populated
+      if (result.success) {
+        setAutoPopulatedFields(result.populatedFields.map(field => fieldMapping[field]).filter(Boolean));
+      }
+
+      // Show notification about auto-population
+      showProfilePopulationNotification(showNotification, result);
+
+    } catch (error) {
+      console.error('Error auto-populating form:', error);
+    }
+  };
+
   // Reset form when modal opens/closes
   useEffect(() => {
     if (isOpen && selectedModule) {
       setActiveTab('module-enrollment');
-      // Pre-fill form with user data if available
-      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      // Reset form and auto-populated fields tracking
       setEnrollmentForm({
-        name: userData.name || '',
-        email: userData.email || '',
-        phone: userData.phone || '',
+        name: '',
+        email: '',
+        phone: '',
         experience: '',
         motivation: ''
       });
+      setAutoPopulatedFields([]);
+      // Then auto-populate with user data
+      populateUserData();
     } else if (isOpen && !selectedModule) {
       // Fetch user enrollments when opening without selected module
       fetchUserEnrollments();
@@ -433,39 +466,84 @@ const TrainingRegistration = ({ isOpen, onClose, selectedModule, onEnrollmentSuc
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Full Name *
+                      {autoPopulatedFields.includes('name') && (
+                        <span className="ml-2 text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                          Auto-filled from profile
+                        </span>
+                      )}
                     </label>
                     <input
                       type="text"
                       required
                       value={enrollmentForm.name}
-                      onChange={(e) => setEnrollmentForm({...enrollmentForm, name: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      onChange={(e) => {
+                        setEnrollmentForm({...enrollmentForm, name: e.target.value});
+                        // Remove from auto-populated list if user modifies
+                        if (autoPopulatedFields.includes('name')) {
+                          setAutoPopulatedFields(prev => prev.filter(field => field !== 'name'));
+                        }
+                      }}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                        autoPopulatedFields.includes('name')
+                          ? 'border-green-300 bg-green-50'
+                          : 'border-gray-300'
+                      }`}
                       placeholder="Enter your full name"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Email Address *
+                      {autoPopulatedFields.includes('email') && (
+                        <span className="ml-2 text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                          Auto-filled from profile
+                        </span>
+                      )}
                     </label>
                     <input
                       type="email"
                       required
                       value={enrollmentForm.email}
-                      onChange={(e) => setEnrollmentForm({...enrollmentForm, email: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      onChange={(e) => {
+                        setEnrollmentForm({...enrollmentForm, email: e.target.value});
+                        // Remove from auto-populated list if user modifies
+                        if (autoPopulatedFields.includes('email')) {
+                          setAutoPopulatedFields(prev => prev.filter(field => field !== 'email'));
+                        }
+                      }}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                        autoPopulatedFields.includes('email')
+                          ? 'border-green-300 bg-green-50'
+                          : 'border-gray-300'
+                      }`}
                       placeholder="Enter your email"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Phone Number *
+                      {autoPopulatedFields.includes('phone') && (
+                        <span className="ml-2 text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                          Auto-filled from profile
+                        </span>
+                      )}
                     </label>
                     <input
                       type="tel"
                       required
                       value={enrollmentForm.phone}
-                      onChange={(e) => setEnrollmentForm({...enrollmentForm, phone: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      onChange={(e) => {
+                        setEnrollmentForm({...enrollmentForm, phone: e.target.value});
+                        // Remove from auto-populated list if user modifies
+                        if (autoPopulatedFields.includes('phone')) {
+                          setAutoPopulatedFields(prev => prev.filter(field => field !== 'phone'));
+                        }
+                      }}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                        autoPopulatedFields.includes('phone')
+                          ? 'border-green-300 bg-green-50'
+                          : 'border-gray-300'
+                      }`}
                       placeholder="Enter your phone number"
                     />
                   </div>

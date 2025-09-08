@@ -9,6 +9,7 @@ import Markets from './pages/Markets';
 
 import Pricing from './pages/Pricing';
 import About from './pages/About';
+import Careers from './pages/Careers';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import BrokerRegister from './components/Auth/BrokerRegister';
@@ -18,8 +19,10 @@ import Dashboard from './pages/admin/Dashboard';
 import StaffDashboard from './pages/staff/StaffDashboard';
 import BrokerDashboard from './pages/BrokerDashboard';
 import Profile from './pages/Profile';
+import JoinAsStaff from './pages/JoinAsStaff';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import AuthCallback from './components/Auth/AuthCallback';
+// import CertificateVerification from './pages/CertificateVerification';
 
 function App() {
   return (
@@ -30,13 +33,16 @@ function App() {
       <Route path="/training" element={<Training />} />
       <Route path="/training/:moduleId" element={<TrainingModule />} />
       <Route path="/training-payment-success" element={<TrainingPaymentSuccess />} />
+      {/* <Route path="/certificate-verification" element={<CertificateVerification />} /> */}
       <Route path="/markets" element={<Markets />} />
 
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/about" element={<About />} />
+      <Route path="/careers" element={<Careers />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/register-broker" element={<BrokerRegister />} />
+      <Route path="/join-as-staff" element={<JoinAsStaff />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

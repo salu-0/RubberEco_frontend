@@ -32,8 +32,6 @@ const Register = () => {
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
   const navigate = useNavigate();
 
-
-
   // Enhanced validation functions
   const validateName = (name) => {
     if (!name.trim()) {
@@ -230,10 +228,21 @@ const Register = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       // Then, insert user data into MongoDB via backend API
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/register`, {
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      console.log('🔄 Registering user in MongoDB via:', `${backendUrl}/auth/register`);
+      console.log('🔄 Request payload:', {
+        name: formData.name,
+        email: formData.email,
+        password: '***hidden***',
+        role: 'farmer'
+      });
+
+      const response = await fetch(`${backendUrl}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -246,18 +255,23 @@ const Register = () => {
         })
       });
 
-      const backendData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(backendData.message || 'Registration failed on backend. Please try again.');
+      let backendData;
+      try {
+        backendData = await response.json();
+      } catch (parseError) {
+        throw new Error('Invalid response from server');
       }
 
-      showNotification('Registration successful! Please check your email to verify your account.', 'success');
+      if (!response.ok) {
+        throw new Error(backendData.message || `Registration failed: ${response.status} ${response.statusText}`);
+      }
+
+      showNotification('Registration successful! User created in both Supabase and MongoDB. Please check your email to verify your account.', 'success');
       setTimeout(() => navigate('/login'), 2000);
 
     } catch (error) {
+
       showNotification(error.message || 'Registration failed. Please try again.', 'error');
-      console.error('Registration error:', error);
     } finally {
       setLoading(false);
     }
@@ -282,7 +296,6 @@ const Register = () => {
 
     } catch (error) {
       showNotification(error.message || 'Google signup failed. Please try again.', 'error');
-      console.error('Google signup error:', error);
       setGoogleLoading(false);
     }
   };

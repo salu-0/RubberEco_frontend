@@ -42,87 +42,11 @@ const MyBids = () => {
 
   const loadMyBids = async () => {
     try {
-      // TODO: Replace with actual API call
-      const mockBids = [
-        {
-          id: 'B001',
-          lotId: 'RT001',
-          lotInfo: {
-            farmerName: 'John Doe',
-            location: 'Kottayam, Kerala',
-            numberOfTrees: 150,
-            approximateYield: '2.5 tons',
-            image: b1Image
-          },
-          myBidAmount: 78000,
-          currentHighestBid: 82000,
-          minimumPrice: 75000,
-          status: 'outbid', // winning, outbid, active, expired, won, lost
-          bidTime: '2024-01-25 14:30:00',
-          biddingEndDate: '2024-02-15',
-          totalBids: 5,
-          comment: 'Interested in long-term partnership'
-        },
-        {
-          id: 'B002',
-          lotId: 'RT003',
-          lotInfo: {
-            farmerName: 'Ravi Kumar',
-            location: 'Wayanad, Kerala',
-            numberOfTrees: 100,
-            approximateYield: '1.8 tons',
-            image: b2Image
-          },
-          myBidAmount: 62000,
-          currentHighestBid: 62000,
-          minimumPrice: 55000,
-          status: 'winning',
-          bidTime: '2024-01-24 16:45:00',
-          biddingEndDate: '2024-02-12',
-          totalBids: 5,
-          comment: 'Good location with easy access'
-        },
-        {
-          id: 'B003',
-          lotId: 'RT005',
-          lotInfo: {
-            farmerName: 'Maria Sebastian',
-            location: 'Idukki, Kerala',
-            numberOfTrees: 200,
-            approximateYield: '3.2 tons',
-            image: b3Image
-          },
-          myBidAmount: 95000,
-          currentHighestBid: 95000,
-          minimumPrice: 90000,
-          status: 'active',
-          bidTime: '2024-01-23 11:20:00',
-          biddingEndDate: '2024-02-18',
-          totalBids: 2,
-          comment: ''
-        },
-        {
-          id: 'B004',
-          lotId: 'RT004',
-          lotInfo: {
-            farmerName: 'Suresh Nair',
-            location: 'Kollam, Kerala',
-            numberOfTrees: 80,
-            approximateYield: '1.5 tons',
-            image: b1Image
-          },
-          myBidAmount: 45000,
-          currentHighestBid: 48000,
-          minimumPrice: 40000,
-          status: 'won',
-          bidTime: '2024-01-20 09:15:00',
-          biddingEndDate: '2024-01-30',
-          totalBids: 3,
-          comment: 'Perfect for small scale operations'
-        }
-      ];
-      
-      setMyBids(mockBids);
+      // TODO: Replace with actual API call to fetch real bid data
+      // For now, setting empty array - no mock data
+      const bids = [];
+
+      setMyBids(bids);
       setLoading(false);
     } catch (error) {
       console.error('Error loading my bids:', error);

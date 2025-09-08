@@ -35,16 +35,192 @@ const TrainerManagement = ({ darkMode }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTrainer, setSelectedTrainer] = useState(null);
   const [showTrainerDetails, setShowTrainerDetails] = useState(false);
+  const [showAddTrainerModal, setShowAddTrainerModal] = useState(false);
+  const [addTrainerLoading, setAddTrainerLoading] = useState(false);
+  const [notification, setNotification] = useState(null);
   const [stats, setStats] = useState({
     totalTrainers: 0,
     totalEnrollments: 0,
     activeTrainers: 0,
     completionRate: 0
   });
+  const [newTrainerForm, setNewTrainerForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    department: '',
+    location: '',
+    salary: '',
+    skills: '',
+    notes: ''
+  });
 
   // Get auth token
   const getAuthToken = () => {
     return localStorage.getItem('token') || 'dummy-token';
+  };
+
+  // Show notification
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 5000);
+  };
+
+  // Create sample enrollments for trainers
+  const createSampleEnrollments = async (trainers) => {
+    console.log('📚 Creating sample enrollments for trainers...');
+    const token = getAuthToken();
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
+    const sampleEnrollments = [
+      {
+        userId: trainers[0]?.id || trainers[0]?._id,
+        moduleId: 1,
+        moduleTitle: 'Rubber Tapping Fundamentals',
+        moduleLevel: 'Beginner',
+        paymentAmount: 5000,
+        paymentMethod: 'card',
+        paymentStatus: 'completed',
+        paymentId: 'demo_payment_1',
+        userDetails: {
+          name: trainers[0]?.name,
+          email: trainers[0]?.email,
+          phone: trainers[0]?.phone
+        },
+        progress: {
+          completedLessons: [1, 2, 3],
+          totalLessons: 5,
+          progressPercentage: 100,
+          lastAccessedDate: new Date()
+        }
+      },
+      {
+        userId: trainers[0]?.id || trainers[0]?._id,
+        moduleId: 2,
+        moduleTitle: 'Plantation Management',
+        moduleLevel: 'Intermediate',
+        paymentAmount: 7500,
+        paymentMethod: 'upi',
+        paymentStatus: 'completed',
+        paymentId: 'demo_payment_2',
+        userDetails: {
+          name: trainers[0]?.name,
+          email: trainers[0]?.email,
+          phone: trainers[0]?.phone
+        },
+        progress: {
+          completedLessons: [1, 2],
+          totalLessons: 4,
+          progressPercentage: 75,
+          lastAccessedDate: new Date()
+        }
+      }
+    ];
+
+    if (trainers.length > 1) {
+      sampleEnrollments.push({
+        userId: trainers[1]?.id || trainers[1]?._id,
+        moduleId: 3,
+        moduleTitle: 'Advanced Tapping Techniques',
+        moduleLevel: 'Advanced',
+        paymentAmount: 8000,
+        paymentMethod: 'card',
+        paymentStatus: 'completed',
+        paymentId: 'demo_payment_3',
+        userDetails: {
+          name: trainers[1]?.name,
+          email: trainers[1]?.email,
+          phone: trainers[1]?.phone
+        },
+        progress: {
+          completedLessons: [1, 2, 3, 4],
+          totalLessons: 4,
+          progressPercentage: 100,
+          lastAccessedDate: new Date()
+        }
+      });
+    }
+
+    for (const enrollment of sampleEnrollments) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/training/demo-enroll`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(enrollment)
+        });
+
+        if (response.ok) {
+          console.log(`✅ Created sample enrollment: ${enrollment.moduleTitle} for ${enrollment.userDetails.name}`);
+        } else {
+          const errorText = await response.text();
+          console.log(`⚠️ Failed to create enrollment ${enrollment.moduleTitle}:`, errorText);
+        }
+      } catch (error) {
+        console.log(`❌ Error creating enrollment ${enrollment.moduleTitle}:`, error);
+      }
+    }
+  };
+
+  // Create sample trainers if none exist
+  const createSampleTrainers = async () => {
+    console.log('🎯 Creating sample trainers...');
+    const token = getAuthToken();
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
+    const sampleTrainers = [
+      {
+        name: 'Dr. Sarah Johnson',
+        email: 'sarah.johnson@rubbereco.com',
+        password: 'trainer123',
+        phone: '+91 98765 43210',
+        role: 'trainer',
+        department: 'Training & Development',
+        location: 'Kottayam District, Kerala',
+        status: 'active',
+        performance_rating: 4.8,
+        tasks_completed: 45,
+        tasks_assigned: 50,
+        salary: 65000
+      },
+      {
+        name: 'Prof. Rajesh Kumar',
+        email: 'rajesh.kumar@rubbereco.com',
+        password: 'trainer123',
+        phone: '+91 87654 32109',
+        role: 'trainer',
+        department: 'Field Training',
+        location: 'Thrissur District, Kerala',
+        status: 'active',
+        performance_rating: 4.9,
+        tasks_completed: 38,
+        tasks_assigned: 40,
+        salary: 58000
+      }
+    ];
+
+    for (const trainer of sampleTrainers) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/staff`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(trainer)
+        });
+
+        if (response.ok) {
+          console.log(`✅ Created sample trainer: ${trainer.name}`);
+        } else {
+          console.log(`⚠️ Failed to create trainer ${trainer.name}:`, await response.text());
+        }
+      } catch (error) {
+        console.log(`❌ Error creating trainer ${trainer.name}:`, error);
+      }
+    }
   };
 
   // Fetch all trainers and enrollments
@@ -55,75 +231,123 @@ const TrainerManagement = ({ darkMode }) => {
       const token = getAuthToken();
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
-      // Fetch trainers from Staff collection with role=trainer
-      const trainersResponse = await fetch(`${API_BASE_URL}/staff?role=trainer&limit=100`, {
+      console.log('🔗 API Base URL:', API_BASE_URL);
+      console.log('🔑 Auth Token:', token ? 'Present' : 'Missing');
+
+      // First, try to fetch all staff to see what's available
+      console.log('📡 Fetching all staff members...');
+      const allStaffResponse = await fetch(`${API_BASE_URL}/staff`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
 
-      // Fetch all training enrollments
-      const enrollmentsResponse = await trainingAPI.getAllEnrollments();
+      console.log('📡 All staff response status:', allStaffResponse.status);
 
       let staffTrainers = [];
       let allEnrollments = [];
 
-      if (trainersResponse.ok) {
-        const trainersResult = await trainersResponse.json();
-        staffTrainers = trainersResult.data || [];
-        console.log(`📚 Found ${staffTrainers.length} trainers in Staff collection`);
-      } else {
-        console.warn('Failed to fetch trainers from Staff collection:', trainersResponse.statusText);
-      }
+      if (allStaffResponse.ok) {
+        const allStaffResult = await allStaffResponse.json();
+        console.log('📊 All staff result:', allStaffResult);
 
-      if (enrollmentsResponse.success) {
-        allEnrollments = enrollmentsResponse.enrollments || [];
-        console.log(`📚 Found ${allEnrollments.length} training enrollments`);
-      } else {
-        console.warn('Failed to fetch training enrollments:', enrollmentsResponse.message);
-      }
+        const allStaff = allStaffResult.data || allStaffResult.staff || [];
+        console.log(`📚 Total staff members found: ${allStaff.length}`);
 
-      // If no trainers found in staff collection, fetch all staff and filter for trainer-like roles
-      if (staffTrainers.length === 0) {
-        console.log('📚 No trainers found with role=trainer, fetching all staff...');
-        const allStaffResponse = await fetch(`${API_BASE_URL}/staff?limit=100`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+        // Log all staff to see what roles exist
+        allStaff.forEach((staff, index) => {
+          console.log(`👤 Staff ${index + 1}: ${staff.name} - Role: ${staff.role} - Department: ${staff.department}`);
         });
 
-        if (allStaffResponse.ok) {
-          const allStaffResult = await allStaffResponse.json();
-          const allStaff = allStaffResult.data || [];
+        // Filter for trainers specifically
+        staffTrainers = allStaff.filter(staff => staff.role === 'trainer');
+        console.log(`🎯 Trainers with role='trainer': ${staffTrainers.length}`);
 
-          // Filter for trainer-related roles or names
+        // If no exact trainers found, look for trainer-related roles
+        if (staffTrainers.length === 0) {
+          console.log('🔍 No exact trainers found, looking for trainer-related roles...');
           staffTrainers = allStaff.filter(staff =>
-            staff.role === 'trainer' ||
             staff.role === 'supervisor' ||
             staff.role === 'manager' ||
             staff.name?.toLowerCase().includes('trainer') ||
             staff.department?.toLowerCase().includes('training') ||
-            staff.department?.toLowerCase().includes('education')
+            staff.department?.toLowerCase().includes('education') ||
+            staff.department?.toLowerCase().includes('development')
           );
-
-          console.log(`📚 Found ${staffTrainers.length} potential trainers from all staff`);
+          console.log(`🎯 Trainer-related staff found: ${staffTrainers.length}`);
         }
+
+        // If still no trainers, use first few staff members as demo
+        if (staffTrainers.length === 0 && allStaff.length > 0) {
+          console.log('🎯 No trainer-related staff found, using first few staff as trainers...');
+          staffTrainers = allStaff.slice(0, Math.min(5, allStaff.length));
+          console.log(`🎯 Using ${staffTrainers.length} staff members as trainers`);
+        }
+      } else {
+        const errorText = await allStaffResponse.text();
+        console.error('❌ Failed to fetch staff:', allStaffResponse.status, errorText);
       }
 
+      // Fetch training enrollments
+      console.log('📡 Fetching training enrollments...');
+      try {
+        const enrollmentsResponse = await trainingAPI.getAllEnrollments();
+        if (enrollmentsResponse.success) {
+          allEnrollments = enrollmentsResponse.enrollments || [];
+          console.log(`📚 Found ${allEnrollments.length} training enrollments`);
+
+          // If no enrollments found and we have trainers, create sample enrollments
+          if (allEnrollments.length === 0 && staffTrainers.length > 0) {
+            console.log('📚 No enrollments found, creating sample enrollments...');
+            await createSampleEnrollments(staffTrainers);
+
+            // Retry fetching enrollments
+            const retryEnrollmentsResponse = await trainingAPI.getAllEnrollments();
+            if (retryEnrollmentsResponse.success) {
+              allEnrollments = retryEnrollmentsResponse.enrollments || [];
+              console.log(`📚 After creating samples, found ${allEnrollments.length} training enrollments`);
+            }
+          }
+        } else {
+          console.warn('⚠️ Failed to fetch training enrollments:', enrollmentsResponse.message);
+        }
+      } catch (enrollmentError) {
+        console.warn('⚠️ Error fetching enrollments:', enrollmentError);
+      }
+
+      console.log(`🔄 Processing ${staffTrainers.length} trainers...`);
+
       // Enhance trainer data with enrollment information
-      const enhancedTrainers = staffTrainers.map(trainer => {
+      const enhancedTrainers = staffTrainers.map((trainer, index) => {
+        console.log(`👤 Processing trainer ${index + 1}: ${trainer.name} (${trainer.email})`);
+
         // Try to match enrollments by email or staff ID
         const trainerEnrollments = allEnrollments.filter(enrollment => {
           const enrollmentUserId = enrollment.user?.id || enrollment.userId;
           const enrollmentUserEmail = enrollment.user?.email || enrollment.userDetails?.email;
+          const enrollmentUserName = enrollment.user?.name || enrollment.userDetails?.name;
 
-          // Match by email (most reliable) or by ID
-          return enrollmentUserEmail === trainer.email ||
-                 enrollmentUserId === trainer._id ||
-                 enrollmentUserId === trainer.id;
+          // Match by email (most reliable), ID, or name
+          const emailMatch = enrollmentUserEmail && trainer.email &&
+                            enrollmentUserEmail.toLowerCase() === trainer.email.toLowerCase();
+          const idMatch = enrollmentUserId && (enrollmentUserId === trainer._id || enrollmentUserId === trainer.id);
+          const nameMatch = enrollmentUserName && trainer.name &&
+                           enrollmentUserName.toLowerCase().includes(trainer.name.toLowerCase().split(' ')[0]);
+
+          return emailMatch || idMatch || nameMatch;
         });
+
+        console.log(`📚 Found ${trainerEnrollments.length} enrollments for ${trainer.name}`);
+        if (trainerEnrollments.length > 0) {
+          console.log(`   Enrollments:`, trainerEnrollments.map(e => ({
+            title: e.moduleTitle,
+            level: e.moduleLevel,
+            progress: e.progress?.progressPercentage || 0,
+            userEmail: e.user?.email || e.userDetails?.email,
+            userName: e.user?.name || e.userDetails?.name
+          })));
+        }
 
         const completedCourses = trainerEnrollments.filter(e =>
           e.progress?.progressPercentage >= 100 || e.certificateIssued
@@ -135,27 +359,31 @@ const TrainerManagement = ({ darkMode }) => {
         let lastActiveDate = 'Never';
         if (trainer.last_active) {
           lastActiveDate = new Date(trainer.last_active).toLocaleDateString();
+        } else if (trainer.updatedAt) {
+          lastActiveDate = new Date(trainer.updatedAt).toLocaleDateString();
+        } else if (trainer.createdAt) {
+          lastActiveDate = new Date(trainer.createdAt).toLocaleDateString();
         } else if (trainerEnrollments.length > 0) {
           const latestEnrollment = Math.max(...trainerEnrollments.map(e => new Date(e.enrollmentDate || e.createdAt)));
           lastActiveDate = new Date(latestEnrollment).toLocaleDateString();
         }
 
-        return {
+        const enhancedTrainer = {
           // Map staff fields to trainer interface
           id: trainer._id || trainer.id,
-          name: trainer.name,
-          email: trainer.email,
-          phone: trainer.phone,
-          role: trainer.role,
-          location: trainer.location,
-          department: trainer.department,
-          bio: `${trainer.role} in ${trainer.department}`,
-          avatar: trainer.avatar,
-          hireDate: trainer.hire_date,
-          salary: trainer.salary,
-          performanceRating: trainer.performance_rating,
-          tasksCompleted: trainer.tasks_completed,
-          tasksAssigned: trainer.tasks_assigned,
+          name: trainer.name || 'Unknown Name',
+          email: trainer.email || 'No email',
+          phone: trainer.phone || 'No phone',
+          role: trainer.role || 'trainer',
+          location: trainer.location || 'No location',
+          department: trainer.department || 'No department',
+          bio: `${trainer.role || 'trainer'} in ${trainer.department || 'Training'}`,
+          avatar: trainer.avatar || '',
+          hireDate: trainer.hire_date || trainer.createdAt,
+          salary: trainer.salary || 0,
+          performanceRating: trainer.performance_rating || 0,
+          tasksCompleted: trainer.tasks_completed || 0,
+          tasksAssigned: trainer.tasks_assigned || 0,
 
           // Enrollment-related data
           enrollments: trainerEnrollments,
@@ -169,8 +397,16 @@ const TrainerManagement = ({ darkMode }) => {
             ? Math.round(trainerEnrollments.reduce((sum, e) => sum + (e.progress?.progressPercentage || 0), 0) / trainerEnrollments.length)
             : 0,
           lastActive: lastActiveDate,
-          status: trainer.status || (trainerEnrollments.length > 0 ? 'active' : 'inactive')
+          status: trainer.status || 'active'
         };
+
+        console.log(`✅ Enhanced trainer: ${enhancedTrainer.name} - ${enhancedTrainer.department}`);
+        return enhancedTrainer;
+      });
+
+      console.log(`✅ Final enhanced trainers: ${enhancedTrainers.length}`);
+      enhancedTrainers.forEach((trainer, index) => {
+        console.log(`   ${index + 1}. ${trainer.name} - ${trainer.department} - ${trainer.email}`);
       });
 
       setTrainers(enhancedTrainers);
@@ -180,21 +416,92 @@ const TrainerManagement = ({ darkMode }) => {
       const totalTrainers = enhancedTrainers.length;
       const activeTrainers = enhancedTrainers.filter(t => t.status === 'active').length;
       const totalEnrollments = allEnrollments.length;
-      const completionRate = totalEnrollments > 0 
+      const completionRate = totalEnrollments > 0
         ? Math.round((allEnrollments.filter(e => e.progress?.progressPercentage >= 100).length / totalEnrollments) * 100)
         : 0;
 
-      setStats({
+      const newStats = {
         totalTrainers,
         activeTrainers,
         totalEnrollments,
         completionRate
-      });
+      };
+
+      console.log('📊 Calculated stats:', newStats);
+      setStats(newStats);
+
+      // Only use demo data if we have absolutely no staff data
+      if (enhancedTrainers.length === 0) {
+        console.log('⚠️ No trainers found, will use demo data as fallback');
+        throw new Error('No trainers found in database');
+      }
 
     } catch (error) {
-      console.error('Error fetching trainers and enrollments:', error);
+      console.error('❌ Error fetching trainers and enrollments:', error);
 
-      // Fallback demo data based on Staff collection structure
+      // Try to create sample trainers if none exist
+      console.log('🔄 Attempting to create sample trainers...');
+      try {
+        await createSampleTrainers();
+        console.log('✅ Sample trainers created, retrying fetch...');
+
+        // Retry fetching after creating sample data
+        const retryResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/staff`, {
+          headers: {
+            'Authorization': `Bearer ${getAuthToken()}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (retryResponse.ok) {
+          const retryResult = await retryResponse.json();
+          const retryStaff = retryResult.data || [];
+          const retryTrainers = retryStaff.filter(staff => staff.role === 'trainer');
+
+          if (retryTrainers.length > 0) {
+            console.log(`✅ Found ${retryTrainers.length} trainers after creating samples`);
+            const enhancedRetryTrainers = retryTrainers.map(trainer => ({
+              id: trainer._id || trainer.id,
+              name: trainer.name,
+              email: trainer.email,
+              phone: trainer.phone,
+              role: trainer.role,
+              location: trainer.location,
+              department: trainer.department,
+              bio: `${trainer.role} in ${trainer.department}`,
+              avatar: trainer.avatar || '',
+              hireDate: trainer.hire_date,
+              salary: trainer.salary,
+              performanceRating: trainer.performance_rating,
+              tasksCompleted: trainer.tasks_completed,
+              tasksAssigned: trainer.tasks_assigned,
+              enrollments: [],
+              totalCourses: 0,
+              completedCourses: 0,
+              totalRevenue: 0,
+              completionRate: 0,
+              avgProgress: 0,
+              lastActive: trainer.last_active ? new Date(trainer.last_active).toLocaleDateString() : 'Recently',
+              status: trainer.status || 'active'
+            }));
+
+            setTrainers(enhancedRetryTrainers);
+            setStats({
+              totalTrainers: enhancedRetryTrainers.length,
+              activeTrainers: enhancedRetryTrainers.filter(t => t.status === 'active').length,
+              totalEnrollments: 0,
+              completionRate: 0
+            });
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (createError) {
+        console.error('❌ Failed to create sample trainers:', createError);
+      }
+
+      // Final fallback to demo data
+      console.log('⚠️ Using fallback demo data');
       const demoTrainers = [
         {
           id: 'staff_trainer_1',
@@ -338,6 +645,111 @@ const TrainerManagement = ({ darkMode }) => {
     setShowTrainerDetails(true);
   };
 
+  // Handle adding a new trainer
+  const handleAddTrainer = async (e) => {
+    e.preventDefault();
+    setAddTrainerLoading(true);
+
+    try {
+      const token = getAuthToken();
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
+      // Validate required fields
+      if (!newTrainerForm.name || !newTrainerForm.email || !newTrainerForm.phone || !newTrainerForm.department || !newTrainerForm.location) {
+        showNotification('Please fill in all required fields', 'error');
+        setAddTrainerLoading(false);
+        return;
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(newTrainerForm.email)) {
+        showNotification('Please enter a valid email address', 'error');
+        setAddTrainerLoading(false);
+        return;
+      }
+
+      // Validate phone format (basic validation)
+      const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,}$/;
+      if (!phoneRegex.test(newTrainerForm.phone)) {
+        showNotification('Please enter a valid phone number', 'error');
+        setAddTrainerLoading(false);
+        return;
+      }
+
+      // Prepare trainer data
+      const trainerData = {
+        name: newTrainerForm.name.trim(),
+        email: newTrainerForm.email.toLowerCase().trim(),
+        password: 'trainer123', // Default password
+        phone: newTrainerForm.phone.trim(),
+        role: 'trainer',
+        department: newTrainerForm.department.trim(),
+        location: newTrainerForm.location.trim(),
+        salary: parseInt(newTrainerForm.salary) || 0,
+        skills: newTrainerForm.skills ? newTrainerForm.skills.split(',').map(s => s.trim()).filter(s => s) : [],
+        notes: newTrainerForm.notes.trim(),
+        status: 'active',
+        performance_rating: 0,
+        tasks_completed: 0,
+        tasks_assigned: 0
+      };
+
+      console.log('🔄 Creating new trainer:', trainerData);
+
+      const response = await fetch(`${API_BASE_URL}/staff`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(trainerData)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Trainer created successfully:', result);
+
+        // Reset form
+        setNewTrainerForm({
+          name: '',
+          email: '',
+          phone: '',
+          department: '',
+          location: '',
+          salary: '',
+          skills: '',
+          notes: ''
+        });
+
+        // Close modal
+        setShowAddTrainerModal(false);
+
+        // Refresh trainers list
+        await fetchTrainersAndEnrollments();
+
+        showNotification(`Trainer "${trainerData.name}" added successfully!`, 'success');
+      } else {
+        const errorResult = await response.json();
+        console.error('❌ Failed to create trainer:', errorResult);
+        showNotification(`Failed to add trainer: ${errorResult.message || 'Unknown error'}`, 'error');
+      }
+    } catch (error) {
+      console.error('❌ Error adding trainer:', error);
+      showNotification(`Error adding trainer: ${error.message}`, 'error');
+    } finally {
+      setAddTrainerLoading(false);
+    }
+  };
+
+  // Handle form input changes
+  const handleFormChange = (field, value) => {
+    setNewTrainerForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   const StatCard = ({ title, value, icon: Icon, color, description }) => (
     <motion.div
       className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
@@ -376,6 +788,33 @@ const TrainerManagement = ({ darkMode }) => {
 
   return (
     <div className="space-y-6">
+      {/* Notification */}
+      {notification && (
+        <motion.div
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -50 }}
+          className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg flex items-center space-x-3 ${
+            notification.type === 'success'
+              ? 'bg-green-500 text-white'
+              : 'bg-red-500 text-white'
+          }`}
+        >
+          {notification.type === 'success' ? (
+            <CheckCircle className="h-5 w-5" />
+          ) : (
+            <AlertCircle className="h-5 w-5" />
+          )}
+          <span>{notification.message}</span>
+          <button
+            onClick={() => setNotification(null)}
+            className="ml-2 text-white hover:text-gray-200"
+          >
+            ×
+          </button>
+        </motion.div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -386,14 +825,47 @@ const TrainerManagement = ({ darkMode }) => {
             Manage trainers and monitor their course enrollments
           </p>
         </div>
-        <motion.button
-          className="mt-4 sm:mt-0 bg-gradient-to-r from-primary-500 to-primary-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center space-x-2"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <Plus className="h-5 w-5" />
-          <span>Add Trainer</span>
-        </motion.button>
+        <div className="flex space-x-3">
+          <motion.button
+            onClick={async () => {
+              console.log('🔄 Manual refresh triggered');
+              await fetchTrainersAndEnrollments();
+            }}
+            className="mt-4 sm:mt-0 bg-gray-600 text-white px-4 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center space-x-2"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <span>🔄</span>
+            <span>Refresh</span>
+          </motion.button>
+          <motion.button
+            onClick={async () => {
+              console.log('📚 Creating sample enrollments...');
+              if (trainers.length > 0) {
+                await createSampleEnrollments(trainers);
+                await fetchTrainersAndEnrollments();
+                showNotification('Sample enrollments created successfully!', 'success');
+              } else {
+                showNotification('No trainers found to create enrollments for', 'error');
+              }
+            }}
+            className="mt-4 sm:mt-0 bg-blue-600 text-white px-4 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center space-x-2"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <BookOpen className="h-5 w-5" />
+            <span>Add Sample Enrollments</span>
+          </motion.button>
+          <motion.button
+            onClick={() => setShowAddTrainerModal(true)}
+            className="mt-4 sm:mt-0 bg-gradient-to-r from-primary-500 to-primary-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center space-x-2"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Plus className="h-5 w-5" />
+            <span>Add Trainer</span>
+          </motion.button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -551,6 +1023,20 @@ const TrainerManagement = ({ darkMode }) => {
                         <p className="text-sm text-green-600">
                           {trainer.completedCourses || 0} Completed
                         </p>
+                        {trainer.enrollments && trainer.enrollments.length > 0 && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            {trainer.enrollments.slice(0, 2).map((enrollment, idx) => (
+                              <div key={idx} className="truncate">
+                                • {enrollment.moduleTitle}
+                              </div>
+                            ))}
+                            {trainer.enrollments.length > 2 && (
+                              <div className="text-primary-600 font-medium">
+                                +{trainer.enrollments.length - 2} more
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -626,6 +1112,256 @@ const TrainerManagement = ({ darkMode }) => {
           </table>
         </div>
       </div>
+
+      {/* Add Trainer Modal */}
+      {showAddTrainerModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto`}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+          >
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                  <Plus className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white">Add New Trainer</h2>
+                  <p className="text-primary-100">Create a new trainer profile</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAddTrainerModal(false)}
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+              >
+                <span className="text-white text-2xl">×</span>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <form onSubmit={handleAddTrainer} className="p-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Basic Information */}
+                <div className="space-y-4">
+                  <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Basic Information
+                  </h3>
+
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={newTrainerForm.name}
+                      onChange={(e) => handleFormChange('name', e.target.value)}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                        darkMode
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                      placeholder="Enter trainer's full name"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      value={newTrainerForm.email}
+                      onChange={(e) => handleFormChange('email', e.target.value)}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                        darkMode
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                      placeholder="trainer@rubbereco.com"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Phone Number *
+                    </label>
+                    <input
+                      type="tel"
+                      value={newTrainerForm.phone}
+                      onChange={(e) => handleFormChange('phone', e.target.value)}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                        darkMode
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                      placeholder="+91 98765 43210"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Work Information */}
+                <div className="space-y-4">
+                  <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Work Information
+                  </h3>
+
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Department *
+                    </label>
+                    <select
+                      value={newTrainerForm.department}
+                      onChange={(e) => handleFormChange('department', e.target.value)}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                        darkMode
+                          ? 'bg-gray-700 border-gray-600 text-white'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                      required
+                    >
+                      <option value="">Select Department</option>
+                      <option value="Training & Development">Training & Development</option>
+                      <option value="Field Training">Field Training</option>
+                      <option value="Technical Training">Technical Training</option>
+                      <option value="Safety Training">Safety Training</option>
+                      <option value="Research & Training">Research & Training</option>
+                      <option value="Quality Training">Quality Training</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Location *
+                    </label>
+                    <input
+                      type="text"
+                      value={newTrainerForm.location}
+                      onChange={(e) => handleFormChange('location', e.target.value)}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                        darkMode
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                      placeholder="Kottayam District, Kerala"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Monthly Salary (₹)
+                    </label>
+                    <input
+                      type="number"
+                      value={newTrainerForm.salary}
+                      onChange={(e) => handleFormChange('salary', e.target.value)}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                        darkMode
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                      placeholder="50000"
+                      min="0"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional Information */}
+              <div className="mt-6 space-y-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Skills (comma-separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={newTrainerForm.skills}
+                    onChange={(e) => handleFormChange('skills', e.target.value)}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                      darkMode
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    }`}
+                    placeholder="Rubber Plantation Management, Training Delivery, Curriculum Development"
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Notes
+                  </label>
+                  <textarea
+                    value={newTrainerForm.notes}
+                    onChange={(e) => handleFormChange('notes', e.target.value)}
+                    rows={3}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                      darkMode
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    }`}
+                    placeholder="Additional notes about the trainer..."
+                  />
+                </div>
+              </div>
+
+              {/* Default Password Info */}
+              <div className={`mt-6 p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-blue-50'} border ${darkMode ? 'border-gray-600' : 'border-blue-200'}`}>
+                <div className="flex items-center space-x-2">
+                  <User className="h-5 w-5 text-blue-600" />
+                  <span className={`font-medium ${darkMode ? 'text-blue-400' : 'text-blue-800'}`}>
+                    Login Information
+                  </span>
+                </div>
+                <p className={`text-sm mt-2 ${darkMode ? 'text-gray-300' : 'text-blue-700'}`}>
+                  Default password will be set to: <strong>trainer123</strong>
+                  <br />
+                  The trainer can change this password after first login.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-4 mt-8">
+                <button
+                  type="button"
+                  onClick={() => setShowAddTrainerModal(false)}
+                  className={`px-6 py-3 border rounded-lg font-medium transition-colors ${
+                    darkMode
+                      ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Cancel
+                </button>
+                <motion.button
+                  type="submit"
+                  disabled={addTrainerLoading}
+                  className="bg-gradient-to-r from-primary-500 to-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                  whileHover={{ scale: addTrainerLoading ? 1 : 1.02 }}
+                  whileTap={{ scale: addTrainerLoading ? 1 : 0.98 }}
+                >
+                  {addTrainerLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <span>Creating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-5 w-5" />
+                      <span>Add Trainer</span>
+                    </>
+                  )}
+                </motion.button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
 
       {/* Trainer Details Modal */}
       {showTrainerDetails && selectedTrainer && (
@@ -772,48 +1508,137 @@ const TrainerManagement = ({ darkMode }) => {
 
               {/* Enrolled Courses */}
               <div>
-                <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  Enrolled Courses ({selectedTrainer.enrollments?.length || 0})
-                </h3>
-                <div className="space-y-3">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Enrolled Courses ({selectedTrainer.enrollments?.length || 0})
+                  </h3>
+                  {selectedTrainer.totalRevenue > 0 && (
+                    <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Total Revenue: <span className="font-semibold text-green-600">₹{selectedTrainer.totalRevenue.toLocaleString()}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-4">
                   {selectedTrainer.enrollments && selectedTrainer.enrollments.length > 0 ? (
                     selectedTrainer.enrollments.map((enrollment, index) => (
                       <div
                         key={index}
-                        className={`p-4 rounded-lg border ${
+                        className={`p-5 rounded-xl border ${
                           darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
-                        }`}
+                        } hover:shadow-md transition-shadow`}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <BookOpen className="h-5 w-5 text-primary-600" />
-                            <div>
-                              <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-start space-x-3">
+                            <div className={`p-2 rounded-lg ${
+                              enrollment.progress?.progressPercentage >= 100
+                                ? 'bg-green-100 text-green-600'
+                                : enrollment.progress?.progressPercentage >= 50
+                                ? 'bg-blue-100 text-blue-600'
+                                : 'bg-orange-100 text-orange-600'
+                            }`}>
+                              <BookOpen className="h-5 w-5" />
+                            </div>
+                            <div className="flex-1">
+                              <p className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                                 {enrollment.moduleTitle || 'Unknown Course'}
                               </p>
-                              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                Level: {enrollment.moduleLevel || 'Not specified'}
-                              </p>
+                              <div className="flex items-center space-x-4 mt-1">
+                                <span className={`text-sm px-2 py-1 rounded-full ${
+                                  enrollment.moduleLevel === 'Beginner'
+                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                                    : enrollment.moduleLevel === 'Intermediate'
+                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                                    : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
+                                }`}>
+                                  {enrollment.moduleLevel || 'Not specified'}
+                                </span>
+                                {enrollment.paymentAmount && (
+                                  <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                    Fee: ₹{enrollment.paymentAmount.toLocaleString()}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                            <div className={`text-2xl font-bold ${
+                              enrollment.progress?.progressPercentage >= 100
+                                ? 'text-green-600'
+                                : enrollment.progress?.progressPercentage >= 50
+                                ? 'text-blue-600'
+                                : 'text-orange-600'
+                            }`}>
                               {enrollment.progress?.progressPercentage || 0}%
-                            </p>
-                            <div className="w-24 bg-gray-200 dark:bg-gray-600 rounded-full h-2 mt-1">
-                              <div
-                                className="bg-gradient-to-r from-primary-500 to-primary-600 h-2 rounded-full"
-                                style={{ width: `${enrollment.progress?.progressPercentage || 0}%` }}
-                              ></div>
                             </div>
+                            <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                              Progress
+                            </p>
                           </div>
                         </div>
+
+                        {/* Progress Bar */}
+                        <div className="mb-3">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                              Lessons: {enrollment.progress?.completedLessons?.length || 0} / {enrollment.progress?.totalLessons || 0}
+                            </span>
+                            <span className={`text-sm font-medium ${
+                              enrollment.progress?.progressPercentage >= 100
+                                ? 'text-green-600'
+                                : 'text-gray-600'
+                            }`}>
+                              {enrollment.progress?.progressPercentage >= 100 ? 'Completed' : 'In Progress'}
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3">
+                            <div
+                              className={`h-3 rounded-full transition-all duration-300 ${
+                                enrollment.progress?.progressPercentage >= 100
+                                  ? 'bg-gradient-to-r from-green-500 to-green-600'
+                                  : enrollment.progress?.progressPercentage >= 50
+                                  ? 'bg-gradient-to-r from-blue-500 to-blue-600'
+                                  : 'bg-gradient-to-r from-orange-500 to-orange-600'
+                              }`}
+                              style={{ width: `${enrollment.progress?.progressPercentage || 0}%` }}
+                            ></div>
+                          </div>
+                        </div>
+
+                        {/* Additional Details */}
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Payment Method:</span>
+                            <span className={`ml-2 font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                              {enrollment.paymentMethod?.toUpperCase() || 'N/A'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Status:</span>
+                            <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                              enrollment.paymentStatus === 'completed'
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
+                            }`}>
+                              {enrollment.paymentStatus || 'Unknown'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Last Accessed */}
+                        {enrollment.progress?.lastAccessedDate && (
+                          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                            <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                              Last accessed: {new Date(enrollment.progress.lastAccessedDate).toLocaleDateString()}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     ))
                   ) : (
-                    <div className={`text-center py-8 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No enrolled courses found</p>
+                    <div className={`text-center py-12 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      <BookOpen className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                      <p className="text-lg font-medium mb-2">No enrolled courses found</p>
+                      <p className="text-sm">This trainer hasn't enrolled in any courses yet.</p>
                     </div>
                   )}
                 </div>

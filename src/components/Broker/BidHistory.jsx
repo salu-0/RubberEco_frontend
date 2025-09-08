@@ -14,7 +14,10 @@ import {
   FaDownload,
   FaEye,
   FaSortAmountDown,
-  FaSortAmountUp
+  FaSortAmountUp,
+  FaPhone,
+  FaEnvelope,
+  FaWhatsapp
 } from 'react-icons/fa';
 import './BidHistory.css';
 
@@ -35,6 +38,8 @@ const BidHistory = () => {
     maxAmount: '',
     sortBy: 'newest'
   });
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [selectedBid, setSelectedBid] = useState(null);
 
   useEffect(() => {
     loadBidHistory();
@@ -46,121 +51,12 @@ const BidHistory = () => {
 
   const loadBidHistory = async () => {
     try {
-      // TODO: Replace with actual API call
-      const mockHistory = [
-        {
-          id: 'BH001',
-          lotId: 'RT001',
-          lotInfo: {
-            farmerName: 'John Doe',
-            location: 'Kottayam, Kerala',
-            numberOfTrees: 150,
-            approximateYield: '2.5 tons',
-            image: b1Image
-          },
-          bidAmount: 78000,
-          finalAmount: 82000,
-          minimumPrice: 75000,
-          status: 'lost', // won, lost, rejected, expired
-          bidTime: '2024-01-25 14:30:00',
-          biddingEndDate: '2024-02-15',
-          resultDate: '2024-02-15 18:00:00',
-          totalBids: 8,
-          myRank: 2,
-          comment: 'Interested in long-term partnership',
-          winnerBid: 82000
-        },
-        {
-          id: 'BH002',
-          lotId: 'RT003',
-          lotInfo: {
-            farmerName: 'Ravi Kumar',
-            location: 'Wayanad, Kerala',
-            numberOfTrees: 100,
-            approximateYield: '1.8 tons',
-            image: b2Image
-          },
-          bidAmount: 62000,
-          finalAmount: 62000,
-          minimumPrice: 55000,
-          status: 'won',
-          bidTime: '2024-01-24 16:45:00',
-          biddingEndDate: '2024-02-12',
-          resultDate: '2024-02-12 18:00:00',
-          totalBids: 5,
-          myRank: 1,
-          comment: 'Good location with easy access',
-          winnerBid: 62000
-        },
-        {
-          id: 'BH003',
-          lotId: 'RT005',
-          lotInfo: {
-            farmerName: 'Maria Sebastian',
-            location: 'Idukki, Kerala',
-            numberOfTrees: 200,
-            approximateYield: '3.2 tons',
-            image: b3Image
-          },
-          bidAmount: 85000,
-          finalAmount: null,
-          minimumPrice: 90000,
-          status: 'rejected',
-          bidTime: '2024-01-23 11:20:00',
-          biddingEndDate: '2024-02-18',
-          resultDate: '2024-01-23 12:00:00',
-          totalBids: 1,
-          myRank: null,
-          comment: 'Below minimum price',
-          winnerBid: null
-        },
-        {
-          id: 'BH004',
-          lotId: 'RT004',
-          lotInfo: {
-            farmerName: 'Suresh Nair',
-            location: 'Kollam, Kerala',
-            numberOfTrees: 80,
-            approximateYield: '1.5 tons',
-            image: b1Image
-          },
-          bidAmount: 45000,
-          finalAmount: 45000,
-          minimumPrice: 40000,
-          status: 'won',
-          bidTime: '2024-01-20 09:15:00',
-          biddingEndDate: '2024-01-30',
-          resultDate: '2024-01-30 18:00:00',
-          totalBids: 3,
-          myRank: 1,
-          comment: 'Perfect for small scale operations',
-          winnerBid: 45000
-        },
-        {
-          id: 'BH005',
-          lotId: 'RT006',
-          lotInfo: {
-            farmerName: 'Priya Menon',
-            location: 'Thrissur, Kerala',
-            numberOfTrees: 120,
-            approximateYield: '2.0 tons',
-            image: b2Image
-          },
-          bidAmount: 65000,
-          finalAmount: null,
-          minimumPrice: 60000,
-          status: 'expired',
-          bidTime: '2024-01-18 15:30:00',
-          biddingEndDate: '2024-01-25',
-          resultDate: '2024-01-25 18:00:00',
-          totalBids: 2,
-          myRank: null,
-          comment: 'Interested but bidding expired',
-          winnerBid: null
-        }
-      ];
-      
-      setBidHistory(mockHistory);
+      // TODO: Replace with actual API call to fetch real bid history
+      // For now, setting empty array - no mock data
+      const history = [];
+
+
+      setBidHistory(history);
       setLoading(false);
     } catch (error) {
       console.error('Error loading bid history:', error);
@@ -310,6 +206,11 @@ const BidHistory = () => {
     console.log('Exporting bid history...');
   };
 
+  const openContactModal = (bid) => {
+    setSelectedBid(bid);
+    setShowContactModal(true);
+  };
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -440,6 +341,7 @@ const BidHistory = () => {
             getStatusInfo={getStatusInfo}
             formatCurrency={formatCurrency}
             formatDateTime={formatDateTime}
+            openContactModal={openContactModal}
           />
         ))}
       </div>
@@ -451,12 +353,71 @@ const BidHistory = () => {
           <p>Try adjusting your search criteria or filters</p>
         </div>
       )}
+
+      {/* Contact Farmer Modal */}
+      {showContactModal && selectedBid && (
+        <div className="contact-modal-overlay">
+          <div className="contact-modal">
+            <div className="contact-modal-header">
+              <h3>Contact Farmer</h3>
+              <button 
+                className="close-btn"
+                onClick={() => {
+                  setShowContactModal(false);
+                  setSelectedBid(null);
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="farmer-details">
+              <h4>{selectedBid.lotInfo.farmerName}</h4>
+              <p>📧 {selectedBid.lotInfo.farmerEmail || 'No email provided'}</p>
+              <p>📞 {selectedBid.lotInfo.farmerPhone || 'No phone provided'}</p>
+            </div>
+
+            <div className="contact-options">
+              {selectedBid.lotInfo.farmerPhone && (
+                <a
+                  href={`tel:${selectedBid.lotInfo.farmerPhone}`}
+                  className="contact-btn call-btn"
+                >
+                  <FaPhone /> Call Farmer
+                </a>
+              )}
+
+              {selectedBid.lotInfo.farmerEmail && (
+                <a
+                  href={`mailto:${selectedBid.lotInfo.farmerEmail}?subject=Regarding your lot ${selectedBid.lotId}&body=Dear ${selectedBid.lotInfo.farmerName},%0D%0A%0D%0ARegarding your lot ${selectedBid.lotId} at ${selectedBid.lotInfo.location}.%0D%0A%0D%0ABest regards,%0D%0ARubberEco Team`}
+                  className="contact-btn email-btn"
+                >
+                  <FaEnvelope /> Send Email
+                </a>
+              )}
+
+              {selectedBid.lotInfo.farmerPhone && (
+                <button
+                  onClick={() => {
+                    const message = `Hello ${selectedBid.lotInfo.farmerName}, regarding your lot ${selectedBid.lotId} at ${selectedBid.lotInfo.location}. We will get back to you soon.`;
+                    const whatsappUrl = `https://wa.me/${selectedBid.lotInfo.farmerPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`;
+                    window.open(whatsappUrl, '_blank');
+                  }}
+                  className="contact-btn whatsapp-btn"
+                >
+                  <FaWhatsapp /> WhatsApp
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 // History Card Component
-const HistoryCard = ({ bid, getStatusInfo, formatCurrency, formatDateTime }) => {
+const HistoryCard = ({ bid, getStatusInfo, formatCurrency, formatDateTime, openContactModal }) => {
   const statusInfo = getStatusInfo(bid.status);
   const StatusIcon = statusInfo.icon;
 
@@ -547,7 +508,10 @@ const HistoryCard = ({ bid, getStatusInfo, formatCurrency, formatDateTime }) => 
             <FaEye /> View Details
           </button>
           {bid.status === 'won' && (
-            <button className="btn-contact">
+            <button 
+              className="btn-contact"
+              onClick={() => openContactModal(bid)}
+            >
               <FaUser /> Contact Farmer
             </button>
           )}

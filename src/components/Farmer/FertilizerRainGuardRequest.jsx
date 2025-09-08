@@ -27,6 +27,8 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState('new-request');
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   
   // Request Form State
   const [requestForm, setRequestForm] = useState({
@@ -34,26 +36,96 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
     farmLocation: '',
     farmSize: '',
     numberOfTrees: '',
-    soilType: '',
     lastFertilizerDate: '',
     fertilizerType: 'organic',
     rainGuardType: 'temporary',
     urgency: 'normal',
     preferredDate: '',
-    budgetRange: '',
+    ratePerTree: '',
     specialRequirements: '',
-    contactPreference: 'phone',
+    contactPhone: '',
+    contactEmail: '',
     documents: []
   });
 
   // Service requests from database (no mock data)
   const [myRequests, setMyRequests] = useState([]);
 
+  // Load user data when component mounts
+  useEffect(() => {
+    if (isOpen) {
+      loadUserContactDetails();
+      loadMyRequests();
+    }
+  }, [isOpen]);
+
+  const loadUserContactDetails = () => {
+    try {
+      const farmerData = getCurrentFarmer();
+      setRequestForm(prev => ({
+        ...prev,
+        contactPhone: farmerData.phone || '',
+        contactEmail: farmerData.email || ''
+      }));
+    } catch (error) {
+      console.error('Error loading user contact details:', error);
+    }
+  };
+
+  const loadMyRequests = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('❌ No authentication token found. Please login first.');
+        setMyRequests([]);
+        return;
+      }
+
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
+      // Determine role to choose endpoint: staff/admin see all, others see only their own
+      let role = '';
+      try {
+        const userStr = localStorage.getItem('user');
+        role = userStr ? (JSON.parse(userStr).role || '').toLowerCase() : '';
+      } catch {}
+
+      const isStaffOrAdmin = role === 'admin' || role === 'field_worker';
+      const url = isStaffOrAdmin
+        ? `${backendUrl}/service-requests/all`
+        : `${backendUrl}/service-requests/my-requests`;
+
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errText = await response.text().catch(() => '');
+        console.error('Failed to load service requests:', response.status, errText);
+        return;
+      }
+
+      const data = await response.json();
+      const items = data.data || [];
+      setMyRequests(items);
+    } catch (error) {
+      console.error('Error loading service requests:', error);
+    }
+  };
+
   const showNotification = (message, type = 'success') => {
     setNotification({ show: true, message, type });
     setTimeout(() => {
       setNotification({ show: false, message: '', type: 'success' });
     }, 3000);
+  };
+
+  const handleViewDetails = (request) => {
+    setSelectedRequest(request);
+    setShowDetailsModal(true);
   };
 
   const handleInputChange = (field, value) => {
@@ -91,43 +163,55 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
     setLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const newRequest = {
-        id: `${requestForm.serviceType === 'fertilizer' ? 'FR' : 'RG'}${String(myRequests.length + 1).padStart(3, '0')}`,
-        serviceType: requestForm.serviceType,
-        title: requestForm.serviceType === 'fertilizer' ? 'Fertilizer Application Service' : 'Rain Guard Installation',
-        ...requestForm,
-        status: 'submitted',
-        submittedDate: new Date().toISOString().split('T')[0]
-      };
-      
-      setMyRequests(prev => [newRequest, ...prev]);
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const token = localStorage.getItem('token');
+      if (!token) {
+        showNotification('Please login to submit a request', 'error');
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(`${backendUrl}/service-requests`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(requestForm)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to submit service request');
+      }
+
+      // Add to local state for immediate UI update
+      setMyRequests(prev => [data.data, ...prev]);
 
       // Send notification to admin
       const farmerData = getCurrentFarmer();
-      notificationService.addServiceRequestNotification(newRequest, farmerData);
+      notificationService.addServiceRequestNotification(data.data, farmerData);
 
-      // Reset form
+      // Reset form but keep contact details
       setRequestForm({
         serviceType: 'fertilizer',
         farmLocation: '',
         farmSize: '',
         numberOfTrees: '',
-        soilType: '',
         lastFertilizerDate: '',
         fertilizerType: 'organic',
         rainGuardType: 'temporary',
         urgency: 'normal',
         preferredDate: '',
-        budgetRange: '',
+        ratePerTree: '',
         specialRequirements: '',
-        contactPreference: 'phone',
+        contactPhone: farmerData.phone || '',
+        contactEmail: farmerData.email || '',
         documents: []
       });
-      
-      showNotification('Service request submitted successfully!', 'success');
+
+      showNotification('Service request submitted successfully! You will receive an email confirmation.', 'success');
       setActiveTab('my-requests');
     } catch (error) {
       console.error('Error submitting request:', error);
@@ -338,7 +422,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                         value={requestForm.farmSize}
                         onChange={(e) => handleInputChange('farmSize', e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                        placeholder="e.g., 5 hectares"
+                        placeholder="Enter farm size"
                       />
                     </div>
                     
@@ -353,19 +437,6 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                         onChange={(e) => handleInputChange('numberOfTrees', e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                         placeholder="Enter number of trees"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Soil Type
-                      </label>
-                      <input
-                        type="text"
-                        value={requestForm.soilType}
-                        onChange={(e) => handleInputChange('soilType', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                        placeholder="e.g., Laterite, Alluvial"
                       />
                     </div>
                   </div>
@@ -472,18 +543,59 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Budget Range
+                        Rate per Tree
                       </label>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                         <input
-                          type="text"
-                          value={requestForm.budgetRange}
-                          onChange={(e) => handleInputChange('budgetRange', e.target.value)}
+                          type="number"
+                          value={requestForm.ratePerTree}
+                          onChange={(e) => handleInputChange('ratePerTree', e.target.value)}
                           className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                          placeholder="e.g., ₹15,000 - ₹20,000"
+                          placeholder="Enter rate per tree"
                         />
                       </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact Details */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Phone className="h-5 w-5 mr-2 text-red-500" />
+                    Contact Details
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Contact Phone *
+                      </label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <input
+                          type="tel"
+                          required
+                          value={requestForm.contactPhone}
+                          onChange={(e) => handleInputChange('contactPhone', e.target.value)}
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          placeholder="Enter phone number"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Contact Email *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={requestForm.contactEmail}
+                        onChange={(e) => handleInputChange('contactEmail', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        placeholder="Enter email address"
+                      />
                     </div>
                   </div>
                 </div>
@@ -494,7 +606,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                     <FileText className="h-5 w-5 mr-2 text-red-500" />
                     Additional Information
                   </h3>
-                  
+
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -507,22 +619,6 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                         placeholder="Any special requirements or instructions..."
                       />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Contact Preference
-                      </label>
-                      <select
-                        value={requestForm.contactPreference}
-                        onChange={(e) => handleInputChange('contactPreference', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                      >
-                        <option value="phone">Phone Call</option>
-                        <option value="whatsapp">WhatsApp</option>
-                        <option value="email">Email</option>
-                        <option value="visit">Farm Visit</option>
-                      </select>
                     </div>
                   </div>
                 </div>
@@ -633,7 +729,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                 </div>
               ) : (
                 myRequests.map((request) => (
-                  <div key={request.id} className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <div key={request._id || request.requestId} className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                     <div className="flex items-start justify-between mb-4">
                       <div>
                         <div className="flex items-center space-x-3 mb-2">
@@ -645,7 +741,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                           <MapPin className="h-4 w-4 mr-1" />
                           {request.farmLocation}
                         </p>
-                        <p className="text-sm text-gray-500">Request ID: {request.id}</p>
+                        <p className="text-sm text-gray-500">Request ID: {request.requestId || request._id}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-sm text-gray-500">Submitted</p>
@@ -660,15 +756,15 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Trees</p>
-                        <p className="text-sm font-medium text-gray-900">{request.numberOfTrees}</p>
+                        <p className="text-sm font-medium text-gray-900">{request.farmerEstimatedTrees || request.numberOfTrees || 'N/A'}</p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Preferred Date</p>
                         <p className="text-sm font-medium text-gray-900">{request.preferredDate}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500">Budget</p>
-                        <p className="text-sm font-medium text-gray-900">{request.budgetRange}</p>
+                        <p className="text-xs text-gray-500">Rate per Tree</p>
+                        <p className="text-sm font-medium text-gray-900">₹{request.ratePerTree}</p>
                       </div>
                     </div>
 
@@ -727,7 +823,10 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                         <span>{request.serviceDetails}</span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <button className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium">
+                        <button
+                          onClick={() => handleViewDetails(request)}
+                          className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium"
+                        >
                           <Eye className="h-4 w-4 inline mr-1" />
                           View Details
                         </button>
@@ -746,6 +845,211 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
           )}
         </div>
       </motion.div>
+
+      {/* Request Details Modal */}
+      {showDetailsModal && selectedRequest && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
+          >
+            {/* Modal Header */}
+            <div className="bg-red-500 text-white p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold">{selectedRequest.title}</h2>
+                  <p className="text-red-100 text-sm">Request ID: {selectedRequest.id}</p>
+                </div>
+                <button
+                  onClick={() => setShowDetailsModal(false)}
+                  className="p-2 hover:bg-red-600 rounded-lg transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 max-h-[calc(90vh-200px)] overflow-y-auto">
+              <div className="space-y-6">
+                {/* Status and Basic Info */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h3 className="text-sm font-medium text-gray-700 mb-2">Status</h3>
+                    <div className="flex items-center space-x-2">
+                      {selectedRequest.status === 'submitted' && (
+                        <>
+                          <CheckCircle className="h-4 w-4 text-blue-500" />
+                          <span className="text-sm font-medium text-blue-700">Submitted</span>
+                        </>
+                      )}
+                      {selectedRequest.status === 'in_progress' && (
+                        <>
+                          <Clock className="h-4 w-4 text-yellow-500" />
+                          <span className="text-sm font-medium text-yellow-700">In Progress</span>
+                        </>
+                      )}
+                      {selectedRequest.status === 'completed' && (
+                        <>
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <span className="text-sm font-medium text-green-700">Completed</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h3 className="text-sm font-medium text-gray-700 mb-2">Service Type</h3>
+                    <p className="text-sm font-medium text-gray-900 capitalize">
+                      {selectedRequest.serviceType === 'fertilizer' ? 'Fertilizer Application' : 'Rain Guard Installation'}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h3 className="text-sm font-medium text-gray-700 mb-2">Urgency</h3>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      selectedRequest.urgency === 'high' ? 'bg-red-100 text-red-800' :
+                      selectedRequest.urgency === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      {selectedRequest.urgency}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Farm Details */}
+                <div className="bg-green-50 rounded-xl p-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Farm Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-500">Location</p>
+                      <p className="font-medium">{selectedRequest.farmLocation}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Farm Size</p>
+                      <p className="font-medium">{selectedRequest.farmSize}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Number of Trees</p>
+                      <p className="font-medium">{selectedRequest.farmerEstimatedTrees || selectedRequest.numberOfTrees || 'Not specified'}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Rate per Tree</p>
+                      <p className="font-medium">₹{selectedRequest.ratePerTree}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Service Specific Details */}
+                {selectedRequest.serviceType === 'fertilizer' && (
+                  <div className="bg-blue-50 rounded-xl p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Fertilizer Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-gray-500">Fertilizer Type</p>
+                        <p className="font-medium capitalize">{selectedRequest.fertilizerType}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Last Application</p>
+                        <p className="font-medium">{selectedRequest.lastFertilizerDate || 'Not specified'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {selectedRequest.serviceType === 'rain_guard' && (
+                  <div className="bg-blue-50 rounded-xl p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Rain Guard Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-gray-500">Rain Guard Type</p>
+                        <p className="font-medium capitalize">{selectedRequest.rainGuardType?.replace('_', ' ')}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Schedule Details */}
+                <div className="bg-yellow-50 rounded-xl p-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Schedule Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-500">Preferred Date</p>
+                      <p className="font-medium">{selectedRequest.preferredDate}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Submitted Date</p>
+                      <p className="font-medium">{selectedRequest.submittedDate}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact Details */}
+                <div className="bg-purple-50 rounded-xl p-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-500">Phone</p>
+                      <p className="font-medium">{selectedRequest.contactPhone || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Email</p>
+                      <p className="font-medium">{selectedRequest.contactEmail || 'Not provided'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Special Requirements */}
+                {selectedRequest.specialRequirements && (
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Special Requirements</h3>
+                    <p className="text-sm text-gray-700">{selectedRequest.specialRequirements}</p>
+                  </div>
+                )}
+
+                {/* Assigned Provider */}
+                {selectedRequest.assignedProvider && (
+                  <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Assigned Service Provider</h3>
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                        <User className="h-6 w-6 text-red-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{selectedRequest.assignedProvider.name}</p>
+                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                          <div className="flex items-center space-x-1">
+                            <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                            <span>{selectedRequest.assignedProvider.rating}</span>
+                          </div>
+                          <span>•</span>
+                          <span>{selectedRequest.assignedProvider.experience}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+              <button
+                onClick={() => setShowDetailsModal(false)}
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Close
+              </button>
+              {selectedRequest.assignedProvider && (
+                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+                  <Phone className="h-4 w-4" />
+                  <span>Contact Provider</span>
+                </button>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

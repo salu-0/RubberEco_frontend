@@ -39,18 +39,12 @@ export const useNavigationGuard = ({
     const { user, isLoggedIn } = getUserData();
     const currentPath = window.location.pathname;
     
-    console.log('🔄 Navigation detected:', {
-      currentPath,
-      isLoggedIn,
-      userRole: user?.role,
-      preventBackToLogin,
-      preventBackToHome
-    });
+    
 
     // Prevent going back to login pages after authentication
     if (preventBackToLogin && isLoggedIn && 
         (currentPath === '/login' || currentPath === '/register' || currentPath === '/forgot-password')) {
-      console.log('🚫 Preventing back navigation to login page');
+      
       event.preventDefault();
       
       // Redirect based on user role
@@ -68,7 +62,7 @@ export const useNavigationGuard = ({
 
     // Prevent admin users from going back to home from admin dashboard
     if (preventBackToHome && user?.role === 'admin' && (currentPath === '/' || currentPath === '/home')) {
-      console.log('🚫 Preventing admin back navigation to home');
+      
       event.preventDefault();
       navigate('/admin-dashboard', { replace: true });
       return;
@@ -81,7 +75,7 @@ export const useNavigationGuard = ({
       const isAllowedPath = allowedPaths.some(path => currentPath.startsWith(path));
 
       if (!isAllowedPath && (currentPath === '/' || currentPath === '/home')) {
-        console.log('🚫 Redirecting admin to dashboard from home path:', currentPath);
+        
         navigate('/admin-dashboard', { replace: true });
       }
     }
@@ -93,14 +87,14 @@ export const useNavigationGuard = ({
       const isAllowedStaffPath = allowedStaffPaths.some(path => currentPath.startsWith(path));
 
       if (!isAllowedStaffPath) {
-        console.log('🚫 Redirecting staff to dashboard from unauthorized path:', currentPath);
+        
         navigate('/staff-dashboard', { replace: true });
       }
     }
 
     // Broker users should be redirected to broker dashboard from home
     if (isLoggedIn && user?.role === 'broker' && (currentPath === '/' || currentPath === '/home')) {
-      console.log('🚫 Redirecting broker to dashboard from home path:', currentPath);
+      
       navigate('/broker-dashboard', { replace: true });
     }
   }, [navigate, preventBackToLogin, preventBackToHome, userRole, getUserData]);
@@ -110,7 +104,6 @@ export const useNavigationGuard = ({
     const { isLoggedIn } = getUserData();
     
     if (isLoggedIn && (preventBackToLogin || preventBackToHome)) {
-      console.log('🛡️ Setting up navigation guard');
       
       // Add popstate listener for browser back/forward buttons
       window.addEventListener('popstate', handlePopState);
@@ -132,7 +125,7 @@ export const useNavigationGuard = ({
     
     // If navigating to login pages while authenticated, redirect appropriately
     if (isLoggedIn && (to === '/login' || to === '/register' || to === '/forgot-password')) {
-      console.log('🚫 Preventing navigation to login page while authenticated');
+      
       if (user?.role === 'admin') {
         navigate('/admin-dashboard', { replace: true });
       } else if (user?.role === 'broker') {
@@ -147,14 +140,14 @@ export const useNavigationGuard = ({
     
     // If admin trying to navigate to home, redirect to dashboard
     if (isLoggedIn && user?.role === 'admin' && (to === '/' || to === '/home')) {
-      console.log('🚫 Redirecting admin from home to dashboard');
+      
       navigate('/admin-dashboard', { replace: true });
       return;
     }
 
     // If broker trying to navigate to home, redirect to broker dashboard
     if (isLoggedIn && user?.role === 'broker' && (to === '/' || to === '/home')) {
-      console.log('🚫 Redirecting broker from home to broker dashboard');
+      
       navigate('/broker-dashboard', { replace: true });
       return;
     }
@@ -165,7 +158,6 @@ export const useNavigationGuard = ({
       const isAllowedStaffPath = allowedStaffPaths.some(path => to.startsWith(path));
 
       if (!isAllowedStaffPath) {
-        console.log('🚫 Redirecting staff from unauthorized navigation to:', to);
         navigate('/staff-dashboard', { replace: true });
         return;
       }
