@@ -18,6 +18,7 @@ import {
   Loader2
 } from 'lucide-react';
 import Navbar from '../Navbar';
+import { nameValidator, isEmail, passwordStrength, phoneValidator, isRequired, validateSchema } from '../../utils/validation';
 
 const BrokerRegister = () => {
   const navigate = useNavigate();
@@ -28,12 +29,9 @@ const BrokerRegister = () => {
     confirmPassword: '',
     phone: '',
     location: '',
-    licenseNumber: '',
     experience: '',
     companyName: '',
-    bio: '',
-    agreeToTerms: false,
-    agreeToPrivacy: false
+    bio: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -76,43 +74,43 @@ const BrokerRegister = () => {
   const handleBlur = (e) => {
     const { name } = e.target;
     setFieldTouched(prev => ({ ...prev, [name]: true }));
+
+    // Validate on blur using shared validators
     validateField(name, formData[name]);
   };
 
   const validateField = (name, value) => {
     let error = '';
-    
+
     switch (name) {
       case 'name':
-        if (!value.trim()) error = 'Name is required';
+        error = nameValidator(value);
         break;
       case 'email':
-        if (!value.trim()) error = 'Email is required';
-        else if (!/\S+@\S+\.\S+/.test(value)) error = 'Email is invalid';
+        error = isEmail(value);
         break;
       case 'password':
-        if (!value) error = 'Password is required';
-        else if (value.length < 6) error = 'Password must be at least 6 characters';
+        error = passwordStrength(value);
         break;
       case 'confirmPassword':
         if (!value) error = 'Please confirm your password';
         else if (value !== formData.password) error = 'Passwords do not match';
         break;
       case 'phone':
-        if (!value.trim()) error = 'Phone number is required';
+        error = phoneValidator(value);
         break;
       case 'location':
-        if (!value.trim()) error = 'Location is required';
+        error = isRequired(value, 'Location is required');
         break;
-      case 'licenseNumber':
-        if (!value.trim()) error = 'License number is required';
+      case 'experience':
+        error = isRequired(value, 'Experience level is required');
         break;
       case 'companyName':
-        if (!value.trim()) error = 'Company name is required';
-        break;
       case 'bio':
-        if (!value.trim()) error = 'Professional bio is required';
+        error = '';
         break;
+      default:
+        error = '';
     }
 
     setErrors(prev => ({ ...prev, [name]: error }));
@@ -120,32 +118,23 @@ const BrokerRegister = () => {
   };
 
   const validateForm = () => {
-    const newErrors = {};
+    const schema = {
+      name: [(v) => nameValidator(v)],
+      email: [(v) => isEmail(v)],
+      password: [(v) => passwordStrength(v)],
+      confirmPassword: [
+        (v) => (v ? '' : 'Please confirm your password'),
+        (v) => (v === formData.password ? '' : 'Passwords do not match')
+      ],
+      phone: [(v) => phoneValidator(v)],
+      location: [(v) => isRequired(v, 'Location is required')],
+      experience: [(v) => isRequired(v, 'Experience level is required')],
+      // Optional fields left without validators
+      companyName: [],
+      bio: []
+    };
 
-    // Basic validation
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
-    
-    if (!formData.password) newErrors.password = 'Password is required';
-    else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-    
-    if (!formData.confirmPassword) newErrors.confirmPassword = 'Please confirm your password';
-    else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
-    
-    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
-    if (!formData.location.trim()) newErrors.location = 'Location is required';
-    
-    // Broker-specific validation
-    if (!formData.licenseNumber.trim()) newErrors.licenseNumber = 'License number is required';
-    if (!formData.experience) newErrors.experience = 'Experience level is required';
-    if (!formData.companyName.trim()) newErrors.companyName = 'Company name is required';
-    if (!formData.bio.trim()) newErrors.bio = 'Professional bio is required';
-    
-    // Agreement validation
-    if (!formData.agreeToTerms) newErrors.agreeToTerms = 'You must agree to the terms and conditions';
-    if (!formData.agreeToPrivacy) newErrors.agreeToPrivacy = 'You must agree to the privacy policy';
-
+    const newErrors = validateSchema(formData, schema);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -168,19 +157,37 @@ const BrokerRegister = () => {
         phone: formData.phone.trim(),
         location: formData.location.trim(),
         role: 'broker',
-        bio: formData.bio.trim(),
+        bio: formData.bio?.trim() || '',
         
         // Broker-specific data
         brokerProfile: {
-          licenseNumber: formData.licenseNumber.trim(),
-          experience: formData.experience,
+          experience: formData.experience?.trim() || '',
           specialization: ['Rubber Trading'], // Simplified for now
-          companyName: formData.companyName.trim(),
+          companyName: formData.companyName?.trim() || '',
           companyAddress: '',
           education: '',
           previousWork: ''
         }
       };
+
+      console.log('Sending broker data:', brokerData);
+      console.log('Experience field value:', formData.experience);
+      console.log('Broker profile:', brokerData.brokerProfile);
+      
+      // Additional validation before sending
+      if (!brokerData.brokerProfile.experience) {
+        console.error('Experience field is missing!');
+        showNotification('Please select an experience level.', 'error');
+        setLoading(false);
+        return;
+      }
+      
+      if (!brokerData.brokerProfile.specialization || brokerData.brokerProfile.specialization.length === 0) {
+        console.error('Specialization is missing!');
+        showNotification('Specialization is required.', 'error');
+        setLoading(false);
+        return;
+      }
 
       // Try the backend server first, fallback to mock if needed
       const response = await fetch('http://localhost:5000/api/auth/register-broker', {
@@ -192,6 +199,9 @@ const BrokerRegister = () => {
       });
 
       const data = await response.json();
+      
+      console.log('Response status:', response.status);
+      console.log('Response data:', data);
 
       if (response.ok) {
         showNotification('Registration successful! Please check your email for verification.', 'success');
@@ -620,52 +630,8 @@ const BrokerRegister = () => {
                   Professional Information
                 </h3>
 
-                {/* License Number and Experience Row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* License Number Field */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Broker License Number *
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <CreditCard className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="text"
-                        name="licenseNumber"
-                        value={formData.licenseNumber}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        placeholder="Enter your broker license number"
-                        className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 transition-all duration-200 bg-white/50 backdrop-blur-sm ${
-                          errors.licenseNumber
-                            ? 'border-red-500 focus:ring-red-500 focus:border-red-500 bg-red-50/50'
-                            : fieldTouched.licenseNumber && !errors.licenseNumber
-                              ? 'border-green-500 focus:ring-green-500 focus:border-green-500 bg-green-50/50'
-                              : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500'
-                        }`}
-                        disabled={loading}
-                      />
-                    </div>
-                    {fieldTouched.licenseNumber && (
-                      <div className="mt-2">
-                        {errors.licenseNumber ? (
-                          <p className="text-sm text-red-600 flex items-center">
-                            <AlertCircle className="h-4 w-4 mr-1 flex-shrink-0" />
-                            {errors.licenseNumber}
-                          </p>
-                        ) : (
-                          <p className="text-sm text-green-600 flex items-center">
-                            <CheckCircle className="h-4 w-4 mr-1 flex-shrink-0" />
-                            License number is valid
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Experience Field */}
+                {/* Experience Field */}
+                <div className="grid grid-cols-1 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Experience Level *
@@ -717,7 +683,7 @@ const BrokerRegister = () => {
                   {/* Company Name Field */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Company Name *
+                      Company Name
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -740,7 +706,7 @@ const BrokerRegister = () => {
                         disabled={loading}
                       />
                     </div>
-                    {fieldTouched.companyName && (
+                    {fieldTouched.companyName && formData.companyName.trim() && (
                       <div className="mt-2">
                         {errors.companyName ? (
                           <p className="text-sm text-red-600 flex items-center">
@@ -760,7 +726,7 @@ const BrokerRegister = () => {
                   {/* Professional Bio Field */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Professional Bio *
+                      Professional Bio
                     </label>
                     <textarea
                       name="bio"
@@ -778,7 +744,7 @@ const BrokerRegister = () => {
                       }`}
                       disabled={loading}
                     />
-                    {fieldTouched.bio && (
+                    {fieldTouched.bio && formData.bio.trim() && (
                       <div className="mt-2">
                         {errors.bio ? (
                           <p className="text-sm text-red-600 flex items-center">
@@ -797,58 +763,6 @@ const BrokerRegister = () => {
                 </div>
               </div>
 
-              {/* Terms and Conditions */}
-              <div className="space-y-4">
-                <div className="bg-gray-50/50 backdrop-blur-sm rounded-xl p-4 border border-gray-200">
-                  <div className="space-y-3">
-                    <label className="flex items-start space-x-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        name="agreeToTerms"
-                        checked={formData.agreeToTerms}
-                        onChange={handleChange}
-                        className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                      />
-                      <span className="text-sm text-gray-700">
-                        I agree to the{' '}
-                        <Link to="/terms" target="_blank" className="text-primary-600 hover:text-primary-500 font-medium">
-                          Terms and Conditions
-                        </Link>{' '}
-                        *
-                      </span>
-                    </label>
-                    {errors.agreeToTerms && (
-                      <p className="text-sm text-red-600 flex items-center ml-7">
-                        <AlertCircle className="h-4 w-4 mr-1 flex-shrink-0" />
-                        {errors.agreeToTerms}
-                      </p>
-                    )}
-
-                    <label className="flex items-start space-x-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        name="agreeToPrivacy"
-                        checked={formData.agreeToPrivacy}
-                        onChange={handleChange}
-                        className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                      />
-                      <span className="text-sm text-gray-700">
-                        I agree to the{' '}
-                        <Link to="/privacy" target="_blank" className="text-primary-600 hover:text-primary-500 font-medium">
-                          Privacy Policy
-                        </Link>{' '}
-                        *
-                      </span>
-                    </label>
-                    {errors.agreeToPrivacy && (
-                      <p className="text-sm text-red-600 flex items-center ml-7">
-                        <AlertCircle className="h-4 w-4 mr-1 flex-shrink-0" />
-                        {errors.agreeToPrivacy}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
 
               {/* Submit Button */}
               <motion.button

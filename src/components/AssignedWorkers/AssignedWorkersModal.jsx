@@ -33,24 +33,66 @@ const AssignedWorkersModal = ({ isOpen, onClose, userEmail }) => {
   const fetchAssignedWorkers = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/farmer-requests/assigned-workers/${userEmail}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || 'dummy-token'}`
-        }
+      const authHeader = { 'Authorization': `Bearer ${localStorage.getItem('token') || 'dummy-token'}` };
+
+      // Fetch assigned tappers (tapping service)
+      const tappingPromise = fetch(`${import.meta.env.VITE_API_BASE_URL}/service-applications/farmer/assigned-workers/${encodeURIComponent(userEmail)}`, {
+        headers: authHeader
+      }).then(r => r.ok ? r.json() : Promise.resolve({ workers: [] })).catch(err => {
+        console.warn('Failed to fetch tapping assigned workers:', err);
+        return { workers: [] };
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setAssignedWorkers(data.workers || []);
-      } else {
-        console.error('Failed to fetch assigned workers');
-        // Fallback to mock data for demonstration
-        setAssignedWorkers(getMockAssignedWorkers());
-      }
+      // Fetch fertilizer/rain-guard assigned providers for this farmer
+      const servicesPromise = fetch(`${import.meta.env.VITE_API_BASE_URL}/service-requests/my-requests`, {
+        headers: authHeader
+      }).then(r => r.ok ? r.json() : Promise.resolve({ data: [] }));
+
+      const [tappingData, servicesData] = await Promise.all([tappingPromise, servicesPromise]);
+
+      const tapperWorkers = (tappingData?.workers || []).map(w => ({
+        ...w,
+        department: w.department || 'Field Operations',
+        role: w.role || 'Rubber Tapper'
+      }));
+
+      const serviceWorkers = (servicesData?.data || [])
+        .filter(req => req.assignedProvider && ['assigned','in_progress','completed','accepted','agreed'].includes(req.status))
+        .map(req => {
+          const provider = req.assignedProvider || {};
+          const role = req.serviceType === 'fertilizer' ? 'Fertilizer Applicator' : 'Rain Guard Installer';
+          return {
+            id: provider.providerId || provider._id || `${req._id}-provider`,
+            name: provider.name || 'Assigned Provider',
+            role,
+            phone: provider.contact || '',
+            email: '',
+            location: req.farmLocation || 'Not specified',
+            assignedDate: provider.assignedDate || req.updatedAt || req.createdAt,
+            status: req.status === 'completed' ? 'completed' : 'active',
+            rating: provider.rating || 4.0,
+            experience: provider.experience || '—',
+            tasksCompleted: 0,
+            currentTask: `${req.title} - ${req.requestId}`,
+            farmLocation: req.farmLocation,
+            workSchedule: '—',
+            lastActive: 'Recently',
+            requestId: req.requestId,
+            department: 'Services'
+          };
+        });
+
+      // De-duplicate by id
+      const mergedMap = new Map();
+      [...tapperWorkers, ...serviceWorkers].forEach(w => {
+        const key = (w.id && w.id.toString()) || `${w.name}-${w.role}-${w.requestId}`;
+        if (!mergedMap.has(key)) mergedMap.set(key, w);
+      });
+
+      setAssignedWorkers(Array.from(mergedMap.values()));
     } catch (error) {
       console.error('Error fetching assigned workers:', error);
-      // Fallback to mock data
-      setAssignedWorkers(getMockAssignedWorkers());
+      setAssignedWorkers([]);
     } finally {
       setLoading(false);
     }

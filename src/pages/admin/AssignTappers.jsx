@@ -42,6 +42,10 @@ const AssignTasks = ({ darkMode }) => {
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
   const [activeTab, setActiveTab] = useState('pending-requests'); // pending-requests, staff-applications, verified-assignments
 
+  // Fertilizers & Rain Guard service requests
+  const [serviceRequests, setServiceRequests] = useState([]);
+  const [serviceLoading, setServiceLoading] = useState(false);
+
   // Sample data
   const farmers = [
     { id: '1', name: 'Rajesh Kumar', farm: 'Farm A', hectares: 5, location: 'Kerala District 1' },
@@ -229,8 +233,10 @@ const AssignTasks = ({ darkMode }) => {
 
   // Load data on component mount
   useEffect(() => {
-    loadAllRequestData();
-    loadAvailableTappers();
+    // Keep existing loaders (not used anymore for UI, but harmless)
+    // loadAllRequestData();
+    // loadAvailableTappers();
+    loadFertilizerRainGuardRequests();
   }, []);
 
   // Separate useEffect for handling notification events
@@ -289,6 +295,32 @@ const AssignTasks = ({ darkMode }) => {
     setTimeout(() => {
       setNotification({ show: false, message: '', type: 'success' });
     }, 3000);
+  };
+
+  // Load Fertilizer & Rain Guard requests for admin/staff view
+  const loadFertilizerRainGuardRequests = async () => {
+    try {
+      setServiceLoading(true);
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/service-requests/all?status=all`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) {
+        setServiceRequests([]);
+        return;
+      }
+      const result = await response.json();
+      const items = Array.isArray(result.data) ? result.data : [];
+      // Only fertilizer or rain_guard types
+      const filtered = items.filter(r => r.serviceType === 'fertilizer' || r.serviceType === 'rain_guard');
+      setServiceRequests(filtered);
+    } catch (err) {
+      console.error('Error loading fertilizer/rain guard requests:', err);
+      setServiceRequests([]);
+    } finally {
+      setServiceLoading(false);
+    }
   };
 
   // Handle approving staff application
@@ -553,7 +585,7 @@ const AssignTasks = ({ darkMode }) => {
         </motion.div>
       )}
 
-      {/* Pending Tapping Requests */}
+      {/* Fertilizers & Rain Guard Service - tapping widgets removed */}
       <motion.div
         className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
           darkMode ? 'border-gray-700' : 'border-gray-100'
@@ -562,120 +594,62 @@ const AssignTasks = ({ darkMode }) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              Tapping Requests - Staff Self-Assignment
-            </h2>
-            {pendingRequests.length > 0 && (
-              <div className="relative">
-                <Bell className="h-6 w-6 text-orange-500" />
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {pendingRequests.length}
-                </span>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center space-x-2 text-sm text-gray-500">
-            <TreePine className="h-4 w-4" />
-            <span>{pendingRequests.length} requests • Staff can self-assign</span>
-          </div>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            Fertilizers & Rain Guard Service
+          </h2>
         </div>
-
-        {/* Workflow banner removed as requested */}
-
-        {loading ? (
+        {serviceLoading ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto"></div>
             <p className={`mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Loading requests...</p>
           </div>
-        ) : pendingRequests.length === 0 ? (
+        ) : serviceRequests.length === 0 ? (
           <div className="text-center py-8">
-            <TreePine className={`h-12 w-12 mx-auto mb-4 ${darkMode ? 'text-gray-600' : 'text-gray-400'}`} />
-            <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>No pending tapping requests</p>
+            <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>No service requests found.</p>
           </div>
         ) : (
-          <div className="grid gap-4">
-            {pendingRequests.map((request) => (
-              <motion.div
-                key={request._id}
-                className={`p-4 rounded-lg border ${
-                  darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
-                } hover:shadow-md transition-shadow cursor-pointer`}
-                onClick={() => {
-                  setSelectedRequest(request);
-                  setShowRequestDetails(true);
-                }}
-                whileHover={{ scale: 1.01 }}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                        {request.farmerName}
-                      </h3>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        request.urgency === 'high' ? 'bg-red-100 text-red-800' :
-                        request.urgency === 'normal' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {request.urgency} priority
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4 text-gray-400" />
-                        <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
-                          {request.farmLocation}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <TreePine className="h-4 w-4 text-gray-400" />
-                        <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
-                          {request.numberOfTrees} trees
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4 text-gray-400" />
-                        <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
-                          {new Date(request.startDate).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4 text-gray-400" />
-                        <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
-                          {request.duration}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        request.staffApplications?.length > 0
-                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                          : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                      }`}>
-                        {request.staffApplications?.length > 0
-                          ? `${request.staffApplications.length} Staff Applied`
-                          : 'Waiting for Staff'}
-                      </span>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                <tr>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Farmer</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Service</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Farm Location</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Farm Size</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Trees</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Preferred Date</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Rate/Tree</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Status</th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Actions</th>
+                </tr>
+              </thead>
+              <tbody className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                {serviceRequests.map((r) => (
+                  <tr key={r._id} className={darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'}>
+                    <td className="px-6 py-4 text-sm">
+                      <div className="font-medium">{r.farmerName || r.userId?.name || '-'}</div>
+                      <div className={`${darkMode ? 'text-gray-300' : 'text-gray-500'} text-xs`}>{r.farmerEmail || r.userId?.email || '-'}</div>
+                    </td>
+                    <td className="px-6 py-4 text-sm capitalize">{r.serviceType}</td>
+                    <td className="px-6 py-4 text-sm">{r.farmLocation}</td>
+                    <td className="px-6 py-4 text-sm">{r.farmSize}</td>
+                    <td className="px-6 py-4 text-sm">{r.numberOfTrees}</td>
+                    <td className="px-6 py-4 text-sm">{r.preferredDate}</td>
+                    <td className="px-6 py-4 text-sm">₹{r.ratePerTree || '-'}</td>
+                    <td className="px-6 py-4 text-sm capitalize">{r.status || 'pending'}</td>
+                    <td className="px-6 py-4 text-sm">
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedRequest(request);
-                          setShowRequestDetails(true);
-                        }}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+                        onClick={() => { setSelectedRequest(r); setShowRequestDetails(true); }}
+                        className="px-3 py-1 text-white bg-blue-600 hover:bg-blue-700 rounded"
                       >
-                        <Eye className="h-4 w-4" />
-                        View Details
+                        View
                       </button>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </motion.div>
@@ -683,131 +657,25 @@ const AssignTasks = ({ darkMode }) => {
 
 
 
-      {/* Current Assignments */}
-      <motion.div
-        className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-lg border ${
-          darkMode ? 'border-gray-700' : 'border-gray-100'
-        }`}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.2 }}
-      >
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <h3 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              Current Assignments ({currentAssignments.length})
-            </h3>
-            <div className="flex items-center space-x-4 text-sm">
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
-                  {currentAssignments.filter(a => a.status === 'active').length} Active
-                </span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
-                  {currentAssignments.filter(a => a.status === 'completed').length} Completed
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-              <tr>
-                <th className={`px-6 py-4 text-left text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                  Farmer & Farm
-                </th>
-                <th className={`px-6 py-4 text-left text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                  Staff & Task
-                </th>
-                <th className={`px-6 py-4 text-left text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                  Duration & Location
-                </th>
-                <th className={`px-6 py-4 text-left text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                  Status
-                </th>
-                <th className={`px-6 py-4 text-left text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className={`${darkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-              {currentAssignments.map((assignment) => (
-                <motion.tr
-                  key={assignment.id}
-                  className={`hover:${darkMode ? 'bg-gray-700' : 'bg-gray-50'} transition-colors`}
-                  whileHover={{ backgroundColor: darkMode ? '#374151' : '#f9fafb' }}
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                        {assignment.farmer}
-                      </div>
-                      <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                        {assignment.farm}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center mr-3">
-                        <Users className="h-4 w-4 text-primary-600" />
-                      </div>
-                      <div>
-                        <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                          {assignment.staff}
-                        </div>
-                        <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                          {assignment.staffRole?.replace('_', ' ')} • {assignment.taskType}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className={`text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                      {assignment.duration}
-                    </div>
-                    <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} flex items-center`}>
-                      <MapPin className="h-3 w-3 mr-1" />
-                      {assignment.location}
-                    </div>
-                    <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Started: {assignment.startDate}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(assignment.status)}`}>
-                      {assignment.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      <button onClick={() => openViewDetails(assignment)} className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300">
-                        <Eye className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </motion.div>
-
       {/* Quick Stats removed as requested */}
 
       {/* Request Details Modal */}
       {showRequestDetails && selectedRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[9999] p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowRequestDetails(false);
+              setSelectedRequest(null);
+            }
+          }}
+        >
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto`}
+            className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
               <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>

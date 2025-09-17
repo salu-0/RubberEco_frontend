@@ -15,6 +15,7 @@ import {
 import { supabase } from "../../supabaseClient";
 import Navbar from '../Navbar';
 import { useNavigationGuard } from '../../hooks/useNavigationGuard';
+import EmailVerificationAlert from './EmailVerificationAlert';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -27,6 +28,8 @@ const Login = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
   const navigate = useNavigate();
 
   // Initialize navigation guard
@@ -171,10 +174,8 @@ const Login = () => {
 
     setLoading(true);
     try {
-
-      // Call backend API to login user - TEMPORARY HARDCODED URL FOR TESTING
+      // First, try MongoDB backend authentication
       const loginUrl = 'http://localhost:5000/api/auth/login';
-
       const response = await fetch(loginUrl, {
         method: 'POST',
         headers: {
@@ -188,54 +189,92 @@ const Login = () => {
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed. Please try again.');
+      if (response.ok) {
+        // MongoDB login successful
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        // Show success message with user's name and role
+        const userName = data.user.name || 'User';
+        const userRole = data.user.role || 'user';
+        showNotification(`Welcome back, ${userName}! Redirecting to your ${userRole} dashboard...`, 'success');
+
+        // Add delay to show success message before redirect
+        const role = data.user.role ? data.user.role.toLowerCase().trim() : '';
+
+        // Clear browser history to prevent back navigation to login
+        window.history.replaceState(null, '', window.location.pathname);
+
+        // Delay redirect to show success message
+        setTimeout(() => {
+          // Staff users always go to staff dashboard, regardless of redirect
+          if (role === 'staff' && data.user.useStaffDashboard) {
+            localStorage.removeItem('redirectAfterLogin'); // Clean up any stored redirect
+            guardedNavigate('/staff-dashboard');
+          }
+          // Admin users always go to admin dashboard
+          else if (role === 'admin') {
+            localStorage.removeItem('redirectAfterLogin'); // Clean up any stored redirect
+            guardedNavigate('/admin-dashboard');
+          }
+          // Broker users always go to broker dashboard
+          else if (role === 'broker') {
+            localStorage.removeItem('redirectAfterLogin'); // Clean up any stored redirect
+            guardedNavigate('/broker-dashboard');
+          }
+          // Regular users can be redirected to training modules or home
+          else {
+            // Check if there's a redirect URL stored (from training module access)
+            const redirectAfterLogin = localStorage.getItem('redirectAfterLogin');
+
+            if (redirectAfterLogin) {
+              localStorage.removeItem('redirectAfterLogin'); // Clean up
+              guardedNavigate(redirectAfterLogin);
+            } else {
+              guardedNavigate('/home');
+            }
+          }
+        }, 1500); // 1.5 second delay to show success message
+
+        return;
       }
 
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      // If MongoDB login fails with 403 (email verification required)
+      if (response.status === 403 && data.message?.includes('verify your email')) {
+        console.log('📧 Email verification required for:', formData.email);
+        
+        // Show email verification alert
+        setVerificationEmail(formData.email);
+        setShowEmailVerification(true);
+        setLoading(false);
+        return;
+      }
 
-      // Show success message with user's name and role
-      const userName = data.user.name || 'User';
-      const userRole = data.user.role || 'user';
-      showNotification(`Welcome back, ${userName}! Redirecting to your ${userRole} dashboard...`, 'success');
+      // If MongoDB login fails with 403 (user not found), check if user exists in Supabase
+      if (response.status === 403 && !data.message?.includes('verify your email')) {
+        console.log('🔄 User not found in MongoDB, checking Supabase...');
+        
+        try {
+          // Check if user exists in Supabase (OAuth user)
+          const { data: supabaseUsers, error: supabaseError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', formData.email);
 
-      // Add delay to show success message before redirect
-      const role = data.user.role ? data.user.role.toLowerCase().trim() : '';
-
-      // Clear browser history to prevent back navigation to login
-      window.history.replaceState(null, '', window.location.pathname);
-
-      // Delay redirect to show success message
-      setTimeout(() => {
-        // Staff users always go to staff dashboard, regardless of redirect
-        if (role === 'staff' && data.user.useStaffDashboard) {
-          localStorage.removeItem('redirectAfterLogin'); // Clean up any stored redirect
-          guardedNavigate('/staff-dashboard');
-        }
-        // Admin users always go to admin dashboard
-        else if (role === 'admin') {
-          localStorage.removeItem('redirectAfterLogin'); // Clean up any stored redirect
-          guardedNavigate('/admin-dashboard');
-        }
-        // Broker users always go to broker dashboard
-        else if (role === 'broker') {
-          localStorage.removeItem('redirectAfterLogin'); // Clean up any stored redirect
-          guardedNavigate('/broker-dashboard');
-        }
-        // Regular users can be redirected to training modules or home
-        else {
-          // Check if there's a redirect URL stored (from training module access)
-          const redirectAfterLogin = localStorage.getItem('redirectAfterLogin');
-
-          if (redirectAfterLogin) {
-            localStorage.removeItem('redirectAfterLogin'); // Clean up
-            guardedNavigate(redirectAfterLogin);
-          } else {
-            guardedNavigate('/home');
+          if (supabaseUsers && supabaseUsers.length > 0 && !supabaseError) {
+            // User exists in Supabase but not MongoDB - they need to use Google OAuth
+            showNotification('This account was created with Google. Please use "Continue with Google" to sign in.', 'error');
+            setLoading(false);
+            return;
           }
+        } catch (supabaseQueryError) {
+          console.log('⚠️ Supabase query failed:', supabaseQueryError);
+          // Continue with normal error handling
         }
-      }, 1500); // 1.5 second delay to show success message
+      }
+
+      // If we get here, the login failed for other reasons
+      throw new Error(data.message || 'Login failed. Please try again.');
 
     } catch (error) {
       console.error('❌ Login error:', error);
@@ -588,6 +627,16 @@ const Login = () => {
         </motion.div>
         </div>
       </div>
+
+      {/* Email Verification Alert */}
+      <EmailVerificationAlert
+        isOpen={showEmailVerification}
+        onClose={() => setShowEmailVerification(false)}
+        email={verificationEmail}
+        onResendVerification={() => {
+          // This will be handled by the EmailVerificationAlert component
+        }}
+      />
     </div>
   );
 };

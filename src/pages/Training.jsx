@@ -54,6 +54,28 @@ const Training = () => {
     }
   }, []);
 
+  // Handle deep links via hash to auto-browse modules or open practical schedules
+  useEffect(() => {
+    const applyHashAction = () => {
+      const hash = window.location.hash;
+      if (hash === '#browse') {
+        const modulesSection = document.getElementById('training-modules');
+        if (modulesSection) {
+          modulesSection.scrollIntoView({ behavior: 'smooth' });
+        }
+      } else if (hash === '#practical') {
+        setIsPracticalTrainingOpen(true);
+      }
+    };
+
+    // Run on mount
+    applyHashAction();
+
+    // Respond to hash changes
+    window.addEventListener('hashchange', applyHashAction);
+    return () => window.removeEventListener('hashchange', applyHashAction);
+  }, []);
+
   // Check authentication status
   useEffect(() => {
     const { user, isLoggedIn } = getUserData();
@@ -70,12 +92,18 @@ const Training = () => {
       return;
     }
 
+    // Broker users should be redirected to their dashboard
+    if (isLoggedIn && user?.role === 'broker') {
+      navigate('/broker-dashboard', { replace: true });
+      return;
+    }
+
     setIsAuthenticated(isLoggedIn);
     setIsLoading(false);
 
   }, [getUserData, navigate]);
 
-  // Handle module access - redirect to login if not authenticated, show enrollment for paid courses
+  // Handle module access - redirect to login if not authenticated, all video modules are now free
   const handleModuleAccess = (moduleId) => {
     if (!isAuthenticated) {
       // Store the intended destination for redirect after login
@@ -91,15 +119,8 @@ const Training = () => {
       return;
     }
 
-    // If it's a free course, navigate directly
-    if (module.isFree) {
-      navigate(`/training/${moduleId}`);
-      return;
-    }
-
-    // For paid courses, show enrollment form
-    setSelectedModule(module);
-    setIsTrainingEnrollmentOpen(true);
+    // All video training modules are now free - navigate directly
+    navigate(`/training/${moduleId}`);
   };
   const trainingModules = [
     {
@@ -123,8 +144,8 @@ const Training = () => {
       icon: <Users className="h-6 w-6" />,
       lessons: 12,
       rating: 4.9,
-      price: 1999,
-      isFree: false
+      price: 0,
+      isFree: true
     },
     {
       id: 3,
@@ -135,8 +156,8 @@ const Training = () => {
       icon: <Award className="h-6 w-6" />,
       lessons: 6,
       rating: 4.7,
-      price: 2999,
-      isFree: false
+      price: 0,
+      isFree: true
     },
     {
       id: 4,
@@ -147,8 +168,8 @@ const Training = () => {
       icon: <Video className="h-6 w-6" />,
       lessons: 10,
       rating: 4.6,
-      price: 1799,
-      isFree: false
+      price: 0,
+      isFree: true
     }
   ];
 
@@ -320,18 +341,14 @@ const Training = () => {
                       className={`w-full py-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center space-x-2 ${
                         !isAuthenticated
                           ? 'bg-gray-100 text-gray-600 border-2 border-gray-200 hover:border-primary-300 hover:text-primary-600'
-                          : module.isFree
-                          ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:shadow-lg'
-                          : 'bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:shadow-lg'
+                          : 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:shadow-lg'
                       }`}
                     >
                       {!isAuthenticated && <Lock className="w-4 h-4" />}
                       <span>
                         {!isAuthenticated
                           ? 'Login to Access'
-                          : module.isFree
-                          ? 'Start Module'
-                          : `Enroll for ₹${module.price.toLocaleString()}`
+                          : 'Start Module'
                         }
                       </span>
                     </button>
@@ -579,7 +596,6 @@ const Training = () => {
             className="bg-white rounded-lg max-w-7xl w-full max-h-[95vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-2xl font-bold text-gray-900">Practical Training Sessions</h2>
               <button
                 onClick={() => setIsPracticalTrainingOpen(false)}
                 className="text-gray-400 hover:text-gray-600 text-2xl"

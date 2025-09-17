@@ -66,6 +66,13 @@ const TrainingModule = () => {
       return;
     }
 
+    // Broker users should be redirected to their dashboard
+    if (user?.role === 'broker') {
+      console.log('🚫 Broker user accessing training module, redirecting to broker dashboard');
+      navigate('/broker-dashboard', { replace: true });
+      return;
+    }
+
     console.log('✅ Authorized access to training module:', {
       moduleId,
       userName: user?.name,
@@ -164,18 +171,18 @@ const TrainingModule = () => {
       level: "Intermediate",
       rating: 4.9,
       students: 856,
-      price: 1999,
-      isFree: false,
+      price: 0,
+      isFree: true,
       videos: [
         {
           id: 1,
           title: "പാഠം 1: തോട്ടം ആസൂത്രണം",
           titleEnglish: "Lesson 1: Plantation Planning",
           description: "Learn how to plan and design efficient rubber plantations",
-          duration: "12:30",
+          duration: "25:00",
           type: "youtube",
-          videoUrl: "https://www.youtube.com/embed/PLANTATION_1",
-          youtubeUrl: "https://www.youtube.com/embed/PLANTATION_1",
+          videoUrl: "https://www.youtube.com/embed/CfoAYh7IDXc",
+          youtubeUrl: "https://www.youtube.com/embed/CfoAYh7IDXc",
           thumbnailUrl: placeholderThumb,
           completed: false
         },
@@ -188,6 +195,18 @@ const TrainingModule = () => {
           type: "youtube",
           videoUrl: "https://www.youtube.com/embed/PLANTATION_2",
           youtubeUrl: "https://www.youtube.com/embed/PLANTATION_2",
+          thumbnailUrl: placeholderThumb,
+          completed: false
+        },
+        {
+          id: 3,
+          title: "പാഠം 3: റബ്ബർ തോട്ടം മാനേജ്മെന്റ്",
+          titleEnglish: "Lesson 3: Rubber Plantation Management",
+          description: "Comprehensive guide to managing rubber plantations efficiently",
+          duration: "25:00",
+          type: "youtube",
+          videoUrl: "https://www.youtube.com/embed/CfoAYh7IDXc",
+          youtubeUrl: "https://www.youtube.com/embed/CfoAYh7IDXc",
           thumbnailUrl: placeholderThumb,
           completed: false
         }

@@ -39,11 +39,39 @@ const PaymentStatus = ({ isOpen, onClose }) => {
 
   const loadPayments = async () => {
     try {
-      // TODO: Replace with actual API call to fetch real payment data
-      // For now, setting empty array - no mock data
-      const payments = [];
+      const token = localStorage.getItem('token') || '';
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/nursery/bookings/my`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const bookings = Array.isArray(data.data) ? data.data : [];
 
-      setPayments(payments);
+      const mapped = bookings.map(b => {
+        const isAdvancePaid = Boolean(b?.payment?.advancePaid);
+        const bookingStatus = b?.status || 'pending';
+        const status = isAdvancePaid ? (bookingStatus === 'approved' ? 'completed' : 'approved') : 'pending';
+        const createdAt = b?.createdAt ? new Date(b.createdAt) : new Date();
+        const amountStr = `₹${Number(b.amountAdvance || 0).toLocaleString()}`;
+        return {
+          id: b._id,
+          type: 'nursery_booking',
+          description: `Nursery advance - ${b.plantName || 'Rubber Plant'}`,
+          amount: amountStr,
+          date: createdAt.toLocaleDateString(),
+          dueDate: '-',
+          status,
+          paymentMethod: isAdvancePaid ? 'Razorpay' : 'Online',
+          transactionId: b?.payment?.advancePaymentId || b?.payment?.advanceTxnId || '',
+          quantity: b.quantity,
+          meta: {
+            plantName: b.plantName,
+            advancePercent: b.advancePercent,
+            unitPrice: b.unitPrice
+          }
+        };
+      });
+
+      setPayments(mapped);
       setLoading(false);
     } catch (error) {
       console.error('Error loading payments:', error);
@@ -104,6 +132,7 @@ const PaymentStatus = ({ isOpen, onClose }) => {
       subsidy: 'Government Subsidy',
       training_fee: 'Training Fee',
       equipment_purchase: 'Equipment Purchase',
+      nursery_booking: 'Nursery Booking',
       loan_payment: 'Loan Payment'
     };
     
@@ -117,6 +146,7 @@ const PaymentStatus = ({ isOpen, onClose }) => {
       subsidy: TrendingUp,
       training_fee: FileText,
       equipment_purchase: Wallet,
+      nursery_booking: Wallet,
       loan_payment: CreditCard
     };
     
@@ -184,43 +214,7 @@ const PaymentStatus = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Summary Cards */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-green-50 rounded-xl p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-green-600">Completed</p>
-                  <p className="text-2xl font-bold text-green-800">₹{summary.completed.amount.toLocaleString()}</p>
-                  <p className="text-xs text-green-600">{summary.completed.count} payments</p>
-                </div>
-                <CheckCircle className="h-8 w-8 text-green-500" />
-              </div>
-            </div>
-            
-            <div className="bg-yellow-50 rounded-xl p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-yellow-600">Pending</p>
-                  <p className="text-2xl font-bold text-yellow-800">₹{summary.pending.amount.toLocaleString()}</p>
-                  <p className="text-xs text-yellow-600">{summary.pending.count} payments</p>
-                </div>
-                <Clock className="h-8 w-8 text-yellow-500" />
-              </div>
-            </div>
-            
-            <div className="bg-red-50 rounded-xl p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-red-600">Overdue</p>
-                  <p className="text-2xl font-bold text-red-800">₹{summary.overdue.amount.toLocaleString()}</p>
-                  <p className="text-xs text-red-600">{summary.overdue.count} payments</p>
-                </div>
-                <AlertCircle className="h-8 w-8 text-red-500" />
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Summary cards removed as requested */}
 
         {/* Filters */}
         <div className="p-6 border-b border-gray-200">
@@ -262,6 +256,7 @@ const PaymentStatus = ({ isOpen, onClose }) => {
                 <option value="subsidy">Government Subsidy</option>
                 <option value="training_fee">Training Fee</option>
                 <option value="equipment_purchase">Equipment Purchase</option>
+                <option value="nursery_booking">Nursery Booking</option>
               </select>
             </div>
           </div>
@@ -387,6 +382,26 @@ const PaymentStatus = ({ isOpen, onClose }) => {
                       </div>
                     )}
 
+                    {payment.type === 'nursery_booking' && (
+                      <div className="bg-emerald-50 rounded-lg p-3 mb-4">
+                        <h4 className="text-sm font-medium text-emerald-800 mb-2">Nursery Booking</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                          <div>
+                            <p className="text-emerald-600">Plant</p>
+                            <p className="text-emerald-800 font-medium">{payment.meta?.plantName || '-'}</p>
+                          </div>
+                          <div>
+                            <p className="text-emerald-600">Quantity</p>
+                            <p className="text-emerald-800 font-medium">{payment.quantity}</p>
+                          </div>
+                          <div>
+                            <p className="text-emerald-600">Advance %</p>
+                            <p className="text-emerald-800 font-medium">{payment.meta?.advancePercent}%</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {payment.type === 'subsidy' && (
                       <div className="bg-purple-50 rounded-lg p-3 mb-4">
                         <h4 className="text-sm font-medium text-purple-800 mb-2">Subsidy Details</h4>
@@ -418,28 +433,38 @@ const PaymentStatus = ({ isOpen, onClose }) => {
                       </div>
                     )}
 
-                    {/* Actions */}
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
-                        <span className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          Due: {payment.dueDate}
-                        </span>
-                      </div>
+                    {/* Footer actions */}
+                    <div className="flex items-center justify-between text-sm text-gray-600">
                       <div className="flex items-center space-x-2">
-                        <button className="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium">
-                          <Eye className="h-4 w-4 inline mr-1" />
-                          View Details
+                        <span className="flex items-center"><Calendar className="h-4 w-4 mr-1"/> Due: {payment.dueDate}</span>
+                      </div>
+                      <div className="flex items-center space-x-6">
+                        <button className="flex items-center hover:text-gray-900" onClick={async () => {
+                          try {
+                            const token = localStorage.getItem('token') || '';
+                            // only nursery booking receipts supported for now
+                            if (payment.type === 'nursery_booking') {
+                              const resp = await fetch(`${import.meta.env.VITE_API_BASE_URL}/nursery/bookings/${payment.id}/receipt`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                              });
+                              if (!resp.ok) throw new Error('Failed to download receipt');
+                              const blob = await resp.blob();
+                              const url = window.URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `nursery-receipt-${payment.id}.pdf`;
+                              document.body.appendChild(a);
+                              a.click();
+                              a.remove();
+                              window.URL.revokeObjectURL(url);
+                            }
+                          } catch (e) {
+                            console.error(e);
+                          }
+                        }}>
+                          <Download className="h-4 w-4 mr-1"/> Download
                         </button>
-                        <button className="px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg text-sm font-medium">
-                          <Download className="h-4 w-4 inline mr-1" />
-                          Download
-                        </button>
-                        {payment.status === 'pending' && (
-                          <button className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm font-medium">
-                            Pay Now
-                          </button>
-                        )}
+                        <button className="flex items-center hover:text-gray-900"><Eye className="h-4 w-4 mr-1"/> View Details</button>
                       </div>
                     </div>
                   </motion.div>

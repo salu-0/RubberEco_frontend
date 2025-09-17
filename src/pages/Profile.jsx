@@ -46,6 +46,7 @@ import ApplicationStatus from '../components/Farmer/ApplicationStatus';
 import TrainingRegistration, { TrainingSchedule } from '../components/Farmer/TrainingRegistration';
 import PaymentStatus from '../components/Farmer/PaymentStatus';
 import FertilizerRainGuardRequest from '../components/Farmer/FertilizerRainGuardRequest';
+import TreeLotListing from '../components/Farmer/TreeLotListing';
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -73,6 +74,8 @@ const Profile = () => {
     loading: true
   });
   const [showAssignedWorkers, setShowAssignedWorkers] = useState(false);
+  const [isTreeLotListingOpen, setIsTreeLotListingOpen] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
   const navigate = useNavigate();
 
   // Profile image storage utilities
@@ -627,8 +630,106 @@ const Profile = () => {
     window.dispatchEvent(new Event('storage'));
   };
 
+  // Validation functions
+  const validateName = (name) => {
+    if (!name.trim()) {
+      return 'Name is required';
+    }
+    // Only allow letters, spaces, and common name characters (hyphens, apostrophes)
+    const nameRegex = /^[a-zA-Z\s\-'\.]+$/;
+    if (!nameRegex.test(name)) {
+      return 'Name can only contain letters, spaces, hyphens, apostrophes, and periods';
+    }
+    if (name.length < 2) {
+      return 'Name must be at least 2 characters long';
+    }
+    if (name.length > 50) {
+      return 'Name must be less than 50 characters';
+    }
+    return null;
+  };
+
+  const validatePhone = (phone) => {
+    if (!phone.trim()) {
+      return 'Phone number is required';
+    }
+    
+    // International phone number regex that supports:
+    // +91 9876543210 (India with country code)
+    // +1 2345678901 (US with country code)
+    // +44 20 1234 5678 (UK with country code)
+    // 9876543210 (Indian number without country code)
+    // +91-9876543210 (with hyphen)
+    // +91 98765 43210 (with spaces)
+    const internationalPhoneRegex = /^(\+[1-9]\d{0,3}[-.\s]?)?[6-9]\d{9}$|^(\+[1-9]\d{0,3}[-.\s]?)?[1-9]\d{6,14}$/;
+    
+    // Also check for common formats like +91 9876543210, +1-234-567-8901, etc.
+    const commonFormats = [
+      /^\+91[-.\s]?[6-9]\d{9}$/, // India: +91 9876543210
+      /^\+1[-.\s]?[2-9]\d{2}[-.\s]?\d{3}[-.\s]?\d{4}$/, // US: +1 234 567 8901
+      /^\+44[-.\s]?[1-9]\d{8,9}$/, // UK: +44 20 1234 5678
+      /^\+[1-9]\d{0,3}[-.\s]?[1-9]\d{6,14}$/, // General international format
+      /^[6-9]\d{9}$/ // Indian number without country code
+    ];
+    
+    const isValidFormat = commonFormats.some(regex => regex.test(phone.trim()));
+    
+    if (!isValidFormat) {
+      return 'Please enter a valid phone number (e.g., +91 9876543210, +1-234-567-8901, or 9876543210)';
+    }
+    
+    // Additional check for minimum length
+    const cleanPhone = phone.replace(/\D/g, '');
+    if (cleanPhone.length < 7 || cleanPhone.length > 15) {
+      return 'Phone number must be between 7-15 digits';
+    }
+    
+    return null;
+  };
+
+  const validateLocation = (location) => {
+    if (!location.trim()) {
+      return 'Location is required';
+    }
+    // Only allow letters, spaces, commas, and common location characters
+    const locationRegex = /^[a-zA-Z\s,\.\-']+$/;
+    if (!locationRegex.test(location)) {
+      return 'Location can only contain letters, spaces, commas, hyphens, apostrophes, and periods';
+    }
+    if (location.length < 2) {
+      return 'Location must be at least 2 characters long';
+    }
+    if (location.length > 100) {
+      return 'Location must be less than 100 characters';
+    }
+    return null;
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    // Validate the input
+    let error = null;
+    switch (name) {
+      case 'name':
+        error = validateName(value);
+        break;
+      case 'phone':
+        error = validatePhone(value);
+        break;
+      case 'location':
+        error = validateLocation(value);
+        break;
+      default:
+        break;
+    }
+    
+    // Update validation errors
+    setValidationErrors(prev => ({
+      ...prev,
+      [name]: error
+    }));
+    
     setEditForm(prev => ({
       ...prev,
       [name]: value
@@ -636,6 +737,31 @@ const Profile = () => {
   };
 
   const handleSave = async () => {
+    // Validate all fields before saving
+    const nameError = validateName(editForm.name || '');
+    const phoneError = validatePhone(editForm.phone || '');
+    const locationError = validateLocation(editForm.location || '');
+    
+    const errors = {
+      name: nameError,
+      phone: phoneError,
+      location: locationError
+    };
+    
+    setValidationErrors(errors);
+    
+    // Check if there are any validation errors
+    const hasErrors = Object.values(errors).some(error => error !== null);
+    if (hasErrors) {
+      setNotification({
+        show: true,
+        message: 'Please fix the validation errors before saving',
+        type: 'error'
+      });
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     try {
       
@@ -749,6 +875,7 @@ const Profile = () => {
       location: user.location || '',
       bio: user.bio || ''
     });
+    setValidationErrors({}); // Clear validation errors when canceling
     setIsEditing(false);
   };
 
@@ -922,40 +1049,24 @@ const Profile = () => {
                         </button>
                       </div>
 
-                      {/* Training */}
-                      <div className="mb-4">
-                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Training</h3>
-                        <button
-                          className="w-full flex items-center p-3 text-left hover:bg-purple-50 rounded-lg transition-colors group"
-                          onClick={() => setIsTrainingRegistrationOpen(true)}
-                        >
-                          <div className="bg-purple-100 p-2 rounded-lg mr-3">
-                            <GraduationCap className="h-4 w-4 text-purple-600" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">Register for Training</div>
-                            <div className="text-xs text-gray-500">Enroll in programs</div>
-                          </div>
-                          <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-purple-600" />
-                        </button>
-                        <button
-                          className="w-full flex items-center p-3 text-left hover:bg-purple-50 rounded-lg transition-colors group"
-                          onClick={() => setIsTrainingScheduleOpen(true)}
-                        >
-                          <div className="bg-purple-100 p-2 rounded-lg mr-3">
-                            <Calendar className="h-4 w-4 text-purple-600" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">Training Schedule</div>
-                            <div className="text-xs text-gray-500">View sessions</div>
-                          </div>
-                          <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-purple-600" />
-                        </button>
-                      </div>
+                      {/* Training section removed per request */}
 
                       {/* Market & Finance */}
                       <div className="mb-4">
                         <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Market & Finance</h3>
+                        <button
+                          className="w-full flex items-center p-3 text-left hover:bg-purple-50 rounded-lg transition-colors group"
+                          onClick={() => setIsTreeLotListingOpen(true)}
+                        >
+                          <div className="bg-purple-100 p-2 rounded-lg mr-3">
+                            <TreePine className="h-4 w-4 text-purple-600" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-gray-900">List Tree Lots for Bidding</div>
+                            <div className="text-xs text-gray-500">Create bidding listings</div>
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-purple-600" />
+                        </button>
                         <button
                           className="w-full flex items-center p-3 text-left hover:bg-orange-50 rounded-lg transition-colors group"
                           onClick={() => setIsPaymentStatusOpen(true)}
@@ -1134,7 +1245,10 @@ const Profile = () => {
                   <div className="flex space-x-3 mt-4 md:mt-0">
                     {!isEditing ? (
                       <button
-                        onClick={() => setIsEditing(true)}
+                        onClick={() => {
+                          setIsEditing(true);
+                          setValidationErrors({}); // Clear validation errors when starting to edit
+                        }}
                         className="flex items-center space-x-2 bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors"
                       >
                         <Edit3 className="h-4 w-4" />
@@ -1144,7 +1258,7 @@ const Profile = () => {
                       <div className="flex space-x-2">
                         <button
                           onClick={handleSave}
-                          disabled={loading}
+                          disabled={loading || Object.values(validationErrors).some(error => error !== null)}
                           className="flex items-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
                         >
                           <Save className="h-4 w-4" />
@@ -1255,13 +1369,21 @@ const Profile = () => {
                   Full Name
                 </label>
                 {isEditing ? (
-                  <input
-                    type="text"
-                    name="name"
-                    value={editForm.name}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  />
+                  <div>
+                    <input
+                      type="text"
+                      name="name"
+                      value={editForm.name}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+                        validationErrors.name ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="Enter your full name"
+                    />
+                    {validationErrors.name && (
+                      <p className="text-red-500 text-sm mt-1">{validationErrors.name}</p>
+                    )}
+                  </div>
                 ) : (
                   <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">{user.name || 'Not provided'}</p>
                 )}
@@ -1284,14 +1406,25 @@ const Profile = () => {
                   Phone Number
                 </label>
                 {isEditing ? (
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={editForm.phone}
-                    onChange={handleInputChange}
-                    placeholder="Enter your phone number"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  />
+                  <div>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={editForm.phone}
+                      onChange={handleInputChange}
+                      placeholder="e.g., +91 9876543210, +1-234-567-8901"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+                        validationErrors.phone ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {validationErrors.phone ? (
+                      <p className="text-red-500 text-sm mt-1">{validationErrors.phone}</p>
+                    ) : (
+                      <p className="text-gray-500 text-xs mt-1">
+                        Supported formats: +91 9876543210, +1-234-567-8901, 9876543210
+                      </p>
+                    )}
+                  </div>
                 ) : (
                   <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">{user.phone || 'Not provided'}</p>
                 )}
@@ -1304,14 +1437,21 @@ const Profile = () => {
                   Location
                 </label>
                 {isEditing ? (
-                  <input
-                    type="text"
-                    name="location"
-                    value={editForm.location}
-                    onChange={handleInputChange}
-                    placeholder="Enter your location"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  />
+                  <div>
+                    <input
+                      type="text"
+                      name="location"
+                      value={editForm.location}
+                      onChange={handleInputChange}
+                      placeholder="Enter your location"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+                        validationErrors.location ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {validationErrors.location && (
+                      <p className="text-red-500 text-sm mt-1">{validationErrors.location}</p>
+                    )}
+                  </div>
                 ) : (
                   <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">{user.location || 'Not provided'}</p>
                 )}
@@ -1406,6 +1546,12 @@ const Profile = () => {
         isOpen={showAssignedWorkers}
         onClose={() => setShowAssignedWorkers(false)}
         userEmail={user?.email}
+      />
+
+      {/* Tree Lot Listing Modal */}
+      <TreeLotListing
+        isOpen={isTreeLotListingOpen}
+        onClose={() => setIsTreeLotListingOpen(false)}
       />
     </div>
   );

@@ -245,7 +245,7 @@ export default function Home() {
     preventBackToHome: false
   });
 
-  // Check if admin or staff user is trying to access home page
+  // Check if admin, staff, or broker user is trying to access home page
   useEffect(() => {
     const { user, isLoggedIn } = getUserData();
     if (isLoggedIn && user?.role === 'admin') {
@@ -254,6 +254,9 @@ export default function Home() {
     } else if (isLoggedIn && user?.role === 'staff' && user?.useStaffDashboard) {
       console.log('🚫 Staff user detected on home page, redirecting to staff dashboard');
       navigate('/staff-dashboard', { replace: true });
+    } else if (isLoggedIn && user?.role === 'broker') {
+      console.log('🚫 Broker user detected on home page, redirecting to broker dashboard');
+      navigate('/broker-dashboard', { replace: true });
     }
   }, [navigate, getUserData]);
 

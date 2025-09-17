@@ -18,6 +18,7 @@ import {
   Clock,
   X
 } from 'lucide-react';
+import { isEmail, phoneValidator, isRequired, numericValidator, nameValidator } from '../../utils/validation';
 
 const StaffManagement = ({ darkMode }) => {
   const [staff, setStaff] = useState([]);
@@ -42,6 +43,7 @@ const StaffManagement = ({ darkMode }) => {
     department: '',
     location: '',
     salary: '',
+    avatar: '',
     address: {
       street: '',
       city: '',
@@ -204,56 +206,50 @@ const StaffManagement = ({ darkMode }) => {
 
   // Validation functions
   const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    return !isEmail(email);
   };
 
   const validatePhone = (phone) => {
-    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-    return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''));
+    return !phoneValidator(phone);
   };
 
   const validateForm = (data) => {
     const errors = {};
 
     // Required field validation
-    if (!data.name.trim()) {
-      errors.name = 'Full name is required';
-    } else if (data.name.trim().length < 2) {
-      errors.name = 'Name must be at least 2 characters';
-    }
+    const nameErr = nameValidator(data.name);
+    if (nameErr) errors.name = nameErr;
 
-    if (!data.email.trim()) {
+    if (isRequired(data.email)) {
       errors.email = 'Email is required';
-    } else if (!validateEmail(data.email)) {
+    } else if (isEmail(data.email)) {
       errors.email = 'Please enter a valid email address';
     }
 
-    if (!data.phone.trim()) {
-      errors.phone = 'Phone number is required';
-    } else if (!validatePhone(data.phone)) {
-      errors.phone = 'Please enter a valid phone number';
-    }
+    const phoneErr = phoneValidator(data.phone, { allowedCountryCodes: ['+91', '+81'], message: 'Phone must start with +91 or +81 and include 10 digits' });
+    if (phoneErr) errors.phone = phoneErr;
 
     if (!data.role) {
       errors.role = 'Role is required';
     }
 
-    if (!data.department.trim()) {
+    if (isRequired(data.department)) {
       errors.department = 'Department is required';
     }
 
-    if (!data.location.trim()) {
+    if (isRequired(data.location)) {
       errors.location = 'Location is required';
     }
 
     // Optional field validation
-    if (data.salary && (isNaN(data.salary) || data.salary < 0)) {
-      errors.salary = 'Salary must be a valid positive number';
+    if (data.salary) {
+      const salaryErr = numericValidator(data.salary, { min: 0 });
+      if (salaryErr) errors.salary = 'Salary must be a valid positive number';
     }
 
-    if (data.emergency_contact.phone && !validatePhone(data.emergency_contact.phone)) {
-      errors.emergency_phone = 'Please enter a valid emergency contact phone';
+    if (data.emergency_contact.phone) {
+      const emErr = phoneValidator(data.emergency_contact.phone, { allowedCountryCodes: ['+91', '+81'] });
+      if (emErr) errors.emergency_phone = 'Please enter a valid emergency contact phone';
     }
 
     return errors;
@@ -299,6 +295,7 @@ const StaffManagement = ({ darkMode }) => {
       department: '',
       location: '',
       salary: '',
+      avatar: '',
       address: {
         street: '',
         city: '',
@@ -336,6 +333,7 @@ const StaffManagement = ({ darkMode }) => {
         department: staffMember.department || '',
         location: staffMember.location || '',
         salary: staffMember.salary || '',
+        avatar: staffMember.avatar || '',
         address: staffMember.address || {
           street: '',
           city: '',
@@ -353,6 +351,26 @@ const StaffManagement = ({ darkMode }) => {
       setSelectedStaff(staffMember);
       setShowEditModal(true);
     }
+  };
+
+  // Image upload handler
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setFormErrors(prev => ({ ...prev, avatar: 'Please select a valid image file' }));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setFormErrors(prev => ({ ...prev, avatar: 'Image must be less than 5MB' }));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData(prev => ({ ...prev, avatar: String(reader.result) }));
+      setFormErrors(prev => ({ ...prev, avatar: '' }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleDeleteStaff = async (staffId) => {
@@ -838,6 +856,25 @@ const StaffManagement = ({ darkMode }) => {
                   <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
                     Enter the staff member's personal and contact details
                   </p>
+                </div>
+                {/* Profile Image */}
+                <div className="md:col-span-2">
+                  <label className={`block text-sm font-semibold mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Profile Image
+                  </label>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200">
+                      {formData.avatar ? (
+                        <img src={formData.avatar} alt="avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className={`w-full h-full flex items-center justify-center ${darkMode ? 'text-gray-400 bg-gray-700' : 'text-gray-500 bg-gray-100'}`}>No Image</div>
+                      )}
+                    </div>
+                    <input type="file" accept="image/*" onChange={handleAvatarChange} className="text-sm" />
+                  </div>
+                  {formErrors.avatar && (
+                    <p className="mt-2 text-sm text-red-500">{formErrors.avatar}</p>
+                  )}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>

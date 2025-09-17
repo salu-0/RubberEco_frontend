@@ -50,7 +50,13 @@ const LandRegistrationVerification = ({ darkMode }) => {
       if (response.ok) {
         const data = await response.json();
         console.log('🏞️ Land registrations loaded:', data.data);
-        setLandRegistrations(data.data || []);
+        const records = Array.isArray(data.data) ? data.data : [];
+        // Remove obvious dummy data (test/demo/sample entries)
+        const cleaned = records.filter((item) => {
+          const hay = `${item.landTitle || ''} ${item.ownerName || ''} ${item.landLocation || ''}`.toLowerCase();
+          return !/(^|\s)(test|demo|sample)(\s|$)/i.test(hay);
+        });
+        setLandRegistrations(cleaned);
       } else {
         console.error('Failed to load land registrations');
       }

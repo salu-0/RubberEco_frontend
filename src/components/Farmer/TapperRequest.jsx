@@ -28,6 +28,7 @@ import {
   Play,
   MoreVertical
 } from 'lucide-react';
+import { isRequired, numericValidator } from '../../utils/validation';
 
 const TapperRequest = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState('new-request');
@@ -87,6 +88,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
 
   // Requests from database (no mock data)
   const [myRequests, setMyRequests] = useState([]);
+  const [formErrors, setFormErrors] = useState({});
 
   const showNotification = (message, type = 'success') => {
     setNotification({ show: true, message, type });
@@ -275,9 +277,72 @@ const TapperRequest = ({ isOpen, onClose }) => {
     setDeleteConfirm(null);
   };
 
+  const validateField = (key, value) => {
+    switch (key) {
+      case 'farmSize': {
+        const err = numericValidator(value, { min: 0.1, max: 500 });
+        if (err) return err === 'This field is required' ? 'Farm size is required' : `Farm size: ${err}`;
+        return '';
+      }
+      case 'numberOfTrees': {
+        // must be integer and within range
+        if (value === '' || value === null || value === undefined) return 'Number of trees is required';
+        if (!/^\d+$/.test(String(value))) return 'Number of trees must be a whole number';
+        const err = numericValidator(value, { min: 1, max: 1000 });
+        return err ? (err === 'This field is required' ? 'Number of trees is required' : `Number of trees: ${err}`) : '';
+      }
+      case 'budgetPerTree': {
+        const err = numericValidator(value, { min: 1, max: 100 });
+        return err ? (err === 'This field is required' ? 'Rate per tree is required' : `Rate per tree: ${err}`) : '';
+      }
+      default:
+        return '';
+    }
+  };
+
+  const validateRequestForm = () => {
+    const errors = [];
+    const requiredFields = [
+      { key: 'farmLocation', label: 'Farm location' },
+      { key: 'farmSize', label: 'Farm size' },
+      { key: 'numberOfTrees', label: 'Number of trees' },
+      { key: 'tappingType', label: 'Tapping type' },
+      { key: 'startDate', label: 'Start date' },
+      { key: 'budgetPerTree', label: 'Rate per tree' }
+    ];
+
+    requiredFields.forEach(({ key, label }) => {
+      const err = isRequired(requestForm[key], `${label} is required`);
+      if (err) errors.push(err);
+    });
+
+    const treesErr = validateField('numberOfTrees', requestForm.numberOfTrees);
+    if (treesErr) errors.push(treesErr);
+
+    const farmSizeErr = validateField('farmSize', requestForm.farmSize);
+    if (farmSizeErr) errors.push(farmSizeErr);
+
+    const rateErr = validateField('budgetPerTree', requestForm.budgetPerTree);
+    if (rateErr) errors.push(rateErr);
+
+    if (!requestForm.startDate) {
+      errors.push('Start date is required');
+    }
+
+    if (errors.length > 0) {
+      showNotification(errors[0], 'error');
+      return false;
+    }
+
+    return true;
+  };
+
   // Handle update request (when editing)
   const handleUpdateRequest = async (e) => {
     e.preventDefault();
+
+    if (!validateRequestForm()) return;
+
     setLoading(true);
 
     try {
@@ -354,6 +419,18 @@ const TapperRequest = ({ isOpen, onClose }) => {
       ...prev,
       [field]: value
     }));
+
+    // real-time validation
+    const err = validateField(field, value);
+    if (err) {
+      setFormErrors(prev => ({ ...prev, [field]: err }));
+    } else {
+      setFormErrors(prev => {
+        const copy = { ...prev };
+        delete copy[field];
+        return copy;
+      });
+    }
   };
 
   const handleSubmitRequest = async (e) => {
@@ -363,6 +440,9 @@ const TapperRequest = ({ isOpen, onClose }) => {
     }
 
     e.preventDefault();
+
+    if (!validateRequestForm()) return;
+
     setLoading(true);
 
     try {
@@ -675,13 +755,19 @@ const TapperRequest = ({ isOpen, onClose }) => {
                         Farm Size *
                       </label>
                       <input
-                        type="text"
+                        type="number"
                         required
                         value={requestForm.farmSize}
                         onChange={(e) => handleInputChange('farmSize', e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        placeholder="e.g., 5 hectares"
+                        placeholder="e.g., 5"
+                        min="0.1"
+                        max="500"
+                        step="0.1"
                       />
+                      {formErrors.farmSize && (
+                        <p className="text-xs text-red-600 mt-1">{formErrors.farmSize}</p>
+                      )}
                     </div>
                     
                     <div>
@@ -695,7 +781,12 @@ const TapperRequest = ({ isOpen, onClose }) => {
                         onChange={(e) => handleInputChange('numberOfTrees', e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="Enter number of trees"
+                        min="1"
+                        max="1000"
                       />
+                      {formErrors.numberOfTrees && (
+                        <p className="text-xs text-red-600 mt-1">{formErrors.numberOfTrees}</p>
+                      )}
                     </div>
 
                     <div>
@@ -746,9 +837,10 @@ const TapperRequest = ({ isOpen, onClose }) => {
                         onChange={(e) => handleInputChange('preferredTime', e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       >
+                        <option value="early_morning">Early Morning (4 AM - 6 AM)</option>
                         <option value="morning">Morning (6 AM - 10 AM)</option>
                         <option value="afternoon">Afternoon (2 PM - 6 PM)</option>
-                        <option value="flexible">Flexible</option>
+                        <option value="evening">Evening (6 PM - 8 PM)</option>
                       </select>
                     </div>
                   </div>
@@ -790,8 +882,12 @@ const TapperRequest = ({ isOpen, onClose }) => {
                           className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                           placeholder="e.g., 3"
                           min="1"
+                          max="100"
                           step="0.5"
                         />
+                        {formErrors.budgetPerTree && (
+                          <p className="text-xs text-red-600 mt-1">{formErrors.budgetPerTree}</p>
+                        )}
                       </div>
                       <p className="text-xs text-gray-500 mt-1">Amount in ₹ per tree for cutting/tapping service</p>
                     </div>
@@ -822,7 +918,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
                   </button>
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || Object.keys(formErrors).length > 0}
                     className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 flex items-center space-x-2"
                   >
                     {loading ? (

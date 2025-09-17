@@ -8,6 +8,7 @@ import Attendance from '../../components/Staff/Attendance';
 import AttendanceRecords from '../../components/Staff/AttendanceRecords';
 import AttendanceMarkingForm from '../../components/Staff/AttendanceMarkingForm';
 import Toast from '../../components/Toast';
+import { passwordStrength } from '../../utils/validation';
 
 import {
   MapPin,
@@ -71,6 +72,24 @@ const StaffDashboard = ({ darkMode }) => {
   const [showCollectionDetailsModal, setShowCollectionDetailsModal] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState(null);
   const [showAttendanceForm, setShowAttendanceForm] = useState(false);
+  // Profile edit UI state
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({ fullName: '', phone: '', assignedRegion: '' });
+  const [profileErrors, setProfileErrors] = useState({});
+
+  const validateName = (value) => {
+    if (!value || !value.trim()) return 'Full name is required';
+    const ok = /^[A-Za-z][A-Za-z\s.'-]{1,}$/.test(value.trim());
+    return ok ? '' : 'Name can only contain letters, spaces, apostrophes, periods and hyphens';
+  };
+
+  const handleProfileInputChange = (field, value) => {
+    setProfileForm(prev => ({ ...prev, [field]: value }));
+    if (field === 'fullName') {
+      const err = validateName(value);
+      setProfileErrors(prev => ({ ...prev, fullName: err }));
+    }
+  };
 
   // API base URL
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
@@ -445,13 +464,14 @@ const StaffDashboard = ({ darkMode }) => {
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
 
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      showNotification('New passwords do not match!', 'error');
+    const pwdErr = passwordStrength(passwordForm.newPassword);
+    if (pwdErr) {
+      setNotification({ show: true, message: pwdErr, type: 'error' });
       return;
     }
 
-    if (passwordForm.newPassword.length < 6) {
-      showNotification('New password must be at least 6 characters long!', 'error');
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setNotification({ show: true, message: 'Passwords do not match', type: 'error' });
       return;
     }
 
@@ -591,6 +611,16 @@ const StaffDashboard = ({ darkMode }) => {
     // Fetch assigned tasks data
     fetchAssignedTasks();
   }, []);
+
+  // Initialize profile form when user/staff data is available
+  useEffect(() => {
+    setProfileForm({
+      fullName: (staffData?.fullName || user?.name || '').toString(),
+      phone: (staffData?.phone || user?.phone || '').toString(),
+      assignedRegion: (staffData?.assignedRegion || user?.location || '').toString()
+    });
+    setProfileErrors({ fullName: '' });
+  }, [staffData, user]);
 
   // Real-time clock
   useEffect(() => {
@@ -1509,9 +1539,12 @@ const StaffDashboard = ({ darkMode }) => {
                 <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   Profile & Settings
                 </h2>
-                <button className="flex items-center space-x-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
+                <button
+                  onClick={() => setIsEditingProfile((prev) => !prev)}
+                  className="flex items-center space-x-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors"
+                >
                   <Edit className="h-5 w-5" />
-                  <span>Edit Profile</span>
+                  <span>{isEditingProfile ? 'Close' : 'Edit Profile'}</span>
                 </button>
               </div>
 
@@ -1536,12 +1569,32 @@ const StaffDashboard = ({ darkMode }) => {
                         </label>
                         <input
                           type="text"
-                          value={staffData?.fullName || user?.name || 'Loading...'}
+                          value={isEditingProfile ? profileForm.fullName : (staffData?.fullName || user?.name || 'Loading...')}
+                          onChange={(e) => handleProfileInputChange('fullName', e.target.value)}
                           className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                             darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
                           }`}
-                          readOnly
+                          readOnly={!isEditingProfile}
                         />
+                        {isEditingProfile && (
+                          <div className="mt-3">
+                            <button
+                              disabled={!!profileErrors.fullName}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (profileErrors.fullName) return;
+                                // TODO: hook up to save endpoint if available
+                                setIsEditingProfile(false);
+                              }}
+                              className={`px-4 py-2 rounded-lg text-white ${profileErrors.fullName ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
+                            >
+                              Save Changes
+                            </button>
+                          </div>
+                        )}
+                        {isEditingProfile && profileErrors.fullName && (
+                          <p className="text-xs text-red-600 mt-1">{profileErrors.fullName}</p>
+                        )}
                       </div>
                       <div>
                         <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
@@ -1575,11 +1628,12 @@ const StaffDashboard = ({ darkMode }) => {
                         </label>
                         <input
                           type="tel"
-                          value={staffData?.phone || user?.phone || 'Loading...'}
+                          value={isEditingProfile ? profileForm.phone : (staffData?.phone || user?.phone || 'Loading...')}
+                          onChange={(e) => handleProfileInputChange('phone', e.target.value)}
                           className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                             darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
                           }`}
-                          readOnly
+                          readOnly={!isEditingProfile}
                         />
                       </div>
                       <div>
@@ -1601,11 +1655,12 @@ const StaffDashboard = ({ darkMode }) => {
                         </label>
                         <input
                           type="text"
-                          value={staffData?.assignedRegion || user?.location || 'Loading...'}
+                          value={isEditingProfile ? profileForm.assignedRegion : (staffData?.assignedRegion || user?.location || 'Loading...')}
+                          onChange={(e) => handleProfileInputChange('assignedRegion', e.target.value)}
                           className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                             darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
                           }`}
-                          readOnly
+                          readOnly={!isEditingProfile}
                         />
                       </div>
                     </div>

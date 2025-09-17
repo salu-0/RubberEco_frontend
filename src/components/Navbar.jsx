@@ -96,9 +96,10 @@ const Navbar = ({ transparent = false, fixed = true }) => {
     // Regular users and non-authenticated users get full navigation
     const baseItems = [
       { name: 'Home', path: '/' },
-      { name: 'Features', path: '/features', scrollTo: 'features' },
+      { name: 'Features', path: '/', scrollTo: 'features' },
       { name: 'Training', path: '/training' },
-      { name: 'Markets', path: '/markets' }
+      { name: 'Markets', path: '/markets' },
+      { name: 'Nursery', path: '/nursery' }
     ];
 
     return baseItems;
@@ -119,15 +120,22 @@ const Navbar = ({ transparent = false, fixed = true }) => {
   };
 
   const handleNavClick = (item, e) => {
-    // If we're on the home page and the item has a scrollTo property, scroll instead of navigate
-    if (location.pathname === '/' && item.scrollTo) {
+    // Handle in-page scroll for features even when coming from other routes
+    if (item.scrollTo) {
       e.preventDefault();
-      const element = document.getElementById(item.scrollTo);
-      if (element) {
-        element.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
-        });
+      if (location.pathname !== '/') {
+        navigate('/');
+        setTimeout(() => {
+          const element = document.getElementById(item.scrollTo);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 350);
+      } else {
+        const element = document.getElementById(item.scrollTo);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       }
     }
     // For mobile menu, close it

@@ -108,6 +108,25 @@ export const trainingAPI = {
     });
 
     return handleResponse(response);
+  },
+
+  // Razorpay helpers for training
+  createRazorpayOrder: async ({ amount, moduleId, moduleTitle }) => {
+    const response = await fetch(`${API_BASE_URL}/training/razorpay/create-order`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount, moduleId, moduleTitle })
+    });
+    return handleResponse(response);
+  },
+
+  verifyRazorpayAndEnroll: async (payload) => {
+    const response = await fetch(`${API_BASE_URL}/training/razorpay/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    return handleResponse(response);
   }
 };
 

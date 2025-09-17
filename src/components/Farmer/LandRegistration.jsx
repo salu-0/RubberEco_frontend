@@ -25,11 +25,13 @@ import {
   Droplets,
   Mountain
 } from 'lucide-react';
+import { isRequired, isEmail, phoneValidator, pincodeValidator, numericValidator, nameValidator } from '../../utils/validation';
 
 const LandRegistration = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState('new-registration');
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
+  const [formErrors, setFormErrors] = useState({});
 
   // View Details Modal State
   const [selectedLand, setSelectedLand] = useState(null);
@@ -158,6 +160,39 @@ const LandRegistration = ({ isOpen, onClose }) => {
       ...prev,
       [field]: value
     }));
+    
+    // Clear error for this field when user starts typing
+    if (formErrors[field]) {
+      setFormErrors(prev => ({
+        ...prev,
+        [field]: ''
+      }));
+    }
+  };
+
+  const handleInputBlur = (field, value) => {
+    let error = '';
+    
+    switch (field) {
+      case 'ownerName':
+        error = nameValidator(value);
+        break;
+      case 'fatherName':
+        error = nameValidator(value);
+        break;
+      case 'email':
+        if (value && isEmail(value)) {
+          error = isEmail(value);
+        }
+        break;
+      default:
+        break;
+    }
+    
+    setFormErrors(prev => ({
+      ...prev,
+      [field]: error
+    }));
   };
 
   const handleFileUpload = (event) => {
@@ -184,8 +219,43 @@ const LandRegistration = ({ isOpen, onClose }) => {
     }));
   };
 
+  const validateRegistrationForm = () => {
+    const errors = {};
+
+    // Owner info
+    if (nameValidator(registrationForm.ownerName)) errors.ownerName = nameValidator(registrationForm.ownerName);
+    if (nameValidator(registrationForm.fatherName)) errors.fatherName = nameValidator(registrationForm.fatherName);
+    if (phoneValidator(registrationForm.phoneNumber)) errors.phoneNumber = phoneValidator(registrationForm.phoneNumber);
+    if (registrationForm.email && isEmail(registrationForm.email)) errors.email = isEmail(registrationForm.email);
+    if (isRequired(registrationForm.address)) errors.address = isRequired(registrationForm.address, 'Current address is required');
+
+    // Land details
+    if (isRequired(registrationForm.surveyNumber)) errors.surveyNumber = isRequired(registrationForm.surveyNumber);
+    if (isRequired(registrationForm.district)) errors.district = 'District is required';
+    if (pincodeValidator(registrationForm.pincode)) errors.pincode = pincodeValidator(registrationForm.pincode);
+    if (isRequired(registrationForm.totalArea)) errors.totalArea = isRequired(registrationForm.totalArea);
+    if (isRequired(registrationForm.landLocation)) errors.landLocation = isRequired(registrationForm.landLocation, 'Land location is required');
+
+    // Coordinates optional numeric
+    if (registrationForm.latitude && numericValidator(registrationForm.latitude, { allowEmpty: true })) {
+      errors.latitude = numericValidator(registrationForm.latitude, { allowEmpty: true });
+    }
+    if (registrationForm.longitude && numericValidator(registrationForm.longitude, { allowEmpty: true })) {
+      errors.longitude = numericValidator(registrationForm.longitude, { allowEmpty: true });
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmitRegistration = async (e) => {
     e.preventDefault();
+
+    if (!validateRegistrationForm()) {
+      setNotification({ show: true, message: 'Please fix the highlighted errors before submitting.', type: 'error' });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -431,29 +501,43 @@ const LandRegistration = ({ isOpen, onClose }) => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Full Name *
+                        Full Name <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         required
                         value={registrationForm.ownerName}
                         onChange={(e) => handleInputChange('ownerName', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        placeholder="Enter your full name"
+                        onBlur={(e) => handleInputBlur('ownerName', e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                          formErrors.ownerName ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="Enter your full name (first and last name)"
                       />
+                      {formErrors.ownerName && <p className="text-xs text-red-500 mt-1">{formErrors.ownerName}</p>}
+                      {!formErrors.ownerName && registrationForm.ownerName && (
+                        <p className="text-xs text-green-600 mt-1">✓ Name format is valid</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Father's Name *
+                        Father's Name <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         required
                         value={registrationForm.fatherName}
                         onChange={(e) => handleInputChange('fatherName', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        placeholder="Enter father's name"
+                        onBlur={(e) => handleInputBlur('fatherName', e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                          formErrors.fatherName ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="Enter father's name (first and last name)"
                       />
+                      {formErrors.fatherName && <p className="text-xs text-red-500 mt-1">{formErrors.fatherName}</p>}
+                      {!formErrors.fatherName && registrationForm.fatherName && (
+                        <p className="text-xs text-green-600 mt-1">✓ Name format is valid</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -470,6 +554,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
                           placeholder="+91 98765 43210"
                         />
                       </div>
+                      {formErrors.phoneNumber && <p className="text-xs text-red-500 mt-1">{formErrors.phoneNumber}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -481,10 +566,17 @@ const LandRegistration = ({ isOpen, onClose }) => {
                           type="email"
                           value={registrationForm.email}
                           onChange={(e) => handleInputChange('email', e.target.value)}
-                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          onBlur={(e) => handleInputBlur('email', e.target.value)}
+                          className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                            formErrors.email ? 'border-red-500' : 'border-gray-300'
+                          }`}
                           placeholder="your.email@example.com"
                         />
                       </div>
+                      {formErrors.email && <p className="text-xs text-red-500 mt-1">{formErrors.email}</p>}
+                      {!formErrors.email && registrationForm.email && (
+                        <p className="text-xs text-green-600 mt-1">✓ Email format is valid</p>
+                      )}
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -501,6 +593,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
                           placeholder="Enter your complete address"
                         />
                       </div>
+                      {formErrors.address && <p className="text-xs text-red-500 mt-1">{formErrors.address}</p>}
                     </div>
                   </div>
                 </div>
@@ -523,9 +616,6 @@ const LandRegistration = ({ isOpen, onClose }) => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="e.g., Family Farm, Ancestral Land, or leave blank"
                       />
-                      <p className="text-xs text-gray-500 mt-1">
-                        If your land doesn't have a specific name, you can leave this blank. We'll use your location for identification.
-                      </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -539,6 +629,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="e.g., 123/4A"
                       />
+                      {formErrors.surveyNumber && <p className="text-xs text-red-500 mt-1">{formErrors.surveyNumber}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -559,6 +650,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
                         <option value="Idukki">Idukki</option>
                         <option value="Pathanamthitta">Pathanamthitta</option>
                       </select>
+                      {formErrors.district && <p className="text-xs text-red-500 mt-1">{formErrors.district}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -572,6 +664,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="e.g., 686001"
                       />
+                      {formErrors.pincode && <p className="text-xs text-red-500 mt-1">{formErrors.pincode}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -585,6 +678,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="e.g., 5.2 hectares"
                       />
+                      {formErrors.totalArea && <p className="text-xs text-red-500 mt-1">{formErrors.totalArea}</p>}
                     </div>
 
 
@@ -604,6 +698,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
                           placeholder="Enter complete land address with landmarks"
                         />
                       </div>
+                      {formErrors.landLocation && <p className="text-xs text-red-500 mt-1">{formErrors.landLocation}</p>}
                     </div>
                   </div>
                 </div>

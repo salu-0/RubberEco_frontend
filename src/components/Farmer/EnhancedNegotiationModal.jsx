@@ -68,19 +68,17 @@ const EnhancedNegotiationModal = ({
   useEffect(() => {
     if (isOpen && application) {
       loadNegotiationDetails();
-      // Set initial values for counter proposals
-      if (application.negotiation?.currentProposal) {
-        const current = application.negotiation.currentProposal;
-        setProposedRate(current.proposedRate || '');
-        setProposedTreeCount(current.proposedTreeCount || '');
-        setProposedTiming(current.proposedTiming || {
-          startDate: '',
-          endDate: '',
-          preferredTimeSlots: [],
-          workingDays: [],
-          estimatedDuration: ''
-        });
-      }
+      // Reset form fields when opening modal
+      setProposedRate('');
+      setProposedTreeCount('');
+      setProposedTiming({
+        startDate: '',
+        endDate: '',
+        preferredTimeSlots: [],
+        workingDays: [],
+        estimatedDuration: ''
+      });
+      setNotes('');
     }
   }, [isOpen, application]);
 
@@ -245,18 +243,34 @@ const EnhancedNegotiationModal = ({
   };
 
   const canSubmitCounterProposal = () => {
-    if (!negotiationData) return false;
+    if (!negotiationData) {
+      console.log('❌ No negotiation data');
+      return false;
+    }
     
     // Cannot submit counter proposal if negotiation is already accepted/agreed
     if (negotiationData.status === 'accepted' || negotiationData.status === 'agreed') {
+      console.log('❌ Negotiation already accepted/agreed:', negotiationData.status);
       return false;
     }
     
     const currentProposal = negotiationData.negotiation?.currentProposal;
-    if (!currentProposal) return false;
+    if (!currentProposal) {
+      console.log('❌ No current proposal');
+      return false;
+    }
+    
+    console.log('🔍 Current proposal details:', {
+      proposedBy: currentProposal.proposedBy,
+      proposedRate: currentProposal.proposedRate,
+      proposedTreeCount: currentProposal.proposedTreeCount,
+      status: negotiationData.status
+    });
     
     // Can submit counter proposal if current proposal is from staff and negotiation is still active
-    return currentProposal.proposedBy === 'staff';
+    const canSubmit = currentProposal.proposedBy === 'staff';
+    console.log('✅ Can submit counter proposal:', canSubmit);
+    return canSubmit;
   };
 
   const canAcceptProposal = () => {
@@ -339,6 +353,16 @@ const EnhancedNegotiationModal = ({
                   </span>
                 )}
               </div>
+              {negotiationData?.negotiation?.currentProposal && (
+                <div className="mt-2 text-xs text-blue-600">
+                  Last proposal by: <span className="font-medium">{negotiationData.negotiation.currentProposal.proposedBy}</span>
+                  {canSubmitCounterProposal() && (
+                    <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                      You can submit a counter proposal
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Staff Information */}
@@ -404,8 +428,32 @@ const EnhancedNegotiationModal = ({
 
             {/* Counter Proposal Form */}
             {canSubmitCounterProposal() && (
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <h3 className="font-semibold text-gray-900 mb-4">Submit Counter Proposal</h3>
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h3 className="font-semibold text-blue-900 mb-4">Submit Counter Proposal</h3>
+                <p className="text-sm text-blue-700 mb-4">
+                  Staff has submitted a proposal. You can now submit your counter proposal with your preferred rate and tree count.
+                </p>
+                
+                {/* Staff's Current Proposal Reference */}
+                {negotiationData?.negotiation?.currentProposal && (
+                  <div className="mb-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <h4 className="font-medium text-yellow-900 mb-2">Staff's Current Proposal:</h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium">Rate:</span> ₹{negotiationData.negotiation.currentProposal.proposedRate} per tree
+                      </div>
+                      <div>
+                        <span className="font-medium">Trees:</span> {negotiationData.negotiation.currentProposal.proposedTreeCount}
+                      </div>
+                    </div>
+                    {negotiationData.negotiation.currentProposal.notes && (
+                      <div className="mt-2 text-sm">
+                        <span className="font-medium">Notes:</span> {negotiationData.negotiation.currentProposal.notes}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 
                 {/* Rate and Tree Count */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">

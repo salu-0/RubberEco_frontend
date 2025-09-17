@@ -84,15 +84,37 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
 
   // Role-based redirection for authenticated users
   if (isAuthenticated && userRole) {
+    // Define farmer-specific routes that brokers should not access
+    const farmerRoutes = ['/training', '/nursery', '/markets', '/pricing', '/about', '/careers', '/features'];
+    const isFarmerRoute = farmerRoutes.some(route => location.pathname.startsWith(route));
+
     // If admin is trying to access non-admin routes, redirect to dashboard
     if (userRole === 'admin' && location.pathname === '/profile') {
       console.log('🔄 Redirecting admin to dashboard from profile');
       return <Navigate to="/admin-dashboard" replace />;
     }
 
+    // If broker is trying to access farmer routes, redirect to broker dashboard
+    if (userRole === 'broker' && isFarmerRoute) {
+      console.log('🚫 Broker trying to access farmer route:', location.pathname);
+      return <Navigate to="/broker-dashboard" replace />;
+    }
+
+    // If broker is trying to access home, redirect to broker dashboard
+    if (userRole === 'broker' && (location.pathname === '/' || location.pathname === '/home')) {
+      console.log('🔄 Redirecting broker to broker dashboard from home');
+      return <Navigate to="/broker-dashboard" replace />;
+    }
+
     // If non-admin is trying to access admin routes
     if (userRole !== 'admin' && location.pathname.startsWith('/admin')) {
       console.log('🚫 Non-admin user trying to access admin route');
+      return <Navigate to="/home" replace />;
+    }
+
+    // If non-staff is trying to access staff routes
+    if (userRole !== 'staff' && location.pathname.startsWith('/staff')) {
+      console.log('🚫 Non-staff user trying to access staff route');
       return <Navigate to="/home" replace />;
     }
   }

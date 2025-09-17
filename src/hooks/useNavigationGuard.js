@@ -145,11 +145,16 @@ export const useNavigationGuard = ({
       return;
     }
 
-    // If broker trying to navigate to home, redirect to broker dashboard
-    if (isLoggedIn && user?.role === 'broker' && (to === '/' || to === '/home')) {
+    // If broker trying to navigate to home or farmer routes, redirect to broker dashboard
+    if (isLoggedIn && user?.role === 'broker') {
+      const farmerRoutes = ['/training', '/nursery', '/markets', '/pricing', '/about', '/careers', '/features'];
+      const isFarmerRoute = farmerRoutes.some(route => to.startsWith(route));
       
-      navigate('/broker-dashboard', { replace: true });
-      return;
+      if (to === '/' || to === '/home' || isFarmerRoute) {
+        console.log('🚫 Broker trying to access farmer route, redirecting to broker dashboard:', to);
+        navigate('/broker-dashboard', { replace: true });
+        return;
+      }
     }
 
     // If staff trying to navigate anywhere except staff dashboard or logout, redirect to staff dashboard

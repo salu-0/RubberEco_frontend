@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { trainingAPI } from '../../utils/api';
 import enrollmentManager from '../../utils/enrollmentManager';
@@ -25,6 +26,7 @@ import {
 } from 'lucide-react';
 
 const TrainingRegistration = ({ isOpen, onClose, selectedModule, onEnrollmentSuccess }) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(selectedModule ? 'module-enrollment' : 'available-programs');
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
@@ -41,6 +43,21 @@ const TrainingRegistration = ({ isOpen, onClose, selectedModule, onEnrollmentSuc
   const [autoPopulatedFields, setAutoPopulatedFields] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+
+  // Load Razorpay script once
+  useEffect(() => {
+    if (window.Razorpay) {
+      setRazorpayLoaded(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => setRazorpayLoaded(true);
+    script.onerror = () => console.error('Failed to load Razorpay');
+    document.body.appendChild(script);
+  }, []);
 
   // Available Training Programs (removed static data)
   const [availablePrograms, setAvailablePrograms] = useState([]);
@@ -106,7 +123,7 @@ const TrainingRegistration = ({ isOpen, onClose, selectedModule, onEnrollmentSuc
         return;
       }
 
-      // Store enrollment data temporarily for after payment
+      // Prepare enrollment data
       const enrollmentData = {
         moduleId: selectedModule.id,
         moduleTitle: selectedModule.title,
@@ -117,44 +134,50 @@ const TrainingRegistration = ({ isOpen, onClose, selectedModule, onEnrollmentSuc
         timestamp: Date.now()
       };
 
-      // Store in sessionStorage to retrieve after payment
-      sessionStorage.setItem('pendingEnrollment', JSON.stringify(enrollmentData));
+      if (!razorpayLoaded || !window.Razorpay) {
+        throw new Error('Payment SDK failed to load. Please try again.');
+      }
 
-      // Demo Mode: Simulate payment process
-      // In production, replace this with actual Stripe payment link
-      showNotification('Demo Mode: Simulating payment process...', 'info');
+      // Create Razorpay order
+      const orderResp = await trainingAPI.createRazorpayOrder({ amount: selectedModule.price, moduleId: selectedModule.id, moduleTitle: selectedModule.title });
 
-      // Simulate payment processing delay
-      setTimeout(() => {
-        const shouldSimulateSuccess = confirm(
-          'Demo Payment Simulation\n\n' +
-          `Course: ${selectedModule.title}\n` +
-          `Amount: ₹${selectedModule.price?.toLocaleString()}\n\n` +
-          'Click OK to simulate successful payment\n' +
-          'Click Cancel to simulate payment cancellation\n\n' +
-          'In production, this would redirect to Stripe payment page.'
-        );
-
-        if (shouldSimulateSuccess) {
-          // Simulate successful payment
-          window.location.href = `${window.location.origin}/training-payment-success?moduleId=${selectedModule.id}`;
-        } else {
-          // Simulate cancelled payment
-          window.location.href = `${window.location.origin}/training?cancelled=true`;
+      const options = {
+        key: orderResp.data.key,
+        amount: orderResp.data.amount,
+        currency: 'INR',
+        name: 'RubberEco Training',
+        description: selectedModule.title,
+        order_id: orderResp.data.orderId,
+        prefill: { name: enrollmentForm.name, email: enrollmentForm.email, contact: enrollmentForm.phone },
+        theme: { color: '#16a34a' },
+        handler: async function (response) {
+          try {
+            const payload = {
+              userId: JSON.parse(localStorage.getItem('user') || '{}').id,
+              moduleId: enrollmentData.moduleId,
+              moduleTitle: enrollmentData.moduleTitle,
+              moduleLevel: enrollmentData.moduleLevel,
+              paymentAmount: enrollmentData.paymentAmount,
+              userDetails: enrollmentData.userDetails,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            };
+            const verify = await trainingAPI.verifyRazorpayAndEnroll(payload);
+            showNotification('Enrollment successful!', 'success');
+            setPaymentLoading(false);
+            onEnrollmentSuccess && onEnrollmentSuccess(enrollmentData.moduleId);
+          } catch (err) {
+            console.error('Verify/enroll error:', err);
+            showNotification(err.message || 'Enrollment failed after payment', 'error');
+            setPaymentLoading(false);
+          }
         }
-      }, 1500);
+      };
 
-      /*
-      // Uncomment below for actual Stripe integration when you have a valid payment link:
-      const stripeBaseUrl = 'https://buy.stripe.com/test_YOUR_PAYMENT_LINK_ID';
-      const successUrl = encodeURIComponent(`${window.location.origin}/training-payment-success?moduleId=${selectedModule.id}`);
-      const cancelUrl = encodeURIComponent(`${window.location.origin}/training?cancelled=true`);
-      const stripeUrl = `${stripeBaseUrl}?prefilled_email=${encodeURIComponent(enrollmentForm.email)}&client_reference_id=${selectedModule.id}_${Date.now()}&success_url=${successUrl}&cancel_url=${cancelUrl}`;
-
-      setTimeout(() => {
-        window.location.href = stripeUrl;
-      }, 1000);
-      */
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+      setPaymentLoading(false);
 
     } catch (error) {
       console.error('Payment redirect error:', error);
@@ -682,7 +705,10 @@ const TrainingRegistration = ({ isOpen, onClose, selectedModule, onEnrollmentSuc
                   Please browse and enroll in courses from the main training page.
                 </p>
                 <button
-                  onClick={onClose}
+                  onClick={() => {
+                    onClose && onClose();
+                    navigate('/training#browse');
+                  }}
                   className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
                 >
                   Go to Training Courses
@@ -708,7 +734,10 @@ const TrainingRegistration = ({ isOpen, onClose, selectedModule, onEnrollmentSuc
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No course enrollments yet</h3>
                   <p className="text-gray-600 mb-4">You haven't enrolled in any paid training courses yet.</p>
                   <button
-                    onClick={onClose}
+                    onClick={() => {
+                      onClose && onClose();
+                      navigate('/training#browse');
+                    }}
                     className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
                   >
                     Browse Training Courses

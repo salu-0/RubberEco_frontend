@@ -8,7 +8,6 @@ import {
   Calendar,
   FileText,
   CreditCard,
-  Settings,
   Bell,
   Search,
   User,
@@ -33,7 +32,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   TreePine,
-  CalendarDays
+  CalendarDays,
+  Package
 } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import NotificationPanel from '../../components/Admin/NotificationPanel';
@@ -49,6 +49,8 @@ import LeaveManagement from '../../components/Admin/LeaveManagement';
 import PerformanceTracking from './PerformanceTracking';
 import AssignTasks from './AssignTappers';
 import VideoManagement from './VideoManagement';
+import NurseryBookings from './NurseryBookings';
+import NurseryInventory from './NurseryInventory';
 import { useNavigationGuard } from '../../hooks/useNavigationGuard';
 
 const Dashboard = () => {
@@ -83,6 +85,10 @@ const Dashboard = () => {
   const [activitiesLoading, setActivitiesLoading] = useState(true);
   const [staffPerformance, setStaffPerformance] = useState([]);
   const [staffLoading, setStaffLoading] = useState(true);
+  const [serviceRequests, setServiceRequests] = useState([]);
+  const [serviceLoading, setServiceLoading] = useState(false);
+  const [staffMap, setStaffMap] = useState({});
+  const [tapperByRequest, setTapperByRequest] = useState({});
   const navigate = useNavigate();
 
   // API base URL
@@ -550,6 +556,92 @@ const Dashboard = () => {
     }
   };
 
+  // Load accepted service requests for Admin > Service Requests tab
+  const loadAcceptedServiceRequests = async () => {
+    try {
+      setServiceLoading(true);
+      const response = await fetch(`${API_BASE_URL}/farmer-requests`, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!response.ok) {
+        console.warn('Failed to load service requests');
+        setServiceRequests([]);
+        setTapperByRequest({});
+        return;
+      }
+      const result = await response.json();
+      const items = Array.isArray(result.data) ? result.data : [];
+      const acceptedLike = items.filter(req => {
+        const s = (req.status || '').toLowerCase();
+        return s === 'accepted' || s === 'in_progress' || s === 'assigned';
+      });
+      setServiceRequests(acceptedLike);
+      // Also load applicants per request to resolve tapper names
+      await loadApplicantsForRequests(acceptedLike);
+    } catch (err) {
+      console.error('Error loading service requests:', err);
+      setServiceRequests([]);
+      setTapperByRequest({});
+    } finally {
+      setServiceLoading(false);
+    }
+  };
+
+  // Load applicants for each request and pick the selected/accepted staff name if present
+  const loadApplicantsForRequests = async (requests) => {
+    try {
+      const token = getAuthToken();
+      const entries = await Promise.all(
+        requests.map(async (req) => {
+          try {
+            const res = await fetch(`${API_BASE_URL}/service-applications/request/${req._id}/applications`, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            if (!res.ok) return [req._id, null];
+            const data = await res.json();
+            const apps = Array.isArray(data.data) ? data.data : [];
+            // Prefer apps with selected/accepted/assigned/in_progress/completed
+            const preferred = apps.find(a => ['selected','accepted','agreed','assigned','in_progress','completed'].includes((a.status || '').toLowerCase()));
+            const name = preferred?.staffName || preferred?.staffId?.name || (apps[0]?.staffName || apps[0]?.staffId?.name) || null;
+            return [req._id, name];
+          } catch (_) {
+            return [req._id, null];
+          }
+        })
+      );
+      const map = {};
+      entries.forEach(([id, name]) => { if (id) map[id] = name || null; });
+      setTapperByRequest(map);
+    } catch (e) {
+      console.warn('Failed loading applicants for requests', e);
+      setTapperByRequest({});
+    }
+  };
+
+  // Build a map of staff id => name for resolving assigned tapper IDs
+  const loadStaffMap = async () => {
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`${API_BASE_URL}/staff`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const list = Array.isArray(data.data) ? data.data : [];
+      const map = {};
+      list.forEach(s => { map[s._id] = s.name || s.fullName || s.email || 'Tapper'; });
+      setStaffMap(map);
+    } catch (e) {
+      console.warn('Could not load staff map', e);
+    }
+  };
+
   // Real-time clock
   useEffect(() => {
     const timer = setInterval(() => {
@@ -580,6 +672,14 @@ const Dashboard = () => {
     }, 300000);
     return () => clearInterval(interval);
   }, []);
+
+  // Load service requests when Services tab is opened
+  useEffect(() => {
+    if (activeTab === 'services') {
+      loadAcceptedServiceRequests();
+      loadStaffMap();
+    }
+  }, [activeTab]);
 
   // Handle hash-based navigation
   useEffect(() => {
@@ -723,14 +823,15 @@ const Dashboard = () => {
     { name: 'Land Verification', icon: TreePine, id: 'land-verification', notificationCount: pendingLandRegistrations },
     { name: 'Trainers', icon: Target, id: 'trainers' },
     { name: 'Brokers', icon: Briefcase, id: 'brokers' },
-    { name: 'Request Management', icon: UserPlus, id: 'assign-tasks', notificationCount: pendingTappingRequests },
-    { name: 'Video Management', icon: Video, id: 'videos' },
+    { name: 'Nursery Bookings', icon: Leaf, id: 'nursery' },
+    { name: 'Nursery Inventory', icon: Package, id: 'inventory' },
+    { name: 'Fertilizers and Rain Guard Service', icon: UserPlus, id: 'assign-tasks', notificationCount: pendingTappingRequests },
+    // { name: 'Video Management', icon: Video, id: 'videos' },
     { name: 'Tapping Schedules', icon: Calendar, id: 'schedules' },
     { name: 'Payments', icon: CreditCard, id: 'payments' },
-    { name: 'Service Requests', icon: Briefcase, id: 'services' },
+    { name: 'Tapping Requests', icon: Briefcase, id: 'services' },
     { name: 'Performance Tracking', icon: TrendingUp, id: 'performance' },
     { name: 'Reports', icon: FileText, id: 'reports' },
-    { name: 'Settings', icon: Settings, id: 'settings' },
   ];
 
 
@@ -895,49 +996,6 @@ const Dashboard = () => {
                   {currentTime.toLocaleDateString()}
                 </div>
               </div>
-
-              {/* Enhanced Search */}
-              <div className="relative group">
-                <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 transition-colors ${
-                  darkMode ? 'text-gray-400 group-focus-within:text-primary-400' : 'text-gray-500 group-focus-within:text-primary-500'
-                }`} />
-                <input
-                  type="text"
-                  placeholder="Search users, reports..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`pl-10 pr-4 py-2 w-64 rounded-lg border transition-all duration-200 ${
-                    darkMode
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:bg-gray-600'
-                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:bg-gray-50'
-                  } focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:w-80`}
-                />
-              </div>
-
-              {/* Enhanced Notifications */}
-              <motion.button
-                onClick={() => setNotificationPanelOpen(true)}
-                className={`p-2 rounded-lg relative transition-colors ${
-                  darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
-                }`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Bell className="h-6 w-6" />
-                {(unreadNotifications + pendingStaffRequests + pendingTappingRequests + pendingLandRegistrations + pendingLeaveRequests) > 0 && (
-                  <motion.span
-                    className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 rounded-full text-xs text-white flex items-center justify-center font-medium"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                  >
-                    {(unreadNotifications + pendingStaffRequests + pendingTappingRequests + pendingLandRegistrations + pendingLeaveRequests) > 99
-                      ? '99+'
-                      : (unreadNotifications + pendingStaffRequests + pendingTappingRequests + pendingLandRegistrations + pendingLeaveRequests)
-                    }
-                  </motion.span>
-                )}
-              </motion.button>
 
               {/* Enhanced Dark Mode Toggle */}
               <motion.button
@@ -1618,14 +1676,124 @@ const Dashboard = () => {
           {/* Tapping Schedules Section */}
           {activeTab === 'schedules' && <TappingScheduleManagement darkMode={darkMode} />}
 
-          {/* Video Management Section */}
-          {activeTab === 'videos' && <VideoManagement darkMode={darkMode} />}
+          {/* Nursery Bookings Section */}
+          {activeTab === 'nursery' && <NurseryBookings />}
+
+          {/* Nursery Inventory Section */}
+          {activeTab === 'inventory' && <NurseryInventory darkMode={darkMode} />}
+
+          {/* Video Management removed as requested */}
+
+          {/* Tapping Requests Section */}
+          {activeTab === 'services' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className={`${darkMode ? 'bg-gray-800/50 border-green-500/20' : 'bg-white'} backdrop-blur-sm rounded-2xl p-6 shadow-xl border ${
+                darkMode ? 'border-green-500/20' : 'border-gray-100'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Tapping Requests</h2>
+                  <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} text-sm`}>Accepted tapping requests from farmers</p>
+                </div>
+                <button
+                  onClick={loadAcceptedServiceRequests}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    darkMode ? 'bg-green-600 text-white hover:bg-green-500' : 'bg-green-600 text-white hover:bg-green-700'
+                  }`}
+                >
+                  Refresh
+                </button>
+              </div>
+
+              {serviceLoading ? (
+                <div className={`text-center py-12 ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>Loading tapping requests...</div>
+              ) : serviceRequests.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className={`mx-auto mb-3 h-12 w-12 rounded-full flex items-center justify-center ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                    <Briefcase className={`${darkMode ? 'text-gray-300' : 'text-gray-500'}`} />
+                  </div>
+                  <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>No accepted requests</h3>
+                  <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} text-sm`}>Accepted farmer tapping requests will appear here.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className={`w-full ${darkMode ? 'text-white' : ''}`}>
+                    <thead className={darkMode ? 'bg-gray-700/50 text-white' : 'bg-gray-50'}>
+                      <tr>
+                        <th className={`px-6 py-3 text-left text-xs font-semibold uppercase ${darkMode ? 'text-white' : 'text-gray-600'}`}>S.NO.</th>
+                        <th className={`px-6 py-3 text-left text-xs font-semibold uppercase ${darkMode ? 'text-white' : 'text-gray-600'}`}>Farmer</th>
+                        <th className={`px-6 py-3 text-left text-xs font-semibold uppercase ${darkMode ? 'text-white' : 'text-gray-600'}`}>Location</th>
+                        <th className={`px-6 py-3 text-left text-xs font-semibold uppercase ${darkMode ? 'text-white' : 'text-gray-600'}`}>Trees</th>
+                        <th className={`px-6 py-3 text-left text-xs font-semibold uppercase ${darkMode ? 'text-white' : 'text-gray-600'}`}>Rate / Tree</th>
+                        <th className={`px-6 py-3 text-left text-xs font-semibold uppercase ${darkMode ? 'text-white' : 'text-gray-600'}`}>Start</th>
+                        <th className={`px-6 py-3 text-left text-xs font-semibold uppercase ${darkMode ? 'text-white' : 'text-gray-600'}`}>Created</th>
+                        <th className={`px-6 py-3 text-left text-xs font-semibold uppercase ${darkMode ? 'text-white' : 'text-gray-600'}`}>Tapper</th>
+                        <th className={`px-6 py-3 text-left text-xs font-semibold uppercase ${darkMode ? 'text-white' : 'text-gray-600'}`}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                      {serviceRequests.map((req, idx) => (
+                        <tr key={req._id || idx} className={darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'}>
+                          <td className="px-6 py-4 text-sm">{idx + 1}</td>
+                          <td className="px-6 py-4 text-sm">{req.farmerName || '-'}</td>
+                          <td className="px-6 py-4 text-sm">{req.farmLocation || req.location || '-'}</td>
+                          <td className="px-6 py-4 text-sm">{
+                            req.finalAgreedTrees ??
+                            req.tapperProposedTrees ??
+                            req.farmerEstimatedTrees ??
+                            req.numberOfTrees ??
+                            req.treeCount ??
+                            '-'
+                          }</td>
+                          <td className="px-6 py-4 text-sm">₹{req.budgetPerTree ?? req.ratePerTree ?? '-'}</td>
+                          <td className="px-6 py-4 text-sm">{req.startDate ? new Date(req.startDate).toLocaleDateString() : '-'}</td>
+                          <td className="px-6 py-4 text-sm">{req.createdAt ? new Date(req.createdAt).toLocaleDateString() : (req.submittedAt ? new Date(req.submittedAt).toLocaleDateString() : '-')}</td>
+                          <td className="px-6 py-4 text-sm">{
+                            (req.assignedTapper?.tapperName ||
+                            req.assignedTapper?.name ||
+                            (typeof req.assignedTapper?.tapperId === 'object' ? req.assignedTapper?.tapperId?.name : undefined) ||
+                            req.assignedTapperName ||
+                            req.assignedTo?.name ||
+                            req.selectedTapper?.name ||
+                            staffMap[req.assignedTapperId] ||
+                            staffMap[req.assigned_tapper_id] ||
+                            staffMap[req.tapperId] ||
+                            req.tapperName ||
+                            tapperByRequest[req._id]) || (
+                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-700 text-gray-200 border border-gray-500/30">Not assigned</span>
+                            )
+                          }</td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${
+                              (req.status || '').toLowerCase() === 'accepted'
+                                ? 'bg-green-900/40 text-green-200 border-green-500/30'
+                                : (req.status || '').toLowerCase() === 'in_progress'
+                                ? 'bg-blue-900/30 text-blue-200 border-blue-500/30'
+                                : (req.status || '').toLowerCase() === 'assigned'
+                                ? 'bg-purple-900/30 text-purple-200 border-purple-500/30'
+                                : 'bg-gray-700 text-gray-200 border-gray-500/30'
+                            }`}>
+                              {(req.status || '').replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </motion.div>
+          )}
 
           {/* Performance Tracking Section */}
           {activeTab === 'performance' && <PerformanceTracking darkMode={darkMode} />}
 
           {/* Other tab contents */}
-          {activeTab !== 'overview' && activeTab !== 'performance' && activeTab !== 'assign-tasks' && activeTab !== 'users' && activeTab !== 'staff' && activeTab !== 'staff-requests' && activeTab !== 'leave-management' && activeTab !== 'land-verification' && activeTab !== 'trainers' && activeTab !== 'brokers' && activeTab !== 'videos' && (
+          {activeTab !== 'overview' && activeTab !== 'performance' && activeTab !== 'assign-tasks' && activeTab !== 'users' && activeTab !== 'staff' && activeTab !== 'staff-requests' && activeTab !== 'leave-management' && activeTab !== 'land-verification' && activeTab !== 'trainers' && activeTab !== 'brokers' && activeTab !== 'videos' && activeTab !== 'nursery' && activeTab !== 'inventory' && activeTab !== 'services' && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

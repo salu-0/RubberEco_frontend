@@ -23,6 +23,7 @@ import {
 import b1Image from '../../assets/images/bid/b1.jpg';
 import b2Image from '../../assets/images/bid/b2.jpg';
 import b3Image from '../../assets/images/bid/b3.jpg';
+import { getSafeImageUrl, handleImageError } from '../../utils/imageUtils';
 
 const MyBids = () => {
   const [myBids, setMyBids] = useState([]);
@@ -36,20 +37,53 @@ const MyBids = () => {
     loadMyBids();
   }, []);
 
+  // Refresh bids when component becomes visible (e.g., when switching tabs)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadMyBids();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   useEffect(() => {
     filterAndSortBids();
   }, [myBids, searchTerm, statusFilter, sortBy]);
 
   const loadMyBids = async () => {
     try {
-      // TODO: Replace with actual API call to fetch real bid data
-      // For now, setting empty array - no mock data
-      const bids = [];
+      // Get auth token
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No authentication token found');
+        setMyBids([]);
+        setLoading(false);
+        return;
+      }
 
-      setMyBids(bids);
+      // Call real API
+      const response = await fetch('http://localhost:5000/api/bids/my-bids', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to fetch bids');
+      }
+
+      setMyBids(result.data || []);
       setLoading(false);
     } catch (error) {
       console.error('Error loading my bids:', error);
+      setMyBids([]);
       setLoading(false);
     }
   };
@@ -147,6 +181,10 @@ const MyBids = () => {
   };
 
   const formatCurrency = (amount) => {
+    if (amount === null || amount === undefined || isNaN(amount)) {
+      return '₹0';
+    }
+    
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
@@ -155,7 +193,14 @@ const MyBids = () => {
   };
 
   const formatDateTime = (dateString) => {
-    return new Date(dateString).toLocaleString('en-IN', {
+    if (!dateString) return 'Invalid Date';
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return 'Invalid Date';
+    }
+    
+    return date.toLocaleString('en-IN', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -165,11 +210,18 @@ const MyBids = () => {
   };
 
   const getDaysRemaining = (endDate) => {
+    if (!endDate) return 0;
+    
     const today = new Date();
     const end = new Date(endDate);
+    
+    if (isNaN(end.getTime())) {
+      return 0;
+    }
+    
     const diffTime = end - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    return Math.max(0, diffDays);
   };
 
   const getStatusCounts = () => {
@@ -207,6 +259,22 @@ const MyBids = () => {
             <p className="text-gray-600">Track and monitor all your bidding activities</p>
           </div>
         </div>
+        <button
+          onClick={loadMyBids}
+          disabled={loading}
+          className="flex items-center space-x-2 px-4 py-2 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <div className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`}>
+            {loading ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+            ) : (
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            )}
+          </div>
+          <span className="text-sm font-medium">Refresh</span>
+        </button>
       </div>
 
       {/* Status Summary */}
@@ -388,9 +456,10 @@ const BidCard = ({ bid, getStatusInfo, formatCurrency, formatDateTime, getDaysRe
       {/* Image Section */}
       <div className="relative h-48 overflow-hidden">
         <img
-          src={bid.lotInfo.image}
+          src={getSafeImageUrl(bid.lotInfo.image)}
           alt={`Lot ${bid.lotId}`}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          onError={(e) => handleImageError(e, 0)}
         />
 
         {/* Lot ID Badge */}
@@ -473,7 +542,7 @@ const BidCard = ({ bid, getStatusInfo, formatCurrency, formatDateTime, getDaysRe
           <div className="flex justify-between items-center mb-3">
             <span className="text-sm text-gray-600">Current Highest:</span>
             <span className={`font-semibold ${
-              bid.myBidAmount >= bid.currentHighestBid ? 'text-green-600' : 'text-red-600'
+              (bid.myBidAmount || 0) >= (bid.currentHighestBid || 0) ? 'text-green-600' : 'text-red-600'
             }`}>
               {formatCurrency(bid.currentHighestBid)}
             </span>

@@ -22,6 +22,7 @@ import {
   Trash2,
   Upload
 } from 'lucide-react';
+import { isRequired, numericValidator, isEmail, phoneValidator } from '../../utils/validation';
 
 const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState('new-request');
@@ -29,6 +30,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
   
   // Request Form State
   const [requestForm, setRequestForm] = useState({
@@ -133,6 +135,64 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
       ...prev,
       [field]: value
     }));
+
+    // Field-level validation
+    const err = validateField(field, value);
+    setFormErrors(prev => ({ ...prev, [field]: err }));
+  };
+
+  const validateField = (key, value) => {
+    switch (key) {
+      case 'farmLocation': {
+        const req = isRequired(value, 'Farm location is required');
+        if (req) return req;
+        const hasDigit = /\d/.test(value);
+        if (hasDigit) return 'Farm location should not contain numbers';
+        const placeRegex = /^[A-Za-z][A-Za-z\s,.'-]{2,}$/;
+        return placeRegex.test(value.trim()) ? '' : 'Enter a valid place name';
+      }
+      case 'farmSize': {
+        const req = isRequired(value, 'Farm size is required');
+        if (req) return req;
+        const nErr = numericValidator(value, { min: 0.1, max: 1000 });
+        if (nErr) {
+          if (nErr.includes('at most')) return 'Farm size cannot exceed 1000 hectares';
+          if (nErr.includes('at least')) return 'Farm size must be at least 0.1 hectares';
+          return `Farm size: ${nErr}`;
+        }
+        return '';
+      }
+      case 'numberOfTrees': {
+        const req = isRequired(value, 'Number of trees is required');
+        if (req) return req;
+        // Must be an integer number
+        if (!/^\d+$/.test(String(value))) return 'Number of trees must be a whole number';
+        const nErr = numericValidator(value, { min: 1, max: 100000 });
+        if (nErr) {
+          if (nErr.includes('at most')) return 'Number of trees seems too large (max 100000)';
+          return nErr === 'This field is required' ? 'Number of trees is required' : `Number of trees: ${nErr}`;
+        }
+        return '';
+      }
+      case 'preferredDate':
+        return isRequired(value, 'Preferred date is required');
+      case 'contactPhone':
+        return phoneValidator(value, { allowLocalTenDigit: true });
+      case 'contactEmail':
+        return isEmail(value);
+      case 'ratePerTree': {
+        if (value === '' || value === null || value === undefined) return '';
+        const nErr = numericValidator(value, { allowEmpty: true, min: 0, max: 1000 });
+        if (nErr) {
+          if (nErr.includes('at most')) return 'Rate per tree cannot exceed 1000';
+          if (nErr.includes('at least')) return 'Rate per tree must be at least 0';
+          return `Rate per tree: ${nErr}`;
+        }
+        return '';
+      }
+      default:
+        return '';
+    }
   };
 
   const handleFileUpload = (event) => {
@@ -158,8 +218,27 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
     }));
   };
 
+  const validateRequestForm = () => {
+    const keys = ['farmLocation', 'farmSize', 'numberOfTrees', 'preferredDate', 'contactPhone', 'contactEmail', 'ratePerTree'];
+    const errorsMap = {};
+    keys.forEach((k) => {
+      const err = validateField(k, requestForm[k]);
+      if (err) errorsMap[k] = err;
+    });
+    setFormErrors(errorsMap);
+    const firstError = Object.values(errorsMap)[0];
+    if (firstError) {
+      showNotification(firstError, 'error');
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmitRequest = async (e) => {
     e.preventDefault();
+
+    if (!validateRequestForm()) return;
+
     setLoading(true);
 
     try {
@@ -222,15 +301,21 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
   };
 
   const getStatusBadge = (status) => {
-    const statusConfig = {
-      submitted: { color: 'bg-blue-100 text-blue-800', icon: Clock, text: 'Submitted' },
-      assigned: { color: 'bg-yellow-100 text-yellow-800', icon: User, text: 'Assigned' },
-      in_progress: { color: 'bg-purple-100 text-purple-800', icon: Clock, text: 'In Progress' },
-      completed: { color: 'bg-green-100 text-green-800', icon: CheckCircle, text: 'Completed' },
-      cancelled: { color: 'bg-red-100 text-red-800', icon: X, text: 'Cancelled' }
-    };
-    
-    const config = statusConfig[status] || statusConfig.submitted;
+    const normalized = (status || '').toLowerCase();
+    let config;
+    if (['submitted', 'under_review', 'negotiation'].includes(normalized)) {
+      config = { color: 'bg-blue-100 text-blue-800', icon: Clock, text: 'Pending' };
+    } else if (['approved', 'accepted', 'assigned'].includes(normalized)) {
+      config = { color: 'bg-green-100 text-green-800', icon: CheckCircle, text: 'Accepted' };
+    } else if (normalized === 'in_progress') {
+      config = { color: 'bg-purple-100 text-purple-800', icon: Clock, text: 'In Progress' };
+    } else if (normalized === 'completed') {
+      config = { color: 'bg-green-100 text-green-800', icon: CheckCircle, text: 'Completed' };
+    } else if (normalized === 'cancelled' || normalized === 'rejected') {
+      config = { color: 'bg-red-100 text-red-800', icon: X, text: 'Cancelled' };
+    } else {
+      config = { color: 'bg-blue-100 text-blue-800', icon: Clock, text: 'Pending' };
+    }
     const IconComponent = config.icon;
     
     return (
@@ -406,24 +491,41 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                           required
                           value={requestForm.farmLocation}
                           onChange={(e) => handleInputChange('farmLocation', e.target.value)}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          className={`w-full pl-10 pr-4 py-3 border ${formErrors.farmLocation ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent`}
                           placeholder="Enter farm location"
                         />
+                        {formErrors.farmLocation && (
+                          <p className="mt-1 text-xs text-red-600">{formErrors.farmLocation}</p>
+                        )}
                       </div>
                     </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Farm Size *
+                        Farm Size (Hectares) <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="text"
-                        required
-                        value={requestForm.farmSize}
-                        onChange={(e) => handleInputChange('farmSize', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                        placeholder="Enter farm size"
-                      />
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min="0.1"
+                          max="1000"
+                          step="0.1"
+                          required
+                          value={requestForm.farmSize}
+                          onChange={(e) => handleInputChange('farmSize', e.target.value)}
+                          className={`w-full px-4 py-3 border ${formErrors.farmSize ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent`}
+                          placeholder="Enter farm size in hectares"
+                        />
+                        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">
+                          ha
+                        </span>
+                      </div>
+                      {formErrors.farmSize && (
+                        <p className="mt-1 text-xs text-red-600">{formErrors.farmSize}</p>
+                      )}
+                      {!formErrors.farmSize && requestForm.farmSize && (
+                        <p className="mt-1 text-xs text-green-600">✓ Farm size is within valid range (0.1 - 1000 hectares)</p>
+                      )}
                     </div>
                     
                     <div>
@@ -432,12 +534,19 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                       </label>
                       <input
                         type="number"
+                        min={1}
+                        step={1}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         required
                         value={requestForm.numberOfTrees}
                         onChange={(e) => handleInputChange('numberOfTrees', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        className={`w-full px-4 py-3 border ${formErrors.numberOfTrees ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent`}
                         placeholder="Enter number of trees"
                       />
+                      {formErrors.numberOfTrees && (
+                        <p className="mt-1 text-xs text-red-600">{formErrors.numberOfTrees}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -522,8 +631,11 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                         required
                         value={requestForm.preferredDate}
                         onChange={(e) => handleInputChange('preferredDate', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        className={`w-full px-4 py-3 border ${formErrors.preferredDate ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent`}
                       />
+                      {formErrors.preferredDate && (
+                        <p className="mt-1 text-xs text-red-600">{formErrors.preferredDate}</p>
+                      )}
                     </div>
                     
                     <div>
@@ -543,17 +655,26 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Rate per Tree
+                        Rate per Tree (₹)
                       </label>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                         <input
                           type="number"
+                          min="0"
+                          max="1000"
+                          step="0.01"
                           value={requestForm.ratePerTree}
                           onChange={(e) => handleInputChange('ratePerTree', e.target.value)}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                          placeholder="Enter rate per tree"
+                          className={`w-full pl-10 pr-4 py-3 border ${formErrors.ratePerTree ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent`}
+                          placeholder="Enter rate per tree (max ₹1000)"
                         />
+                        {formErrors.ratePerTree && (
+                          <p className="mt-1 text-xs text-red-600">{formErrors.ratePerTree}</p>
+                        )}
+                        {!formErrors.ratePerTree && requestForm.ratePerTree && (
+                          <p className="mt-1 text-xs text-green-600">✓ Rate per tree is within valid range (₹0 - ₹1000)</p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -578,9 +699,12 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                           required
                           value={requestForm.contactPhone}
                           onChange={(e) => handleInputChange('contactPhone', e.target.value)}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          className={`w-full pl-10 pr-4 py-3 border ${formErrors.contactPhone ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent`}
                           placeholder="Enter phone number"
                         />
+                        {formErrors.contactPhone && (
+                          <p className="mt-1 text-xs text-red-600">{formErrors.contactPhone}</p>
+                        )}
                       </div>
                     </div>
 
@@ -593,9 +717,12 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                         required
                         value={requestForm.contactEmail}
                         onChange={(e) => handleInputChange('contactEmail', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        className={`w-full px-4 py-3 border ${formErrors.contactEmail ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent`}
                         placeholder="Enter email address"
                       />
+                      {formErrors.contactEmail && (
+                        <p className="mt-1 text-xs text-red-600">{formErrors.contactEmail}</p>
+                      )}
                     </div>
                   </div>
                 </div>

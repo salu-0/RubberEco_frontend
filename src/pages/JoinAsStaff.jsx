@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
@@ -18,6 +18,8 @@ import {
   Camera,
   Shield
 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { isRequired, isEmail, phoneValidator, nameValidator, dateOfBirthValidator } from '../utils/validation';
 
 const JoinAsStaff = () => {
   const [formData, setFormData] = useState({
@@ -53,6 +55,12 @@ const JoinAsStaff = () => {
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState({});
   const [currentStep, setCurrentStep] = useState(1);
+  const [userLookup, setUserLookup] = useState({
+    loading: false,
+    found: false,
+    user: null,
+    message: ''
+  });
 
   const positions = [
     { value: 'tapper', label: 'Rubber Tapper' },
@@ -63,6 +71,71 @@ const JoinAsStaff = () => {
     { value: 'skilled_worker', label: 'Skilled Worker' },
     { value: 'manager', label: 'Operations Manager' }
   ];
+
+  // Debounced email lookup function
+  const checkUserExists = useCallback(async (email) => {
+    if (!email || !isEmail(email)) {
+      setUserLookup({
+        loading: false,
+        found: false,
+        user: null,
+        message: ''
+      });
+      return;
+    }
+
+    setUserLookup(prev => ({ ...prev, loading: true }));
+
+    try {
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${backendUrl}/auth/check-user?email=${encodeURIComponent(email)}`);
+      const data = await response.json();
+
+      if (data.success && data.exists) {
+        setUserLookup({
+          loading: false,
+          found: true,
+          user: data.user,
+          message: 'User found! Auto-filling details...'
+        });
+        
+        // Auto-fill form data
+        setFormData(prev => ({
+          ...prev,
+          fullName: data.user.name || '',
+          email: data.user.email || '',
+          phone: data.user.phone || '',
+          // Don't auto-fill date of birth and gender for privacy
+        }));
+      } else {
+        setUserLookup({
+          loading: false,
+          found: false,
+          user: null,
+          message: 'New user - please fill in your details'
+        });
+      }
+    } catch (error) {
+      console.error('Error checking user:', error);
+      setUserLookup({
+        loading: false,
+        found: false,
+        user: null,
+        message: 'Error checking user details'
+      });
+    }
+  }, []);
+
+  // Debounce email lookup
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (formData.email) {
+        checkUserExists(formData.email);
+      }
+    }, 1000); // 1 second delay
+
+    return () => clearTimeout(timeoutId);
+  }, [formData.email, checkUserExists]);
 
   const handleInputChange = (field, value) => {
     if (field.includes('.')) {
@@ -81,10 +154,24 @@ const JoinAsStaff = () => {
       }));
     }
     
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+    // Real-time validation for specific fields
+    let error = '';
+    if (field === 'fullName') {
+      error = nameValidator(value, { min: 2, max: 50 });
+    } else if (field === 'dateOfBirth') {
+      error = dateOfBirthValidator(value, { minAge: 18, maxAge: 65 });
+    } else if (field === 'phone') {
+      error = phoneValidator(value, { 
+        allowedCountryCodes: ['+91'], 
+        allowLocalTenDigit: true 
+      });
+    } else if (field === 'email') {
+      error = isEmail(value);
+    } else if (field === 'gender') {
+      error = value ? '' : 'Please select your gender';
     }
+    
+    setErrors(prev => ({ ...prev, [field]: error }));
   };
 
   const handleFileUpload = (field, file) => {
@@ -117,48 +204,62 @@ const JoinAsStaff = () => {
 
   const validateStep = (step) => {
     const newErrors = {};
-    
+
     if (step === 1) {
-      if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
-      if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
-      if (!formData.gender) newErrors.gender = 'Gender is required';
-      if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
-      if (!formData.email.trim()) newErrors.email = 'Email is required';
-      
+      // Enhanced name validation
+      const nameErr = nameValidator(formData.fullName, { min: 2, max: 50 });
+      if (nameErr) newErrors.fullName = nameErr;
+
+      // Enhanced date of birth validation
+      const dateErr = dateOfBirthValidator(formData.dateOfBirth, { minAge: 18, maxAge: 65 });
+      if (dateErr) newErrors.dateOfBirth = dateErr;
+
+      // Gender validation
+      if (!formData.gender) newErrors.gender = 'Please select your gender';
+
+      // Enhanced phone validation
+      const phoneErr = phoneValidator(formData.phone, { 
+        allowedCountryCodes: ['+91'], 
+        allowLocalTenDigit: true 
+      });
+      if (phoneErr) newErrors.phone = phoneErr;
+
       // Email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (formData.email && !emailRegex.test(formData.email)) {
-        newErrors.email = 'Please enter a valid email address';
-      }
-      
-      // Phone validation
-      const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,}$/;
-      if (formData.phone && !phoneRegex.test(formData.phone)) {
-        newErrors.phone = 'Please enter a valid phone number';
-      }
+      const emailErr = isEmail(formData.email);
+      if (emailErr) newErrors.email = emailErr;
     }
-    
+
     if (step === 2) {
-      if (!formData.presentAddress.street.trim()) newErrors['presentAddress.street'] = 'Street address is required';
-      if (!formData.presentAddress.city.trim()) newErrors['presentAddress.city'] = 'City is required';
-      if (!formData.presentAddress.state.trim()) newErrors['presentAddress.state'] = 'State is required';
-      if (!formData.presentAddress.pincode.trim()) newErrors['presentAddress.pincode'] = 'Pincode is required';
-      
+      const streetErr = isRequired(formData.presentAddress.street, 'Street address is required');
+      if (streetErr) newErrors['presentAddress.street'] = streetErr;
+      const cityErr = isRequired(formData.presentAddress.city, 'City is required');
+      if (cityErr) newErrors['presentAddress.city'] = cityErr;
+      const stateErr = isRequired(formData.presentAddress.state, 'State is required');
+      if (stateErr) newErrors['presentAddress.state'] = stateErr;
+      const pinErr = isRequired(formData.presentAddress.pincode, 'Pincode is required');
+      if (pinErr) newErrors['presentAddress.pincode'] = pinErr;
+
       if (!formData.permanentAddress.sameAsPresent) {
-        if (!formData.permanentAddress.street.trim()) newErrors['permanentAddress.street'] = 'Street address is required';
-        if (!formData.permanentAddress.city.trim()) newErrors['permanentAddress.city'] = 'City is required';
-        if (!formData.permanentAddress.state.trim()) newErrors['permanentAddress.state'] = 'State is required';
-        if (!formData.permanentAddress.pincode.trim()) newErrors['permanentAddress.pincode'] = 'Pincode is required';
+        const pStreetErr = isRequired(formData.permanentAddress.street, 'Street address is required');
+        if (pStreetErr) newErrors['permanentAddress.street'] = pStreetErr;
+        const pCityErr = isRequired(formData.permanentAddress.city, 'City is required');
+        if (pCityErr) newErrors['permanentAddress.city'] = pCityErr;
+        const pStateErr = isRequired(formData.permanentAddress.state, 'State is required');
+        if (pStateErr) newErrors['permanentAddress.state'] = pStateErr;
+        const pPinErr = isRequired(formData.permanentAddress.pincode, 'Pincode is required');
+        if (pPinErr) newErrors['permanentAddress.pincode'] = pPinErr;
       }
     }
-    
+
     if (step === 3) {
-      if (!formData.qualification.trim()) newErrors.qualification = 'Qualification is required';
-      if (!formData.applyForPosition) newErrors.applyForPosition = 'Please select a position';
+      const qualErr = isRequired(formData.qualification, 'Qualification is required');
+      if (qualErr) newErrors.qualification = qualErr;
+      const posErr = isRequired(formData.applyForPosition, 'Please select a position');
+      if (posErr) newErrors.applyForPosition = posErr;
       if (!formData.photo) newErrors.photo = 'Photo is required';
       if (!formData.idProof) newErrors.idProof = 'ID proof is required';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -335,6 +436,27 @@ const JoinAsStaff = () => {
             {currentStep === 1 && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Personal Information</h2>
+                
+                {/* Auto-fill notification */}
+                {userLookup.found && userLookup.user && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6"
+                  >
+                    <div className="flex items-start">
+                      <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
+                      <div>
+                        <h3 className="text-sm font-medium text-blue-800">
+                          Welcome back, {userLookup.user.name}!
+                        </h3>
+                        <p className="text-sm text-blue-700 mt-1">
+                          We found your account and have pre-filled some details. Please review and complete the remaining information.
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
 
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
@@ -348,17 +470,26 @@ const JoinAsStaff = () => {
                         value={formData.fullName}
                         onChange={(e) => handleInputChange('fullName', e.target.value)}
                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                          errors.fullName ? 'border-red-500' : 'border-gray-300'
+                          errors.fullName 
+                            ? 'border-red-500 bg-red-50' 
+                            : formData.fullName && !errors.fullName 
+                              ? 'border-green-500 bg-green-50' 
+                              : 'border-gray-300'
                         }`}
-                        placeholder="Enter your full name"
+                        placeholder="Enter your full name (e.g., John Doe)"
                       />
                     </div>
-                    {errors.fullName && (
+                    {errors.fullName ? (
                       <p className="text-red-500 text-sm mt-1 flex items-center">
                         <AlertCircle className="w-4 h-4 mr-1" />
                         {errors.fullName}
                       </p>
-                    )}
+                    ) : formData.fullName && !errors.fullName ? (
+                      <p className="text-green-600 text-sm mt-1 flex items-center">
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Name looks good!
+                      </p>
+                    ) : null}
                   </div>
 
                   <div>
@@ -371,17 +502,27 @@ const JoinAsStaff = () => {
                         type="date"
                         value={formData.dateOfBirth}
                         onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                        max={new Date().toISOString().split('T')[0]} // Prevent future dates
                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                          errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'
+                          errors.dateOfBirth 
+                            ? 'border-red-500 bg-red-50' 
+                            : formData.dateOfBirth && !errors.dateOfBirth 
+                              ? 'border-green-500 bg-green-50' 
+                              : 'border-gray-300'
                         }`}
                       />
                     </div>
-                    {errors.dateOfBirth && (
+                    {errors.dateOfBirth ? (
                       <p className="text-red-500 text-sm mt-1 flex items-center">
                         <AlertCircle className="w-4 h-4 mr-1" />
                         {errors.dateOfBirth}
                       </p>
-                    )}
+                    ) : formData.dateOfBirth && !errors.dateOfBirth ? (
+                      <p className="text-green-600 text-sm mt-1 flex items-center">
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Date of birth is valid!
+                      </p>
+                    ) : null}
                   </div>
 
                   <div>
@@ -392,7 +533,11 @@ const JoinAsStaff = () => {
                       value={formData.gender}
                       onChange={(e) => handleInputChange('gender', e.target.value)}
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                        errors.gender ? 'border-red-500' : 'border-gray-300'
+                        errors.gender 
+                          ? 'border-red-500 bg-red-50' 
+                          : formData.gender && !errors.gender 
+                            ? 'border-green-500 bg-green-50' 
+                            : 'border-gray-300'
                       }`}
                     >
                       <option value="">Select Gender</option>
@@ -400,12 +545,17 @@ const JoinAsStaff = () => {
                       <option value="female">Female</option>
                       <option value="other">Other</option>
                     </select>
-                    {errors.gender && (
+                    {errors.gender ? (
                       <p className="text-red-500 text-sm mt-1 flex items-center">
                         <AlertCircle className="w-4 h-4 mr-1" />
                         {errors.gender}
                       </p>
-                    )}
+                    ) : formData.gender && !errors.gender ? (
+                      <p className="text-green-600 text-sm mt-1 flex items-center">
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Gender selected!
+                      </p>
+                    ) : null}
                   </div>
 
                   <div>
@@ -419,17 +569,26 @@ const JoinAsStaff = () => {
                         value={formData.phone}
                         onChange={(e) => handleInputChange('phone', e.target.value)}
                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                          errors.phone ? 'border-red-500' : 'border-gray-300'
+                          errors.phone 
+                            ? 'border-red-500 bg-red-50' 
+                            : formData.phone && !errors.phone 
+                              ? 'border-green-500 bg-green-50' 
+                              : 'border-gray-300'
                         }`}
-                        placeholder="+91 98765 43210"
+                        placeholder="+91 98765 43210 or 9876543210"
                       />
                     </div>
-                    {errors.phone && (
+                    {errors.phone ? (
                       <p className="text-red-500 text-sm mt-1 flex items-center">
                         <AlertCircle className="w-4 h-4 mr-1" />
                         {errors.phone}
                       </p>
-                    )}
+                    ) : formData.phone && !errors.phone ? (
+                      <p className="text-green-600 text-sm mt-1 flex items-center">
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Phone number is valid!
+                      </p>
+                    ) : null}
                   </div>
 
                   <div className="md:col-span-2">
@@ -443,16 +602,54 @@ const JoinAsStaff = () => {
                         value={formData.email}
                         onChange={(e) => handleInputChange('email', e.target.value)}
                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                          errors.email ? 'border-red-500' : 'border-gray-300'
+                          errors.email 
+                            ? 'border-red-500 bg-red-50' 
+                            : formData.email && !errors.email 
+                              ? 'border-green-500 bg-green-50' 
+                              : 'border-gray-300'
                         }`}
                         placeholder="your.email@example.com"
                       />
+                      {userLookup.loading && (
+                        <div className="absolute right-3 top-3">
+                          <Loader2 className="h-5 w-5 animate-spin text-primary-500" />
+                        </div>
+                      )}
                     </div>
-                    {errors.email && (
+                    {errors.email ? (
                       <p className="text-red-500 text-sm mt-1 flex items-center">
                         <AlertCircle className="w-4 h-4 mr-1" />
                         {errors.email}
                       </p>
+                    ) : formData.email && !errors.email ? (
+                      <p className="text-green-600 text-sm mt-1 flex items-center">
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Email address is valid!
+                      </p>
+                    ) : null}
+                    
+                    {/* User lookup status */}
+                    {userLookup.message && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={`text-sm mt-1 flex items-center ${
+                          userLookup.found 
+                            ? 'text-blue-600' 
+                            : userLookup.loading 
+                              ? 'text-gray-600' 
+                              : 'text-gray-500'
+                        }`}
+                      >
+                        {userLookup.loading ? (
+                          <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                        ) : userLookup.found ? (
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                        ) : (
+                          <AlertCircle className="w-4 h-4 mr-1" />
+                        )}
+                        {userLookup.message}
+                      </motion.div>
                     )}
                   </div>
                 </div>

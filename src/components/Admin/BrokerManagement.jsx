@@ -16,6 +16,7 @@ import {
   FaFilter,
   FaSearch
 } from 'react-icons/fa';
+import './BrokerManagement.css';
 
 const BrokerManagement = ({ darkMode = true }) => {
   const [brokers, setBrokers] = useState([]);
@@ -25,6 +26,7 @@ const BrokerManagement = ({ darkMode = true }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [viewMode, setViewMode] = useState('list'); // 'list' or 'details'
 
   useEffect(() => {
     loadBrokers();
@@ -180,6 +182,29 @@ const BrokerManagement = ({ darkMode = true }) => {
     );
   }
 
+  // If viewing details, show the details section
+  if (viewMode === 'details' && selectedBroker) {
+    return (
+      <div className={`w-full p-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+        <BrokerDetailsSection 
+          broker={selectedBroker}
+          onBack={() => {
+            setViewMode('list');
+            setSelectedBroker(null);
+          }}
+          onVerify={(action) => {
+            handleVerifyBroker(selectedBroker._id, action);
+            setViewMode('list');
+            setSelectedBroker(null);
+          }}
+          getStatusInfo={getStatusInfo}
+          formatDate={formatDate}
+          darkMode={darkMode}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={`w-full p-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
       <div className="mb-8">
@@ -245,7 +270,7 @@ const BrokerManagement = ({ darkMode = true }) => {
             onVerify={(action) => handleVerifyBroker(broker._id, action)}
             onViewDetails={() => {
               setSelectedBroker(broker);
-              setShowDetails(true);
+              setViewMode('details');
             }}
             getStatusInfo={getStatusInfo}
             formatDate={formatDate}
@@ -263,23 +288,6 @@ const BrokerManagement = ({ darkMode = true }) => {
         </div>
       )}
 
-      {/* Broker Details Modal */}
-      {showDetails && selectedBroker && (
-        <BrokerDetailsModal 
-          broker={selectedBroker}
-          onClose={() => {
-            setShowDetails(false);
-            setSelectedBroker(null);
-          }}
-          onVerify={(action) => {
-            handleVerifyBroker(selectedBroker._id, action);
-            setShowDetails(false);
-            setSelectedBroker(null);
-          }}
-          getStatusInfo={getStatusInfo}
-          formatDate={formatDate}
-        />
-      )}
     </div>
   );
 };
@@ -393,119 +401,43 @@ const BrokerCard = ({ broker, darkMode, onVerify, onViewDetails, getStatusInfo, 
   );
 };
 
-// Broker Details Modal Component
-const BrokerDetailsModal = ({ broker, onClose, onVerify, getStatusInfo, formatDate }) => {
-  const statusInfo = getStatusInfo(broker.brokerProfile.verificationStatus);
+// Broker Details Section Component
+const BrokerDetailsSection = ({ broker, onBack, onVerify, getStatusInfo, formatDate, darkMode }) => {
+  const statusInfo = getStatusInfo(broker.brokerProfile?.verificationStatus || 'pending');
+
+  // Helper function to display data or show "Not provided"
+  const displayValue = (value, fallback = "Not provided") => {
+    if (!value || value === 'Not specified' || value === 'Not provided' || value.trim() === '') {
+      return <span className="text-gray-400 italic">{fallback}</span>;
+    }
+    return <span className="text-gray-800">{value}</span>;
+  };
+
+  // Helper function to check if value exists
+  const hasValue = (value) => {
+    return value && value !== 'Not specified' && value !== 'Not provided' && value.trim() !== '';
+  };
 
   return (
-    <div className="modal-overlay">
-      <div className="broker-details-modal">
-        <div className="modal-header">
-          <h2>Broker Details</h2>
-          <button className="close-btn" onClick={onClose}>
-            <FaTimes />
+    <div className="broker-details-section">
+      {/* Header */}
+      <div className="details-header">
+        <div className="header-left">
+          <button 
+            onClick={onBack}
+            className="back-button"
+          >
+            <FaTimes className="mr-2" />
+            Back to List
           </button>
+          <h2>
+            <FaUserTie className="mr-2" />
+            Broker Details
+          </h2>
         </div>
-
-        <div className="modal-content">
-          <div className="broker-profile">
-            <div className="profile-section">
-              <h3>Personal Information</h3>
-              <div className="info-grid">
-                <div className="info-item">
-                  <label>Name:</label>
-                  <span>{broker.name}</span>
-                </div>
-                <div className="info-item">
-                  <label>Email:</label>
-                  <span>{broker.email}</span>
-                </div>
-                <div className="info-item">
-                  <label>Phone:</label>
-                  <span>{broker.phone}</span>
-                </div>
-                <div className="info-item">
-                  <label>Location:</label>
-                  <span>{broker.location}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="profile-section">
-              <h3>Professional Information</h3>
-              <div className="info-grid">
-                <div className="info-item">
-                  <label>License Number:</label>
-                  <span>{broker.brokerProfile.licenseNumber}</span>
-                </div>
-                <div className="info-item">
-                  <label>Experience:</label>
-                  <span>{broker.brokerProfile.experience}</span>
-                </div>
-                <div className="info-item">
-                  <label>Company:</label>
-                  <span>{broker.brokerProfile.companyName}</span>
-                </div>
-                <div className="info-item">
-                  <label>Company Address:</label>
-                  <span>{broker.brokerProfile.companyAddress}</span>
-                </div>
-                <div className="info-item">
-                  <label>Education:</label>
-                  <span>{broker.brokerProfile.education}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="profile-section">
-              <h3>Specializations</h3>
-              <div className="specializations-list">
-                {broker.brokerProfile.specialization.map(spec => (
-                  <span key={spec} className="specialization-tag">{spec}</span>
-                ))}
-              </div>
-            </div>
-
-            <div className="profile-section">
-              <h3>Professional Bio</h3>
-              <p className="bio-text">{broker.bio}</p>
-            </div>
-
-            <div className="profile-section">
-              <h3>Previous Work Experience</h3>
-              <p className="work-text">{broker.brokerProfile.previousWork}</p>
-            </div>
-
-            <div className="profile-section">
-              <h3>Verification Status</h3>
-              <div className="status-info">
-                <div 
-                  className="status-badge large"
-                  style={{ 
-                    backgroundColor: statusInfo.bgColor, 
-                    color: statusInfo.color 
-                  }}
-                >
-                  {statusInfo.text}
-                </div>
-                <div className="status-details">
-                  <p>Registered: {formatDate(broker.createdAt)}</p>
-                  {broker.brokerProfile.verificationDate && (
-                    <p>Verified: {formatDate(broker.brokerProfile.verificationDate)}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="modal-actions">
-          <button className="btn-close" onClick={onClose}>
-            Close
-          </button>
-          
-          {broker.brokerProfile.verificationStatus === 'pending' && (
-            <>
+        <div className="header-right">
+          {broker.brokerProfile?.verificationStatus === 'pending' && (
+            <div className="action-buttons">
               <button 
                 className="btn-verify"
                 onClick={() => onVerify('verify')}
@@ -518,8 +450,98 @@ const BrokerDetailsModal = ({ broker, onClose, onVerify, getStatusInfo, formatDa
               >
                 <FaTimes /> Reject Application
               </button>
-            </>
+            </div>
           )}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="details-content">
+        <div className="two-column-layout">
+          {/* Left Column */}
+          <div className="column">
+            {/* Personal Information Section */}
+            <div className="profile-section">
+              <h3><FaUserTie className="mr-2" />Personal Information</h3>
+              <div className="info-grid">
+                <div className="info-item">
+                  <label><FaIdCard className="mr-2" />Full Name:</label>
+                  {displayValue(broker.name, "Name not provided")}
+                </div>
+                <div className="info-item">
+                  <label><FaEnvelope className="mr-2" />Email:</label>
+                  {displayValue(broker.email, "Email not provided")}
+                </div>
+                <div className="info-item">
+                  <label><FaPhone className="mr-2" />Phone:</label>
+                  {displayValue(broker.phone, "Phone not provided")}
+                </div>
+                <div className="info-item">
+                  <label><FaMapMarkerAlt className="mr-2" />Location:</label>
+                  {displayValue(broker.location, "Location not provided")}
+                </div>
+              </div>
+            </div>
+
+            {/* Verification Status Section */}
+            <div className="profile-section">
+              <h3><FaCheck className="mr-2" />Verification Status</h3>
+              <div className="status-info">
+                <div 
+                  className="status-badge large"
+                  style={{ 
+                    backgroundColor: statusInfo.bgColor, 
+                    color: statusInfo.color 
+                  }}
+                >
+                  {statusInfo.text}
+                </div>
+                <div className="status-details">
+                  <p>Registered: {formatDate(broker.createdAt)}</p>
+                  {broker.brokerProfile?.verificationDate && (
+                    <p>Verified: {formatDate(broker.brokerProfile.verificationDate)}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column */}
+          <div className="column">
+            {/* Professional Information Section */}
+            <div className="profile-section">
+              <h3><FaBriefcase className="mr-2" />Professional Information</h3>
+              <div className="info-grid">
+                <div className="info-item">
+                  <label><FaBuilding className="mr-2" />Company:</label>
+                  {displayValue(broker.brokerProfile?.companyName, "Company name not provided")}
+                </div>
+                <div className="info-item">
+                  <label><FaCalendarAlt className="mr-2" />Experience:</label>
+                  {displayValue(broker.brokerProfile?.experience, "Experience not specified")}
+                </div>
+                <div className="info-item">
+                  <label><FaIdCard className="mr-2" />License Number:</label>
+                  {displayValue(broker.brokerProfile?.licenseNumber, "License number not provided")}
+                </div>
+                <div className="info-item">
+                  <label><FaStar className="mr-2" />Specialization:</label>
+                  {broker.brokerProfile?.specialization && broker.brokerProfile.specialization.length > 0 ? (
+                    <div className="specializations-list">
+                      {broker.brokerProfile.specialization
+                        .filter(spec => hasValue(spec))
+                        .slice(0, 3)
+                        .map(spec => (
+                          <span key={spec} className="specialization-tag">{spec}</span>
+                        ))}
+                    </div>
+                  ) : (
+                    <span className="text-gray-400 italic">No specializations specified</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

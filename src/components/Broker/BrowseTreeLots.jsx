@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   TreePine,
@@ -12,14 +13,23 @@ import {
   Search,
   Clock,
   TrendingUp,
-  Users
+  Users,
+  X,
+  Phone,
+  Mail,
+  User,
+  Calendar as CalendarIcon,
+  Award,
+  Shield,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
-import BiddingModal from './BiddingModal';
 
 // Import local images
 import b1Image from '../../assets/images/bid/b1.jpg';
 import b2Image from '../../assets/images/bid/b2.jpg';
 import b3Image from '../../assets/images/bid/b3.jpg';
+import { getSafeImageUrl, handleImageError, processImageUrls } from '../../utils/imageUtils';
 
 // Tree Lot Card Component
 const TreeLotCard = ({ lot, onBid, onViewDetails, formatCurrency, getDaysRemaining }) => {
@@ -31,12 +41,10 @@ const TreeLotCard = ({ lot, onBid, onViewDetails, formatCurrency, getDaysRemaini
       {/* Image Section */}
       <div className="relative h-48 overflow-hidden">
         <img
-          src={lot.images[0]}
+          src={getSafeImageUrl(lot.images[0])}
           alt={`Tree Lot ${lot.id}`}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          onError={(e) => {
-            e.target.src = b1Image;
-          }}
+          onError={(e) => handleImageError(e, 0)}
         />
 
         {/* Lot ID Badge */}
@@ -44,13 +52,21 @@ const TreeLotCard = ({ lot, onBid, onViewDetails, formatCurrency, getDaysRemaini
           #{lot.id}
         </div>
 
-        {/* Urgent Badge */}
-        {isUrgent && (
-          <div className="absolute top-3 right-3 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1">
-            <Clock className="h-3 w-3" />
-            <span>{daysRemaining} days left</span>
+        {/* Right-side badges stack */}
+        <div className="absolute top-3 right-3 flex flex-col items-end space-y-2">
+          {/* Urgent Badge */}
+          {isUrgent && (
+            <div className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1">
+              <Clock className="h-3 w-3" />
+              <span>{daysRemaining} days left</span>
+            </div>
+          )}
+          {/* Bid Count Badge */}
+          <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium text-gray-800 flex items-center space-x-1 shadow-sm">
+            <Users className="h-3 w-3" />
+            <span>{lot.bidCount} bid{lot.bidCount !== 1 ? 's' : ''}</span>
           </div>
-        )}
+        </div>
 
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
@@ -61,10 +77,20 @@ const TreeLotCard = ({ lot, onBid, onViewDetails, formatCurrency, getDaysRemaini
         {/* Header */}
         <div className="mb-4">
           <h3 className="text-xl font-bold text-gray-900 mb-2">{lot.farmerName}</h3>
-          <div className="flex items-center text-gray-600">
+          <div className="flex items-center text-gray-600 justify-between">
             <MapPin className="h-4 w-4 mr-2" />
             <span className="text-sm">{lot.location}</span>
+            {(lot.farmerPhone || lot.farmerEmail) && (
+              <span className="text-xs text-gray-500">{lot.farmerPhone || lot.farmerEmail}</span>
+            )}
           </div>
+          {lot.hasMyBid && lot.myBrokerName && (
+            <div className="mt-3">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-primary-100 text-primary-700 border border-primary-200">
+                Bid by {lot.myBrokerName}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Details Grid */}
@@ -103,12 +129,14 @@ const TreeLotCard = ({ lot, onBid, onViewDetails, formatCurrency, getDaysRemaini
             <span className="text-sm text-gray-600">Current Highest:</span>
             <span className="font-bold text-primary-600">{formatCurrency(lot.currentHighestBid)}</span>
           </div>
-          <div className="flex items-center justify-center">
-            <div className="flex items-center space-x-1 text-xs text-gray-500">
-              <Users className="h-3 w-3" />
-              <span>{lot.bidCount} bid{lot.bidCount !== 1 ? 's' : ''}</span>
+          {!lot.hasMyBid && (
+            <div className="flex items-center justify-center">
+              <div className="flex items-center space-x-1 text-xs text-gray-500">
+                <Users className="h-3 w-3" />
+                <span>{lot.bidCount} bid{lot.bidCount !== 1 ? 's' : ''}</span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -134,12 +162,15 @@ const TreeLotCard = ({ lot, onBid, onViewDetails, formatCurrency, getDaysRemaini
 };
 
 const BrowseTreeLots = () => {
+  const navigate = useNavigate();
   const [treeLots, setTreeLots] = useState([]);
   const [filteredLots, setFilteredLots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedLot, setSelectedLot] = useState(null);
-  const [isBiddingModalOpen, setIsBiddingModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedLotForDetails, setSelectedLotForDetails] = useState(null);
+  const [selectedLotBids, setSelectedLotBids] = useState([]);
+  const [myBidForSelectedLot, setMyBidForSelectedLot] = useState(null);
   const [filters, setFilters] = useState({
     minPrice: '',
     maxPrice: '',
@@ -158,11 +189,56 @@ const BrowseTreeLots = () => {
 
   const loadTreeLots = async () => {
     try {
-      // TODO: Replace with actual API call to fetch real tree lot data
-      // For now, setting empty array - no mock data
-      const lots = [];
+      const response = await fetch('http://localhost:5000/api/tree-lots');
+      if (!response.ok) throw new Error('Failed to load tree lots');
+      const data = await response.json();
+      // Map of lots from main list
+      let lots = (data.data || []).map((lot) => ({
+        id: lot.lotId || lot._id,
+        location: lot.location,
+        numberOfTrees: lot.numberOfTrees,
+        approximateYield: lot.approximateYield,
+        minimumPrice: lot.minimumPrice,
+        description: lot.description || '',
+        images: processImageUrls(lot.images),
+        biddingEndDate: lot.biddingEndDate,
+        createdAt: lot.createdAt,
+        currentHighestBid: lot.currentHighestBid ?? lot.minimumPrice,
+        bidCount: lot.bidCount ?? 0,
+        farmerName: lot.farmerId?.name || 'Farmer',
+        farmerEmail: lot.farmerId?.email || '',
+        farmerPhone: lot.farmerId?.phone || '',
+        hasMyBid: false,
+        myBrokerName: ''
+      }));
 
-
+      // Enrich with broker's own bids to highlight cards
+      try {
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (token) {
+          const myBidsRes = await fetch('http://localhost:5000/api/bids/my-bids', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          if (myBidsRes.ok) {
+            const myBidsJson = await myBidsRes.json();
+            const myLotIds = new Set((myBidsJson.data || []).map((b) => b.lotId));
+            const brokerName = user?.name || 'You';
+            lots = lots.map((lot) => (
+              myLotIds.has(lot.id)
+                ? { ...lot, hasMyBid: true, myBrokerName: brokerName }
+                : lot
+            ));
+          }
+        }
+      } catch (e) {
+        // Non-fatal; proceed without enrichment
+        console.warn('Unable to load my bids for highlighting:', e);
+      }
       setTreeLots(lots);
       setLoading(false);
     } catch (error) {
@@ -230,45 +306,67 @@ const BrowseTreeLots = () => {
   const handleBidClick = (lotId) => {
     const lot = treeLots.find(l => l.id === lotId);
     if (lot) {
-      setSelectedLot(lot);
-      setIsBiddingModalOpen(true);
+      navigate(`/bid/${lotId}`, { state: { lot } });
     }
   };
 
-  const handleViewDetails = (lotId) => {
-    // TODO: Open lot details modal
-    console.log('View details for lot:', lotId);
-  };
+  const handleViewDetails = async (lotId) => {
+    const baseLot = treeLots.find(l => l.id === lotId);
+    if (!baseLot) return;
 
-  const handleSubmitBid = async (bidData) => {
+    // Open modal immediately with base info for responsiveness
+    setSelectedLotForDetails(baseLot);
+    setIsDetailsModalOpen(true);
+    setSelectedLotBids([]);
+    setMyBidForSelectedLot(null);
+
+    // Fetch detailed bids for this lot (public endpoint)
     try {
-      // TODO: Replace with actual API call
-      console.log('Submitting bid:', bidData);
+      const lotRes = await fetch(`http://localhost:5000/api/tree-lots/${lotId}`);
+      if (lotRes.ok) {
+        const lotJson = await lotRes.json();
+        const detailed = lotJson?.data || {};
+        // Merge refreshed values like currentHighestBid/bidCount and store bids
+        setSelectedLotForDetails((prev) => ({
+          ...prev,
+          currentHighestBid: detailed.currentHighestBid ?? prev.currentHighestBid,
+          bidCount: detailed.bidCount ?? prev.bidCount,
+          description: detailed.description || prev.description,
+        }));
+        setSelectedLotBids(detailed.bids || []);
+      }
+    } catch (e) {
+      console.warn('Failed to load lot details:', e);
+    }
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Update the lot with new highest bid (mock update)
-      setTreeLots(prevLots =>
-        prevLots.map(lot =>
-          lot.id === bidData.lotId
-            ? {
-                ...lot,
-                currentHighestBid: bidData.amount,
-                bidCount: lot.bidCount + 1
-              }
-            : lot
-        )
-      );
-
-      // Show success message
-      alert('Bid submitted successfully!');
-
-    } catch (error) {
-      console.error('Error submitting bid:', error);
-      throw error;
+    // Try to fetch current broker's bid for this lot
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const myBidsRes = await fetch('http://localhost:5000/api/bids/my-bids?limit=100', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (myBidsRes.ok) {
+          const myBidsJson = await myBidsRes.json();
+          const mine = (myBidsJson.data || []).find((b) => (b.lotId === lotId));
+          if (mine) setMyBidForSelectedLot(mine);
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load my bid for lot:', e);
     }
   };
+
+  // bidder details toggle removed
+
+  // This function is no longer needed as bidding is handled in BidPage
+  // const handleSubmitBid = async (bidData) => {
+  //   // Moved to BidPage component
+  // };
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -435,16 +533,279 @@ const BrowseTreeLots = () => {
         </motion.div>
       )}
 
-      {/* Bidding Modal */}
-      <BiddingModal
-        isOpen={isBiddingModalOpen}
-        onClose={() => {
-          setIsBiddingModalOpen(false);
-          setSelectedLot(null);
-        }}
-        lot={selectedLot}
-        onSubmitBid={handleSubmitBid}
-      />
+
+      {/* Tree Lot Details Modal */}
+      {isDetailsModalOpen && selectedLotForDetails && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+          >
+            {/* Modal Header */}
+            <div className="relative">
+              <div className="h-64 bg-gradient-to-r from-green-500 to-green-600 rounded-t-2xl overflow-hidden">
+                <img
+                  src={getSafeImageUrl(selectedLotForDetails.images[0])}
+                  alt={`Tree Lot ${selectedLotForDetails.id}`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => handleImageError(e, 0)}
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+                <button
+                  onClick={() => {
+                    setIsDetailsModalOpen(false);
+                    setSelectedLotForDetails(null);
+                  }}
+                  className="absolute top-4 right-4 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-2 transition-all duration-200"
+                >
+                  <X className="w-6 h-6 text-white" />
+                </button>
+                <div className="absolute bottom-4 left-6 text-white">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <span className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-semibold">
+                      #{selectedLotForDetails.id}
+                    </span>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      getDaysRemaining(selectedLotForDetails.biddingEndDate) <= 3 
+                        ? 'bg-red-500 text-white' 
+                        : 'bg-green-500 text-white'
+                    }`}>
+                      {getDaysRemaining(selectedLotForDetails.biddingEndDate)} days left
+                    </span>
+                  </div>
+                  <h2 className="text-3xl font-bold mb-2">{selectedLotForDetails.farmerName}</h2>
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-1">
+                      <MapPin className="w-4 h-4" />
+                      <span className="text-sm">{selectedLotForDetails.location}</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <TreePine className="w-4 h-4" />
+                      <span className="text-sm">{selectedLotForDetails.numberOfTrees} trees</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              {/* Quick Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-green-50 rounded-xl p-4 text-center">
+                  <TreePine className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-green-900">{selectedLotForDetails.numberOfTrees}</div>
+                  <div className="text-sm text-green-600">Trees</div>
+                </div>
+                <div className="bg-blue-50 rounded-xl p-4 text-center">
+                  <Weight className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-blue-900">{selectedLotForDetails.approximateYield}</div>
+                  <div className="text-sm text-blue-600">Expected Yield</div>
+                </div>
+                <div className="bg-purple-50 rounded-xl p-4 text-center">
+                  <DollarSign className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-purple-900">{formatCurrency(selectedLotForDetails.minimumPrice)}</div>
+                  <div className="text-sm text-purple-600">Minimum Price</div>
+                </div>
+                <div className="bg-orange-50 rounded-xl p-4 text-center">
+                  <Users className="w-8 h-8 text-orange-600 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-orange-900">{selectedLotForDetails.bidCount}</div>
+                  <div className="text-sm text-orange-600">Bids</div>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-3">Description</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  {selectedLotForDetails.description || 'No description provided for this tree lot.'}
+                </p>
+              </div>
+
+              {/* Farmer Information */}
+              <div className="bg-gray-50 rounded-xl p-6 mb-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                  <User className="w-5 h-5 mr-2" />
+                  Farmer Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-3">
+                    <User className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <div className="text-sm text-gray-500">Name</div>
+                      <div className="font-medium text-gray-900">{selectedLotForDetails.farmerName}</div>
+                    </div>
+                  </div>
+                  {selectedLotForDetails.farmerPhone && (
+                    <div className="flex items-center space-x-3">
+                      <Phone className="w-5 h-5 text-gray-400" />
+                      <div>
+                        <div className="text-sm text-gray-500">Phone</div>
+                        <div className="font-medium text-gray-900">{selectedLotForDetails.farmerPhone}</div>
+                      </div>
+                    </div>
+                  )}
+                  {selectedLotForDetails.farmerEmail && (
+                    <div className="flex items-center space-x-3">
+                      <Mail className="w-5 h-5 text-gray-400" />
+                      <div>
+                        <div className="text-sm text-gray-500">Email</div>
+                        <div className="font-medium text-gray-900">{selectedLotForDetails.farmerEmail}</div>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex items-center space-x-3">
+                    <MapPin className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <div className="text-sm text-gray-500">Location</div>
+                      <div className="font-medium text-gray-900">{selectedLotForDetails.location}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bidding Information */}
+              <div className="bg-primary-50 rounded-xl p-6 mb-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                  <Gavel className="w-5 h-5 mr-2" />
+                  Bidding Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <div className="text-sm text-gray-500 mb-1">Minimum Price</div>
+                    <div className="text-2xl font-bold text-gray-900">{formatCurrency(selectedLotForDetails.minimumPrice)}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-sm text-gray-500 mb-1">Current Highest Bid</div>
+                    <div className="text-2xl font-bold text-primary-600">{formatCurrency(selectedLotForDetails.currentHighestBid)}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-sm text-gray-500 mb-1">Bidding Ends</div>
+                    <div className="text-lg font-semibold text-gray-900">
+                      {new Date(selectedLotForDetails.biddingEndDate).toLocaleDateString()}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {getDaysRemaining(selectedLotForDetails.biddingEndDate)} days remaining
+                    </div>
+                  </div>
+                </div>
+                {/* My Bid, if any */}
+                {myBidForSelectedLot ? (
+                  <div className="mt-6 bg-white rounded-xl p-4 border border-primary-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <User className="w-4 h-4 text-primary-600" />
+                        <span className="text-sm font-semibold text-primary-700">Your Bid</span>
+                      </div>
+                      <span className="text-sm text-gray-500">{new Date(myBidForSelectedLot.bidTime).toLocaleString()}</span>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Amount</span>
+                      <span className="text-lg font-bold text-gray-900">{formatCurrency(myBidForSelectedLot.myBidAmount)}</span>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Status</span>
+                      <span className={"text-sm font-medium capitalize " + (myBidForSelectedLot.status === 'winning' ? 'text-green-700' : 'text-gray-700')}>{myBidForSelectedLot.status}</span>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* bidder details toggle removed */}
+              </div>
+
+              {/* Bids List */}
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                  <Users className="w-5 h-5 mr-2" />
+                  Bids
+                </h3>
+                {selectedLotBids && selectedLotBids.length > 0 ? (
+                  <div className="space-y-3">
+                    {selectedLotBids.map((bid, idx) => {
+                      return (
+                        <div key={bid.id || idx} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 rounded-full bg-white border flex items-center justify-center text-xs font-semibold">
+                              #{idx + 1}
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">{bid.bidderName}</div>
+                              <div className="text-xs text-gray-500">{new Date(bid.timestamp).toLocaleString()}</div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className={`text-sm font-bold ${bid.isWinning ? 'text-primary-700' : 'text-gray-900'}`}>{formatCurrency(bid.amount)}</div>
+                            {bid.isWinning && (
+                              <div className="text-xs text-primary-600">Highest</div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-600">No bids yet.</div>
+                )}
+              </div>
+
+              {/* Tree Lot Features */}
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                  <Award className="w-5 h-5 mr-2" />
+                  Tree Lot Features
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <span className="text-gray-900">Mature rubber trees ready for tapping</span>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <span className="text-gray-900">Well-maintained plantation</span>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <span className="text-gray-900">Good soil quality and drainage</span>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <span className="text-gray-900">Accessible location</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
+                <button
+                  onClick={() => {
+                    setIsDetailsModalOpen(false);
+                    setSelectedLotForDetails(null);
+                    // Navigate to bid page
+                    navigate(`/bid/${selectedLotForDetails.id}`, { state: { lot: selectedLotForDetails } });
+                  }}
+                  className="flex-1 bg-gradient-to-r from-primary-500 to-primary-600 text-white py-3 px-6 rounded-xl font-medium hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                >
+                  <Gavel className="w-5 h-5" />
+                  <span>Place Bid</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setIsDetailsModalOpen(false);
+                    setSelectedLotForDetails(null);
+                  }}
+                  className="flex-1 border border-gray-300 text-gray-700 py-3 px-6 rounded-xl font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center space-x-2"
+                >
+                  <X className="w-5 h-5" />
+                  <span>Close</span>
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

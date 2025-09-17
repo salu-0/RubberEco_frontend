@@ -34,16 +34,37 @@ const Toast = () => {
   };
 
   const getToastStyles = (type) => {
-    switch (type) {
-      case 'success':
-        return 'bg-green-50 border-green-200 text-green-800';
-      case 'error':
-        return 'bg-red-50 border-red-200 text-red-800';
-      case 'warning':
-        return 'bg-yellow-50 border-yellow-200 text-yellow-800';
-      case 'info':
-      default:
-        return 'bg-blue-50 border-blue-200 text-blue-800';
+    // Check for dark mode
+    const isDarkMode = typeof window !== 'undefined' && (
+      localStorage.getItem('admin_theme') === 'dark' ||
+      document.documentElement.classList.contains('dark') ||
+      (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    );
+
+    if (isDarkMode) {
+      switch (type) {
+        case 'success':
+          return 'bg-green-900/90 border-green-500/50 text-green-100 backdrop-blur-sm';
+        case 'error':
+          return 'bg-red-900/90 border-red-500/50 text-red-100 backdrop-blur-sm';
+        case 'warning':
+          return 'bg-yellow-900/90 border-yellow-500/50 text-yellow-100 backdrop-blur-sm';
+        case 'info':
+        default:
+          return 'bg-blue-900/90 border-blue-500/50 text-blue-100 backdrop-blur-sm';
+      }
+    } else {
+      switch (type) {
+        case 'success':
+          return 'bg-green-50 border-green-200 text-green-800';
+        case 'error':
+          return 'bg-red-50 border-red-200 text-red-800';
+        case 'warning':
+          return 'bg-yellow-50 border-yellow-200 text-yellow-800';
+        case 'info':
+        default:
+          return 'bg-blue-50 border-blue-200 text-blue-800';
+      }
     }
   };
 
@@ -84,7 +105,7 @@ const Toast = () => {
                   <div className="mt-2">
                     <button
                       onClick={() => handleAction(toast)}
-                      className="text-xs font-medium underline hover:no-underline focus:outline-none focus:underline"
+                      className="text-xs font-medium underline hover:no-underline focus:outline-none focus:underline transition-all duration-200 hover:bg-black/10 dark:hover:bg-white/10 px-2 py-1 rounded"
                     >
                       {toast.action.label}
                     </button>
@@ -95,7 +116,7 @@ const Toast = () => {
               <div className="flex-shrink-0">
                 <button
                   onClick={() => handleRemove(toast.id)}
-                  className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                  className="text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100 focus:outline-none transition-colors"
                 >
                   <X className="h-4 w-4" />
                 </button>

@@ -628,10 +628,28 @@ const StaffRequestManagement = ({ darkMode }) => {
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        <span className={`inline-flex items-center px-4 py-2 rounded-xl text-sm font-semibold ${getStatusColor(request.status)} group-hover:scale-105 transition-transform duration-300 shadow-sm`}>
-                          {getStatusIcon(request.status)}
-                          <span className="ml-2 capitalize">{request.status.replace('_', ' ')}</span>
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          <span className={`inline-flex items-center px-4 py-2 rounded-xl text-sm font-semibold ${getStatusColor(request.status)} group-hover:scale-105 transition-transform duration-300 shadow-sm`}>
+                            {getStatusIcon(request.status)}
+                            <span className="ml-2 capitalize">{request.status.replace('_', ' ')}</span>
+                          </span>
+                          {request.verification?.idOcr?.status && (
+                            <span
+                              title={`OCR: ${request.verification.idOcr.status}${request.verification.idOcr.confidence ? ` (conf ${Math.round(request.verification.idOcr.confidence)}%)` : ''}`}
+                              className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium border ${
+                                request.verification.idOcr.status === 'passed'
+                                  ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700/50'
+                                  : request.verification.idOcr.status === 'failed'
+                                  ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700/50'
+                                  : request.verification.idOcr.status === 'error'
+                                  ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-700/50'
+                                  : 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800/50 dark:text-gray-300 dark:border-gray-700/50'
+                              }`}
+                            >
+                              OCR: {request.verification.idOcr.status}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center space-x-2">
@@ -666,7 +684,7 @@ const StaffRequestManagement = ({ darkMode }) => {
                           >
                             <Eye className="h-4 w-4" />
                           </button>
-                          {request.status === 'pending' && (
+                          {(['pending','under_review'].includes(request.status)) && (
                             <>
                               <button
                                 onClick={() => handleRequestAction(request._id, 'approve')}
@@ -948,6 +966,57 @@ const StaffRequestManagement = ({ darkMode }) => {
                 </div>
               </div>
 
+              {/* Document Verification */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 flex items-center">
+                  <CheckCircle className="h-5 w-5 mr-2" />
+                  Document Verification (OCR)
+                </h3>
+                {selectedRequest.verification?.idOcr ? (
+                  <div className={`p-4 rounded-lg border ${darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}>
+                    <div className="flex items-center space-x-2 mb-3">
+                      <span className={`px-2 py-1 rounded-lg text-xs font-medium border ${
+                        selectedRequest.verification.idOcr.status === 'passed'
+                          ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700/50'
+                          : selectedRequest.verification.idOcr.status === 'failed'
+                          ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700/50'
+                          : selectedRequest.verification.idOcr.status === 'error'
+                          ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-700/50'
+                          : 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800/50 dark:text-gray-300 dark:border-gray-700/50'
+                      }`}>
+                        {selectedRequest.verification.idOcr.status.toUpperCase()}
+                      </span>
+                      {typeof selectedRequest.verification.idOcr.confidence === 'number' && (
+                        <span className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Confidence: {Math.round(selectedRequest.verification.idOcr.confidence)}%
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Extracted Name</p>
+                        <p className={`${darkMode ? 'text-gray-100' : 'text-gray-900'} font-medium`}>{selectedRequest.verification.idOcr.extracted?.name || '—'}</p>
+                        <p className={`mt-1 text-xs ${selectedRequest.verification.idOcr.matched?.name ? 'text-green-600' : 'text-red-600'}`}>
+                          {selectedRequest.verification.idOcr.matched?.name ? 'Matched' : 'Not matched'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Extracted DOB</p>
+                        <p className={`${darkMode ? 'text-gray-100' : 'text-gray-900'} font-medium`}>{selectedRequest.verification.idOcr.extracted?.dob || '—'}</p>
+                        <p className={`mt-1 text-xs ${selectedRequest.verification.idOcr.matched?.dob ? 'text-green-600' : 'text-red-600'}`}>
+                          {selectedRequest.verification.idOcr.matched?.dob ? 'Matched' : 'Not matched'}
+                        </p>
+                      </div>
+                    </div>
+                    {selectedRequest.verification.idOcr.notes && (
+                      <p className={`mt-3 text-xs ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Notes: {selectedRequest.verification.idOcr.notes}</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>No OCR verification data.</p>
+                )}
+              </div>
+
               {/* Application Status */}
               <div>
                 <h3 className="text-lg font-semibold mb-4">Application Status</h3>
@@ -977,7 +1046,7 @@ const StaffRequestManagement = ({ darkMode }) => {
               >
                 Close
               </button>
-              {selectedRequest.status === 'pending' && (
+              {(['pending','under_review'].includes(selectedRequest.status)) && (
                 <div className="flex space-x-2">
                   <button
                     onClick={() => {

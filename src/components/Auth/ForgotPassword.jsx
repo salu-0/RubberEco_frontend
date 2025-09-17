@@ -9,6 +9,7 @@ import {
   Loader2
 } from 'lucide-react';
 import Navbar from '../Navbar';
+import { isEmail } from '../../utils/validation';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -19,13 +20,9 @@ const ForgotPassword = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!email.trim()) {
-      setError('Email is required');
-      return;
-    }
-
-    if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
-      setError('Invalid email format');
+    const emailErr = isEmail(email);
+    if (emailErr) {
+      setError(emailErr);
       return;
     }
 

@@ -48,7 +48,68 @@ const PracticalTraining = () => {
   });
   const [autoPopulatedFields, setAutoPopulatedFields] = useState([]);
 
-  // Mock data for demonstration
+  // Load training data from backend API
+  const loadTrainings = async () => {
+    try {
+      setLoading(true);
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      // Ensure we request all available without artificial limits
+      const response = await fetch(`${backendUrl}/api/practical-training/available`);
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setTrainings(result.data || []);
+        } else {
+          console.error('Failed to load trainings:', result.message);
+          // Fallback to mock data if API fails
+          setTrainings(mockTrainings);
+        }
+      } else {
+        console.error('API request failed:', response.status);
+        // Fallback to mock data if API fails
+        setTrainings(mockTrainings);
+      }
+    } catch (error) {
+      console.error('Error loading trainings:', error);
+      // Fallback to mock data if API fails
+      setTrainings(mockTrainings);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load user enrollments from backend API
+  const loadUserEnrollments = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const response = await fetch(`${backendUrl}/api/practical-training/user/${JSON.parse(atob(token.split('.')[1])).id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setUserEnrollments(result.data || []);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading user enrollments:', error);
+    }
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    loadTrainings();
+    loadUserEnrollments();
+  }, []);
+
+  // Mock data for demonstration (fallback)
   const mockTrainings = [
     {
       _id: '1',
@@ -427,43 +488,6 @@ const PracticalTraining = () => {
     }
   ];
 
-  useEffect(() => {
-    loadTrainings();
-    loadUserEnrollments();
-  }, []);
-
-  const loadTrainings = async () => {
-    setLoading(true);
-    try {
-      // In production, replace with actual API call
-      // const response = await fetch('/api/practical-training/available');
-      // const data = await response.json();
-      
-      // Using mock data for now
-      setTimeout(() => {
-        setTrainings(mockTrainings);
-        setLoading(false);
-      }, 1000);
-    } catch (error) {
-      console.error('Error loading trainings:', error);
-      setLoading(false);
-    }
-  };
-
-  const loadUserEnrollments = async () => {
-    try {
-      // In production, replace with actual API call
-      // const userId = getCurrentUser().id;
-      // const response = await fetch(`/api/practical-training/user/${userId}`);
-      // const data = await response.json();
-      
-      // Using mock data for now
-      setUserEnrollments(mockUserEnrollments);
-    } catch (error) {
-      console.error('Error loading user enrollments:', error);
-    }
-  };
-
   const filteredTrainings = trainings.filter(training => {
     const matchesSearch = training.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          training.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -562,19 +586,77 @@ const PracticalTraining = () => {
         const result = await response.json();
 
         if (response.ok && result.success) {
-          showNotification('Successfully enrolled in practical training! You will receive a confirmation email shortly.', 'success');
-          setShowEnrollModal(false);
-          setEnrollmentForm({
-            fullName: '',
-            email: '',
-            phone: '',
-            experienceLevel: '',
-            notes: '',
-            agreeToTerms: false
-          });
-          setAutoPopulatedFields([]);
-          loadTrainings();
-          loadUserEnrollments();
+          // If payment required, create order and open Razorpay
+          const backendUrl2 = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+          if (result.data?.paymentRequired) {
+            // Load Razorpay SDK if not present
+            if (!window.Razorpay) {
+              await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                script.onload = resolve;
+                script.onerror = () => reject(new Error('Failed to load Razorpay SDK'));
+                document.body.appendChild(script);
+              });
+            }
+
+            const orderResp = await fetch(`${backendUrl2}/api/practical-training/${trainingId}/payment/order`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+            });
+            const orderJson = await orderResp.json();
+            if (!orderResp.ok || !orderJson.success) {
+              showNotification(orderJson.message || 'Failed to initiate payment. Please try again.', 'error');
+            } else {
+              const { orderId, amount, key } = orderJson.data;
+              const options = {
+                key,
+                amount,
+                currency: 'INR',
+                name: 'RubberEco Practical Training',
+                description: selectedTraining.title,
+                order_id: orderId,
+                prefill: { name: enrollmentForm.fullName, email: enrollmentForm.email, contact: enrollmentForm.phone },
+                theme: { color: '#16a34a' },
+                handler: async function (paymentResp) {
+                  try {
+                    const verifyResp = await fetch(`${backendUrl2}/api/practical-training/${trainingId}/payment/verify`, {
+                      method: 'POST',
+                      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        razorpay_order_id: paymentResp.razorpay_order_id,
+                        razorpay_payment_id: paymentResp.razorpay_payment_id,
+                        razorpay_signature: paymentResp.razorpay_signature
+                      })
+                    });
+                    const verifyJson = await verifyResp.json();
+                    if (verifyResp.ok && verifyJson.success) {
+                      showNotification('Payment successful! Enrollment confirmed. Check your email for confirmation.', 'success');
+                      setShowEnrollModal(false);
+                      setEnrollmentForm({ fullName: '', email: '', phone: '', experienceLevel: '', notes: '', agreeToTerms: false });
+                      setAutoPopulatedFields([]);
+                      loadTrainings();
+                      loadUserEnrollments();
+                    } else {
+                      showNotification(verifyJson.message || 'Payment verification failed. Please contact support.', 'error');
+                    }
+                  } catch (err) {
+                    console.error('Payment verify error:', err);
+                    showNotification('Payment verification error. Please contact support.', 'error');
+                  }
+                }
+              };
+              const rzp = new window.Razorpay(options);
+              rzp.open();
+            }
+          } else {
+            showNotification('Successfully enrolled! No payment required.', 'success');
+            setShowEnrollModal(false);
+            setEnrollmentForm({ fullName: '', email: '', phone: '', experienceLevel: '', notes: '', agreeToTerms: false });
+            setAutoPopulatedFields([]);
+            loadTrainings();
+            loadUserEnrollments();
+          }
         } else {
           showNotification(result.message || 'Failed to enroll in training. Please try again.', 'error');
         }

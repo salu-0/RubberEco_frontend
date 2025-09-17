@@ -23,6 +23,7 @@ import './BidHistory.css';
 
 // Import local images
 import b1Image from '../../assets/images/bid/b1.jpg';
+import { getSafeImageUrl, handleImageError } from '../../utils/imageUtils';
 import b2Image from '../../assets/images/bid/b2.jpg';
 import b3Image from '../../assets/images/bid/b3.jpg';
 
@@ -174,6 +175,10 @@ const BidHistory = () => {
   };
 
   const formatCurrency = (amount) => {
+    if (amount === null || amount === undefined || isNaN(amount)) {
+      return '₹0';
+    }
+    
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
@@ -182,7 +187,14 @@ const BidHistory = () => {
   };
 
   const formatDateTime = (dateString) => {
-    return new Date(dateString).toLocaleString('en-IN', {
+    if (!dateString) return 'Invalid Date';
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return 'Invalid Date';
+    }
+    
+    return date.toLocaleString('en-IN', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -424,7 +436,7 @@ const HistoryCard = ({ bid, getStatusInfo, formatCurrency, formatDateTime, openC
   return (
     <div className="history-card">
       <div className="history-image">
-        <img src={bid.lotInfo.image} alt={`Lot ${bid.lotId}`} />
+        <img src={getSafeImageUrl(bid.lotInfo.image)} alt={`Lot ${bid.lotId}`} onError={(e) => handleImageError(e, 0)} />
         <div className="lot-badge">#{bid.lotId}</div>
       </div>
 

@@ -9,7 +9,6 @@ import {
   CheckCircle,
   AlertCircle,
   Eye,
-  Edit,
   Trash2,
   Download,
   Filter,
@@ -24,6 +23,10 @@ const ManageUsers = ({ darkMode }) => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ name: '', email: '', phone: '', location: '', bio: '' });
 
   // Fetch users from both MongoDB and Supabase
   const fetchUsers = async () => {
@@ -201,34 +204,81 @@ const ManageUsers = ({ darkMode }) => {
     fetchUsers();
   }, []);
 
-  // Filter users based on search term and role
+  // Filter users based on search term and role, and exclude admins from this view
   const filteredUsers = users.filter(user => {
+    const userRole = (user.role || '').toLowerCase();
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = filterRole === 'all' || user.role === filterRole;
-    return matchesSearch && matchesRole;
+    const matchesRole = filterRole === 'all' || userRole === filterRole;
+    const excludeAdmins = userRole !== 'admin';
+    return matchesSearch && matchesRole && excludeAdmins;
   });
 
   // Handle user actions
   const handleViewUser = (userId) => {
-    console.log('View user:', userId);
-    // Implement view user functionality
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
+    setSelectedUser(user);
+    setIsViewOpen(true);
   };
 
-  const handleEditUser = (userId) => {
-    console.log('Edit user:', userId);
-    // Implement edit user functionality
+  // Edit flow kept for potential future use; no button in UI
+
+  const isMongoId = (id) => !!(id && id.match(/^[0-9a-fA-F]{24}$/));
+  const isUuid = (id) => !!(id && id.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/i));
+
+  const saveEdit = async () => {
+    if (!selectedUser) return;
+    try {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      let endpoint = '';
+      if (isMongoId(selectedUser.id)) {
+        endpoint = `${baseUrl}/users/${selectedUser.id}`;
+      } else if (isUuid(selectedUser.id)) {
+        endpoint = `${baseUrl}/users/supabase/${selectedUser.id}`;
+      } else {
+        alert('Unknown user ID format. Cannot update.');
+        return;
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || 'dummy-token'}`
+        },
+        body: JSON.stringify(editForm)
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.success === false) {
+        throw new Error(data.message || 'Failed to update user');
+      }
+
+      const updated = data.user || { ...selectedUser, ...editForm };
+      setUsers(prev => prev.map(u => (u.id === selectedUser.id ? { ...u, ...updated } : u)));
+      setIsEditOpen(false);
+      setSelectedUser(null);
+    } catch (err) {
+      console.error('Error updating user:', err);
+      alert(err.message || 'Update failed');
+    }
   };
 
   const handleDeleteUser = async (userId) => {
-    console.log('Delete user:', userId);
-
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
+    // Prevent deleting Supabase (Google) users from here
+    if (user.provider === 'google' || isUuid(userId)) {
+      alert('Supabase (Google) users cannot be deleted from here. Manage them in Supabase.');
+      return;
+    }
     if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       return;
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/${userId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -254,10 +304,7 @@ const ManageUsers = ({ darkMode }) => {
     }
   };
 
-  const handleAddUser = () => {
-    console.log('Add new user');
-    // Implement add user functionality
-  };
+  // Removed Add User functionality from this view
 
   const handleExportUsers = () => {
     console.log('Export users');
@@ -469,13 +516,6 @@ const ManageUsers = ({ darkMode }) => {
                   <span>Refresh</span>
                 </button>
                 <button
-                  onClick={handleAddUser}
-                  className={`px-4 py-2 rounded-xl transition-all duration-300 flex items-center space-x-2 ${adminTheme.components.button.primary(darkMode)}`}
-                >
-                  <UserPlus className="h-4 w-4" />
-                  <span>Add User</span>
-                </button>
-                <button
                   onClick={handleExportUsers}
                   className={`px-4 py-2 rounded-xl transition-all duration-300 flex items-center space-x-2 ${adminTheme.components.button.secondary(darkMode)}`}
                 >
@@ -631,13 +671,7 @@ const ManageUsers = ({ darkMode }) => {
                         >
                           <Eye className="h-4 w-4" />
                         </button>
-                        <button 
-                          onClick={() => handleEditUser(user.id)}
-                          className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
-                          title="Edit User"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
+                        {/* Edit button removed */}
                         <button 
                           onClick={() => handleDeleteUser(user.id)}
                           className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
@@ -654,6 +688,51 @@ const ManageUsers = ({ darkMode }) => {
           </div>
         )}
         </motion.div>
+
+        {/* View Modal */}
+        {isViewOpen && selectedUser && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+            <div className={`w-full max-w-md rounded-2xl p-6 ${adminTheme.components.card.content(darkMode)}`}>
+              <div className="flex items-center mb-4">
+                <img src={selectedUser.avatar} alt={selectedUser.name} className="h-12 w-12 rounded-full mr-3" />
+                <div>
+                  <div className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{selectedUser.name}</div>
+                  <div className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{selectedUser.email}</div>
+                </div>
+              </div>
+              <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <p><strong>Role:</strong> {selectedUser.role}</p>
+                <p><strong>Provider:</strong> {selectedUser.provider}</p>
+                {selectedUser.phone && <p><strong>Phone:</strong> {selectedUser.phone}</p>}
+                {selectedUser.location && <p><strong>Location:</strong> {selectedUser.location}</p>}
+                {selectedUser.bio && <p className="mt-2">{selectedUser.bio}</p>}
+              </div>
+              <div className="mt-6 flex justify-end">
+                <button onClick={() => { setIsViewOpen(false); setSelectedUser(null); }} className={adminTheme.components.button.secondary(darkMode)}>Close</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Modal */}
+        {isEditOpen && selectedUser && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+            <div className={`w-full max-w-lg rounded-2xl p-6 ${adminTheme.components.card.content(darkMode)}`}>
+              <div className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Edit User</div>
+              <div className="grid grid-cols-1 gap-3">
+                <input className={adminTheme.components.input.search(darkMode)} value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} placeholder="Name" />
+                <input className={adminTheme.components.input.search(darkMode)} value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} placeholder="Email" />
+                <input className={adminTheme.components.input.search(darkMode)} value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} placeholder="Phone" />
+                <input className={adminTheme.components.input.search(darkMode)} value={editForm.location} onChange={e => setEditForm({ ...editForm, location: e.target.value })} placeholder="Location" />
+                <textarea className={adminTheme.components.input.search(darkMode)} value={editForm.bio} onChange={e => setEditForm({ ...editForm, bio: e.target.value })} placeholder="Bio" />
+              </div>
+              <div className="mt-6 flex justify-end gap-3">
+                <button onClick={() => { setIsEditOpen(false); setSelectedUser(null); }} className={adminTheme.components.button.secondary(darkMode)}>Cancel</button>
+                <button onClick={saveEdit} className={adminTheme.components.button.primary(darkMode)}>Save</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

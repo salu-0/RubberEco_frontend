@@ -25,6 +25,7 @@ import {
   Building
 } from 'lucide-react';
 import { trainingAPI } from '../../utils/api';
+import { isRequired, isEmail, phoneValidator, numericValidator, nameValidator } from '../../utils/validation';
 
 const TrainerManagement = ({ darkMode }) => {
   console.log('🎯 TrainerManagement component loaded!', { darkMode });
@@ -52,8 +53,45 @@ const TrainerManagement = ({ darkMode }) => {
     location: '',
     salary: '',
     skills: '',
-    notes: ''
+    notes: '',
+    avatar: ''
   });
+  const [newTrainerErrors, setNewTrainerErrors] = useState({});
+
+  const validateTrainerField = (field, value) => {
+    let error = '';
+    switch (field) {
+      case 'name':
+        error = nameValidator(value);
+        break;
+      case 'email':
+        error = isEmail(value);
+        break;
+      case 'phone':
+        error = phoneValidator(value, { allowedCountryCodes: ['+91', '+81'], message: 'Phone must start with +91 or +81 and include 10 digits' });
+        break;
+      case 'department':
+      case 'location':
+        error = isRequired(value, 'This field is required');
+        break;
+      case 'salary':
+        if (value) error = numericValidator(value, { min: 0 });
+        break;
+      default:
+        error = '';
+    }
+    setNewTrainerErrors(prev => ({ ...prev, [field]: error }));
+    return error;
+  };
+
+  const validateTrainerForm = () => {
+    const fields = ['name', 'email', 'phone', 'department', 'location', 'salary'];
+    const errors = {};
+    fields.forEach(f => {
+      errors[f] = validateTrainerField(f, newTrainerForm[f]);
+    });
+    return Object.values(errors).filter(Boolean).length === 0;
+  };
 
   // Get auth token
   const getAuthToken = () => {
@@ -648,6 +686,12 @@ const TrainerManagement = ({ darkMode }) => {
   // Handle adding a new trainer
   const handleAddTrainer = async (e) => {
     e.preventDefault();
+    // Final validation before submit
+    const ok = validateTrainerForm();
+    if (!ok) {
+      showNotification('Please fix the highlighted errors before submitting.', 'error');
+      return;
+    }
     setAddTrainerLoading(true);
 
     try {
@@ -655,27 +699,7 @@ const TrainerManagement = ({ darkMode }) => {
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       // Validate required fields
-      if (!newTrainerForm.name || !newTrainerForm.email || !newTrainerForm.phone || !newTrainerForm.department || !newTrainerForm.location) {
-        showNotification('Please fill in all required fields', 'error');
-        setAddTrainerLoading(false);
-        return;
-      }
-
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(newTrainerForm.email)) {
-        showNotification('Please enter a valid email address', 'error');
-        setAddTrainerLoading(false);
-        return;
-      }
-
-      // Validate phone format (basic validation)
-      const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,}$/;
-      if (!phoneRegex.test(newTrainerForm.phone)) {
-        showNotification('Please enter a valid phone number', 'error');
-        setAddTrainerLoading(false);
-        return;
-      }
+      // Already validated via validateTrainerForm
 
       // Prepare trainer data
       const trainerData = {
@@ -687,8 +711,9 @@ const TrainerManagement = ({ darkMode }) => {
         department: newTrainerForm.department.trim(),
         location: newTrainerForm.location.trim(),
         salary: parseInt(newTrainerForm.salary) || 0,
+        avatar: newTrainerForm.avatar || '',
         skills: newTrainerForm.skills ? newTrainerForm.skills.split(',').map(s => s.trim()).filter(s => s) : [],
-        notes: newTrainerForm.notes.trim(),
+        notes: (newTrainerForm.notes || '').trim(),
         status: 'active',
         performance_rating: 0,
         tasks_completed: 0,
@@ -721,6 +746,7 @@ const TrainerManagement = ({ darkMode }) => {
           skills: '',
           notes: ''
         });
+        setNewTrainerErrors({});
 
         // Close modal
         setShowAddTrainerModal(false);
@@ -748,6 +774,26 @@ const TrainerManagement = ({ darkMode }) => {
       ...prev,
       [field]: value
     }));
+  };
+
+  // Image upload handler
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setNewTrainerErrors(prev => ({ ...prev, avatar: 'Please select a valid image file' }));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setNewTrainerErrors(prev => ({ ...prev, avatar: 'Image must be less than 5MB' }));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setNewTrainerForm(prev => ({ ...prev, avatar: String(reader.result) }));
+      setNewTrainerErrors(prev => ({ ...prev, avatar: '' }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const StatCard = ({ title, value, icon: Icon, color, description }) => (
@@ -838,24 +884,7 @@ const TrainerManagement = ({ darkMode }) => {
             <span>🔄</span>
             <span>Refresh</span>
           </motion.button>
-          <motion.button
-            onClick={async () => {
-              console.log('📚 Creating sample enrollments...');
-              if (trainers.length > 0) {
-                await createSampleEnrollments(trainers);
-                await fetchTrainersAndEnrollments();
-                showNotification('Sample enrollments created successfully!', 'success');
-              } else {
-                showNotification('No trainers found to create enrollments for', 'error');
-              }
-            }}
-            className="mt-4 sm:mt-0 bg-blue-600 text-white px-4 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center space-x-2"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <BookOpen className="h-5 w-5" />
-            <span>Add Sample Enrollments</span>
-          </motion.button>
+          {/* Removed 'Add Sample Enrollments' button as requested */}
           <motion.button
             onClick={() => setShowAddTrainerModal(true)}
             className="mt-4 sm:mt-0 bg-gradient-to-r from-primary-500 to-primary-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center space-x-2"
@@ -1152,20 +1181,46 @@ const TrainerManagement = ({ darkMode }) => {
 
                   <div>
                     <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Profile Image
+                    </label>
+                    <div className="flex items-center space-x-4 mb-3">
+                      <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200">
+                        {newTrainerForm.avatar ? (
+                          <img src={newTrainerForm.avatar} alt="avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className={`w-full h-full flex items-center justify-center ${darkMode ? 'text-gray-400 bg-gray-700' : 'text-gray-500 bg-gray-100'}`}>No Image</div>
+                        )}
+                      </div>
+                      <input type="file" accept="image/*" onChange={handleAvatarChange} className="text-sm" />
+                    </div>
+                    {newTrainerErrors.avatar && (
+                      <p className="mt-1 text-sm text-red-500">{newTrainerErrors.avatar}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Full Name *
                     </label>
                     <input
                       type="text"
                       value={newTrainerForm.name}
-                      onChange={(e) => handleFormChange('name', e.target.value)}
+                      onChange={(e) => {
+                        handleFormChange('name', e.target.value);
+                        validateTrainerField('name', e.target.value);
+                      }}
+                      onBlur={(e) => validateTrainerField('name', e.target.value)}
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                         darkMode
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                      }`}
+                      } ${newTrainerErrors.name ? 'border-red-500 focus:ring-red-500' : ''}`}
                       placeholder="Enter trainer's full name"
                       required
                     />
+                    {newTrainerErrors.name && (
+                      <p className="mt-1 text-sm text-red-500">{newTrainerErrors.name}</p>
+                    )}
                   </div>
 
                   <div>
@@ -1175,15 +1230,22 @@ const TrainerManagement = ({ darkMode }) => {
                     <input
                       type="email"
                       value={newTrainerForm.email}
-                      onChange={(e) => handleFormChange('email', e.target.value)}
+                      onChange={(e) => {
+                        handleFormChange('email', e.target.value);
+                        validateTrainerField('email', e.target.value);
+                      }}
+                      onBlur={(e) => validateTrainerField('email', e.target.value)}
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                         darkMode
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                      }`}
+                      } ${newTrainerErrors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
                       placeholder="trainer@rubbereco.com"
                       required
                     />
+                    {newTrainerErrors.email && (
+                      <p className="mt-1 text-sm text-red-500">{newTrainerErrors.email}</p>
+                    )}
                   </div>
 
                   <div>
@@ -1193,15 +1255,22 @@ const TrainerManagement = ({ darkMode }) => {
                     <input
                       type="tel"
                       value={newTrainerForm.phone}
-                      onChange={(e) => handleFormChange('phone', e.target.value)}
+                      onChange={(e) => {
+                        handleFormChange('phone', e.target.value);
+                        validateTrainerField('phone', e.target.value);
+                      }}
+                      onBlur={(e) => validateTrainerField('phone', e.target.value)}
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                         darkMode
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                      }`}
+                      } ${newTrainerErrors.phone ? 'border-red-500 focus:ring-red-500' : ''}`}
                       placeholder="+91 98765 43210"
                       required
                     />
+                    {newTrainerErrors.phone && (
+                      <p className="mt-1 text-sm text-red-500">{newTrainerErrors.phone}</p>
+                    )}
                   </div>
                 </div>
 
@@ -1217,12 +1286,16 @@ const TrainerManagement = ({ darkMode }) => {
                     </label>
                     <select
                       value={newTrainerForm.department}
-                      onChange={(e) => handleFormChange('department', e.target.value)}
+                      onChange={(e) => {
+                        handleFormChange('department', e.target.value);
+                        validateTrainerField('department', e.target.value);
+                      }}
+                      onBlur={(e) => validateTrainerField('department', e.target.value)}
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                         darkMode
                           ? 'bg-gray-700 border-gray-600 text-white'
                           : 'bg-white border-gray-300 text-gray-900'
-                      }`}
+                      } ${newTrainerErrors.department ? 'border-red-500 focus:ring-red-500' : ''}`}
                       required
                     >
                       <option value="">Select Department</option>
@@ -1242,15 +1315,22 @@ const TrainerManagement = ({ darkMode }) => {
                     <input
                       type="text"
                       value={newTrainerForm.location}
-                      onChange={(e) => handleFormChange('location', e.target.value)}
+                      onChange={(e) => {
+                        handleFormChange('location', e.target.value);
+                        validateTrainerField('location', e.target.value);
+                      }}
+                      onBlur={(e) => validateTrainerField('location', e.target.value)}
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                         darkMode
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                      }`}
+                      } ${newTrainerErrors.location ? 'border-red-500 focus:ring-red-500' : ''}`}
                       placeholder="Kottayam District, Kerala"
                       required
                     />
+                    {newTrainerErrors.location && (
+                      <p className="mt-1 text-sm text-red-500">{newTrainerErrors.location}</p>
+                    )}
                   </div>
 
                   <div>
@@ -1260,15 +1340,22 @@ const TrainerManagement = ({ darkMode }) => {
                     <input
                       type="number"
                       value={newTrainerForm.salary}
-                      onChange={(e) => handleFormChange('salary', e.target.value)}
+                      onChange={(e) => {
+                        handleFormChange('salary', e.target.value);
+                        validateTrainerField('salary', e.target.value);
+                      }}
+                      onBlur={(e) => validateTrainerField('salary', e.target.value)}
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                         darkMode
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                      }`}
+                      } ${newTrainerErrors.salary ? 'border-red-500 focus:ring-red-500' : ''}`}
                       placeholder="50000"
                       min="0"
                     />
+                    {newTrainerErrors.salary && (
+                      <p className="mt-1 text-sm text-red-500">{newTrainerErrors.salary}</p>
+                    )}
                   </div>
                 </div>
               </div>

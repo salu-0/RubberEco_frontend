@@ -14,7 +14,8 @@ import {
   Globe,
   Users,
   ArrowRight,
-  CheckCircle
+  CheckCircle,
+  Leaf
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { useNavigationGuard } from '../hooks/useNavigationGuard';
@@ -28,7 +29,7 @@ const Features = () => {
     preventBackToHome: false
   });
 
-  // Check if admin or staff user is trying to access features page
+  // Check if admin, staff, or broker user is trying to access features page
   useEffect(() => {
     const { user, isLoggedIn } = getUserData();
     if (isLoggedIn && user?.role === 'admin') {
@@ -37,6 +38,9 @@ const Features = () => {
     } else if (isLoggedIn && user?.role === 'staff' && user?.useStaffDashboard) {
       console.log('🚫 Staff user detected on features page, redirecting to staff dashboard');
       navigate('/staff-dashboard', { replace: true });
+    } else if (isLoggedIn && user?.role === 'broker') {
+      console.log('🚫 Broker user detected on features page, redirecting to broker dashboard');
+      navigate('/broker-dashboard', { replace: true });
     }
   }, [navigate, getUserData]);
   const mainFeatures = [

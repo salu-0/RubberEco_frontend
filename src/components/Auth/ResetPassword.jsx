@@ -11,6 +11,7 @@ import {
   Loader2
 } from 'lucide-react';
 import Navbar from '../Navbar';
+import { passwordStrength } from '../../utils/validation';
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -45,13 +46,9 @@ const ResetPassword = () => {
   };
 
   const validateForm = () => {
-    if (!formData.password) {
-      setError('Password is required');
-      return false;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+    const pwdErr = passwordStrength(formData.password);
+    if (pwdErr) {
+      setError(pwdErr);
       return false;
     }
 

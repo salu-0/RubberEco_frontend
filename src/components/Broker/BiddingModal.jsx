@@ -13,6 +13,7 @@ import {
   FaCheckCircle
 } from 'react-icons/fa';
 import './BiddingModal.css';
+import { numericValidator, maxLength } from '../../utils/validation';
 
 const BiddingModal = ({ isOpen, onClose, lot, onSubmitBid }) => {
   const [bidAmount, setBidAmount] = useState('');
@@ -64,17 +65,12 @@ const BiddingModal = ({ isOpen, onClose, lot, onSubmitBid }) => {
 
   const validateBid = () => {
     const newErrors = {};
-    const bidValue = parseFloat(bidAmount);
-    
-    if (!bidAmount || isNaN(bidValue)) {
-      newErrors.bidAmount = 'Please enter a valid bid amount';
-    } else if (bidValue < lot.minimumPrice) {
-      newErrors.bidAmount = `Bid must be at least ₹${lot.minimumPrice.toLocaleString()}`;
-    } else if (bidValue <= lot.currentHighestBid) {
-      newErrors.bidAmount = `Bid must be higher than current highest bid of ₹${lot.currentHighestBid.toLocaleString()}`;
+    const amountErr = numericValidator(bidAmount, { allowEmpty: false, min: Math.max(lot.minimumPrice, lot.currentHighestBid + 1000) });
+    if (amountErr) {
+      newErrors.bidAmount = amountErr === 'This field is required' ? 'Please enter a valid bid amount' : amountErr;
     }
 
-    if (bidComment.length > 500) {
+    if (bidComment && bidComment.length > 500) {
       newErrors.bidComment = 'Comment must be less than 500 characters';
     }
 
@@ -120,6 +116,10 @@ const BiddingModal = ({ isOpen, onClose, lot, onSubmitBid }) => {
   };
 
   const formatCurrency = (amount) => {
+    if (amount === null || amount === undefined || isNaN(amount)) {
+      return '₹0';
+    }
+    
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
@@ -136,7 +136,14 @@ const BiddingModal = ({ isOpen, onClose, lot, onSubmitBid }) => {
   };
 
   const formatDateTime = (dateString) => {
-    return new Date(dateString).toLocaleString('en-IN', {
+    if (!dateString) return 'Invalid Date';
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return 'Invalid Date';
+    }
+    
+    return date.toLocaleString('en-IN', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
