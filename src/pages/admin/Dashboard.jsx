@@ -51,12 +51,29 @@ import AssignTasks from './AssignTappers';
 import VideoManagement from './VideoManagement';
 import NurseryBookings from './NurseryBookings';
 import NurseryInventory from './NurseryInventory';
+import PaymentsTable from './PaymentsTable';
 import { useNavigationGuard } from '../../hooks/useNavigationGuard';
 
 const Dashboard = () => {
+  // All useState declarations at the top
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [payments, setPayments] = useState([]);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
+  // Fetch payments when payments tab is active
+  useEffect(() => {
+    if (activeTab === 'payments') {
+      setPaymentsLoading(true);
+      fetch('http://localhost:5000/api/admin/payments')
+        .then(res => res.json())
+        .then(data => {
+          setPayments(data?.data?.payments || []);
+          setPaymentsLoading(false);
+        })
+        .catch(() => setPaymentsLoading(false));
+    }
+  }, [activeTab]);
 
   // Force dark mode on component mount
   useEffect(() => {
@@ -71,6 +88,7 @@ const Dashboard = () => {
   const [pendingStaffRequests, setPendingStaffRequests] = useState(0);
   const [pendingLandRegistrations, setPendingLandRegistrations] = useState(0);
   const [pendingLeaveRequests, setPendingLeaveRequests] = useState(0);
+  const [pendingBrokerRegistrations, setPendingBrokerRegistrations] = useState(0);
   const [dynamicCounts, setDynamicCounts] = useState({
     totalFarmers: 0,
     totalBrokers: 0,
@@ -279,6 +297,37 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Error fetching pending land registrations:', error);
       setPendingLandRegistrations(0);
+    }
+  };
+
+  // Fetch pending broker registrations count
+  const fetchPendingBrokerRegistrations = async () => {
+    try {
+      const token = getAuthToken();
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const response = await fetch(`${backendUrl}/api/users/role/broker`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Count brokers with pending verification status
+        const pendingCount = (data.users || []).filter(broker => 
+          broker.brokerProfile?.verificationStatus === 'pending' || 
+          broker.brokerProfile?.verificationStatus === 'under_review'
+        ).length;
+        setPendingBrokerRegistrations(pendingCount);
+        console.log('👔 Pending broker registrations:', pendingCount);
+      } else {
+        console.log('Error fetching pending broker registrations');
+        setPendingBrokerRegistrations(0);
+      }
+    } catch (error) {
+      console.error('Error fetching pending broker registrations:', error);
+      setPendingBrokerRegistrations(0);
     }
   };
 
@@ -657,6 +706,7 @@ const Dashboard = () => {
     fetchPendingStaffRequests();
     fetchPendingLandRegistrations();
     fetchPendingLeaveRequests();
+    fetchPendingBrokerRegistrations();
     loadRecentActivities();
     loadStaffPerformance();
 
@@ -667,6 +717,7 @@ const Dashboard = () => {
       fetchPendingStaffRequests();
       fetchPendingLandRegistrations();
       fetchPendingLeaveRequests();
+      fetchPendingBrokerRegistrations();
       loadRecentActivities();
       loadStaffPerformance();
     }, 300000);
@@ -678,6 +729,13 @@ const Dashboard = () => {
     if (activeTab === 'services') {
       loadAcceptedServiceRequests();
       loadStaffMap();
+    }
+  }, [activeTab]);
+
+  // Refresh broker count when brokers tab is opened
+  useEffect(() => {
+    if (activeTab === 'brokers') {
+      fetchPendingBrokerRegistrations();
     }
   }, [activeTab]);
 
@@ -822,9 +880,9 @@ const Dashboard = () => {
     { name: 'Leave Management', icon: CalendarDays, id: 'leave-management', notificationCount: pendingLeaveRequests },
     { name: 'Land Verification', icon: TreePine, id: 'land-verification', notificationCount: pendingLandRegistrations },
     { name: 'Trainers', icon: Target, id: 'trainers' },
-    { name: 'Brokers', icon: Briefcase, id: 'brokers' },
+    { name: 'Brokers', icon: Briefcase, id: 'brokers', notificationCount: pendingBrokerRegistrations },
     { name: 'Nursery Bookings', icon: Leaf, id: 'nursery' },
-    { name: 'Nursery Inventory', icon: Package, id: 'inventory' },
+    { name: 'Inventory', icon: Package, id: 'inventory' },
     { name: 'Fertilizers and Rain Guard Service', icon: UserPlus, id: 'assign-tasks', notificationCount: pendingTappingRequests },
     // { name: 'Video Management', icon: Video, id: 'videos' },
     { name: 'Tapping Schedules', icon: Calendar, id: 'schedules' },
@@ -840,8 +898,11 @@ const Dashboard = () => {
     try {
       console.log('🚪 Admin logout initiated');
       await supabase.auth.signOut();
+      // Clear all authentication tokens and user data
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      localStorage.removeItem('nurseryAdminToken');
+      localStorage.removeItem('nurseryAdminUser');
 
       // Clear navigation history and redirect to login
       clearNavigationHistory();
@@ -852,6 +913,8 @@ const Dashboard = () => {
       // Even if supabase logout fails, clear local data and redirect
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      localStorage.removeItem('nurseryAdminToken');
+      localStorage.removeItem('nurseryAdminUser');
       navigate('/login', { replace: true });
     }
   };
@@ -1632,7 +1695,6 @@ const Dashboard = () => {
                             <div className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                               <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
                               <p className="text-sm">No staff members found</p>
-                              <p className="text-xs mt-1">Staff performance data will appear here</p>
                             </div>
                           </td>
                         </tr>
@@ -1668,7 +1730,12 @@ const Dashboard = () => {
           {activeTab === 'trainers' && <TrainerManagement darkMode={darkMode} />}
 
           {/* Broker Management Section */}
-          {activeTab === 'brokers' && <BrokerManagement darkMode={darkMode} />}
+          {activeTab === 'brokers' && (
+            <BrokerManagement 
+              darkMode={darkMode} 
+              onBrokerStatusChange={fetchPendingBrokerRegistrations}
+            />
+          )}
 
           {/* Assign Tasks Section */}
           {activeTab === 'assign-tasks' && <AssignTasks darkMode={darkMode} />}
@@ -1792,8 +1859,21 @@ const Dashboard = () => {
           {/* Performance Tracking Section */}
           {activeTab === 'performance' && <PerformanceTracking darkMode={darkMode} />}
 
+          {/* Payments Tab */}
+          {activeTab === 'payments' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-8 shadow-lg border ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}
+            >
+              <h2 className={`text-2xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Payments</h2>
+              <PaymentsTable payments={payments} loading={paymentsLoading} darkMode={darkMode} />
+            </motion.div>
+          )}
+
           {/* Other tab contents */}
-          {activeTab !== 'overview' && activeTab !== 'performance' && activeTab !== 'assign-tasks' && activeTab !== 'users' && activeTab !== 'staff' && activeTab !== 'staff-requests' && activeTab !== 'leave-management' && activeTab !== 'land-verification' && activeTab !== 'trainers' && activeTab !== 'brokers' && activeTab !== 'videos' && activeTab !== 'nursery' && activeTab !== 'inventory' && activeTab !== 'services' && (
+          {activeTab !== 'overview' && activeTab !== 'performance' && activeTab !== 'assign-tasks' && activeTab !== 'users' && activeTab !== 'staff' && activeTab !== 'staff-requests' && activeTab !== 'leave-management' && activeTab !== 'land-verification' && activeTab !== 'trainers' && activeTab !== 'brokers' && activeTab !== 'videos' && activeTab !== 'nursery' && activeTab !== 'inventory' && activeTab !== 'services' && activeTab !== 'payments' && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

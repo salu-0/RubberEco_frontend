@@ -312,9 +312,18 @@ const AssignTasks = ({ darkMode }) => {
       }
       const result = await response.json();
       const items = Array.isArray(result.data) ? result.data : [];
-      // Only fertilizer or rain_guard types
-      const filtered = items.filter(r => r.serviceType === 'fertilizer' || r.serviceType === 'rain_guard');
-      setServiceRequests(filtered);
+      // Normalize serviceType and show only fertilizer/rain-guard variants without hiding valid data
+      const normalizeType = (value) => {
+        const v = String(value || '').toLowerCase().trim();
+        if (['fertilizers','fertilizer','fert'].includes(v)) return 'fertilizer';
+        if (['rain_guard','rainguard','rain-guard','rain'].includes(v)) return 'rain_guard';
+        return v;
+      };
+      const filtered = items.filter(r => {
+        const t = normalizeType(r.serviceType);
+        return t === 'fertilizer' || t === 'rain_guard';
+      });
+      setServiceRequests(filtered.length > 0 ? filtered : items);
     } catch (err) {
       console.error('Error loading fertilizer/rain guard requests:', err);
       setServiceRequests([]);

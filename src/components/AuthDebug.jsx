@@ -37,8 +37,11 @@ const AuthDebug = () => {
   }, []);
 
   const clearAuth = () => {
+    // Clear all authentication tokens and user data
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('nurseryAdminToken');
+    localStorage.removeItem('nurseryAdminUser');
     window.location.reload();
   };
 

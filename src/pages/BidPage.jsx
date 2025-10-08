@@ -27,12 +27,13 @@ const BidPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [bidHistory, setBidHistory] = useState([]);
+  const [hasBidders, setHasBidders] = useState(false);
+  const [publicBids, setPublicBids] = useState([]); // bids from public lot endpoint
 
   useEffect(() => {
     // Get lot data from location state or fetch from API
     if (location.state?.lot) {
       setLot(location.state.lot);
-      loadBidHistory();
       // Set minimum bid amount
       const minBid = Math.max(location.state.lot.currentHighestBid + 1000, location.state.lot.minimumPrice);
       setBidAmount(minBid.toString());
@@ -41,6 +42,14 @@ const BidPage = () => {
       navigate('/broker-dashboard');
     }
   }, [location.state, navigate]);
+
+  // Load bid history once lot is available
+  useEffect(() => {
+    if (lot) {
+      loadBidHistory();
+      loadLotBidSummary();
+    }
+  }, [lot]);
 
   const loadBidHistory = async () => {
     if (!lot) return;
@@ -82,6 +91,23 @@ const BidPage = () => {
     } catch (error) {
       console.error('Error loading bid history:', error);
       setBidHistory([]);
+    }
+  };
+
+  // Fetch public lot details to know if any bidders exist (any broker)
+  const loadLotBidSummary = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/tree-lots/${lot.id}`);
+      if (!res.ok) return setHasBidders(false);
+      const json = await res.json();
+      const bidsArr = json?.data?.bids || [];
+      const bidCount = json?.data?.bidCount || bidsArr.length;
+      setHasBidders(bidCount > 0);
+      setPublicBids(bidsArr);
+    } catch (e) {
+      console.warn('Failed to load lot bid summary:', e);
+      setHasBidders(false);
+      setPublicBids([]);
     }
   };
 
@@ -381,7 +407,7 @@ const BidPage = () => {
             </div>
           </motion.div>
 
-          {/* Bid History Sidebar */}
+          {/* Bidders Status Sidebar */}
           <motion.div
             className="lg:col-span-1"
             initial={{ opacity: 0, x: 20 }}
@@ -391,28 +417,43 @@ const BidPage = () => {
             <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl border border-white/30 p-6 ring-1 ring-black/5 sticky top-8">
               <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <FaUser />
-                Recent Bidding Activity
+                Bidders Status
               </h4>
-              <div className="bid-history-list">
-                {bidHistory.map((bid, index) => (
-                  <div key={bid.id} className={`bid-item ${bid.isWinning ? 'winning' : ''}`}>
-                    <div className="bid-info">
-                      <div className="bidder-info">
-                        <FaUser className="bidder-icon" />
-                        <span className="bidder-name">{bid.bidderName}</span>
-                        {bid.isWinning && (
-                          <span className="winning-badge">
-                            <FaCheckCircle />
-                            Winning
-                          </span>
-                        )}
-                      </div>
-                      <div className="bid-amount">{formatCurrency(bid.amount)}</div>
+              {(hasBidders || bidHistory.length > 0) ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 text-green-700 bg-green-50 border border-green-200 rounded-lg p-4">
+                    <FaCheckCircle className="shrink-0" />
+                    <div>
+                      <p className="font-medium">Bidders exist for this tree lot</p>
+                      {publicBids.length > 0 && (
+                        <p className="text-sm text-green-800">{publicBids.length} bid(s) placed so far.</p>
+                      )}
                     </div>
-                    <div className="bid-time">{formatDateTime(bid.timestamp)}</div>
                   </div>
-                ))}
-              </div>
+
+                  {publicBids.length > 0 && (
+                    <div className="divide-y divide-gray-200 border border-gray-200 rounded-lg">
+                      {publicBids.slice(0, 5).map((b) => (
+                        <div key={b.id} className="flex items-center justify-between p-3">
+                          <div className="flex items-center gap-2 text-gray-800">
+                            <FaUser className="text-gray-500" />
+                            <span className="font-medium">{b.bidderName || 'Bidder'}</span>
+                          </div>
+                          <div className="text-primary-700 font-semibold">{formatCurrency(b.amount)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 text-gray-600 bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <FaExclamationTriangle className="shrink-0 text-amber-500" />
+                  <div>
+                    <p className="font-medium">No bidders yet</p>
+                    <p className="text-sm">Be the first to place a bid.</p>
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>

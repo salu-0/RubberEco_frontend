@@ -20,6 +20,7 @@ import {
 import Navbar from '../Navbar';
 import { nameValidator, isEmail, passwordStrength, phoneValidator, isRequired, validateSchema } from '../../utils/validation';
 
+
 const BrokerRegister = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -28,10 +29,12 @@ const BrokerRegister = () => {
     password: '',
     confirmPassword: '',
     phone: '',
+    dob: '',
     location: '',
     experience: '',
     companyName: '',
-    bio: ''
+    bio: '',
+    idProof: null
   });
 
   const [errors, setErrors] = useState({});
@@ -40,6 +43,27 @@ const BrokerRegister = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
+  // File upload handler for ID proof
+  const handleFileUpload = (file) => {
+    if (file) {
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors(prev => ({ ...prev, idProof: 'File size must be less than 5MB' }));
+        return;
+      }
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+      if (!allowedTypes.includes(file.type)) {
+        setErrors(prev => ({
+          ...prev,
+          idProof: `Invalid file type. Allowed: ${allowedTypes.join(', ')}`
+        }));
+        return;
+      }
+      setFormData(prev => ({ ...prev, idProof: file }));
+      setErrors(prev => ({ ...prev, idProof: '' }));
+    }
+  };
 
   const experienceOptions = [
     'Less than 1 year',
@@ -99,6 +123,9 @@ const BrokerRegister = () => {
       case 'phone':
         error = phoneValidator(value);
         break;
+      case 'dob':
+        error = isRequired(value, 'Date of Birth is required');
+        break;
       case 'location':
         error = isRequired(value, 'Location is required');
         break;
@@ -127,6 +154,7 @@ const BrokerRegister = () => {
         (v) => (v === formData.password ? '' : 'Passwords do not match')
       ],
       phone: [(v) => phoneValidator(v)],
+      dob: [(v) => isRequired(v, 'Date of Birth is required')],
       location: [(v) => isRequired(v, 'Location is required')],
       experience: [(v) => isRequired(v, 'Experience level is required')],
       // Optional fields left without validators
@@ -135,6 +163,10 @@ const BrokerRegister = () => {
     };
 
     const newErrors = validateSchema(formData, schema);
+    // ID proof required
+    if (!formData.idProof) {
+      newErrors.idProof = 'ID proof is required';
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -150,41 +182,26 @@ const BrokerRegister = () => {
     setLoading(true);
 
     try {
-      const brokerData = {
-        name: formData.name.trim(),
-        email: formData.email.trim().toLowerCase(),
-        password: formData.password,
-        phone: formData.phone.trim(),
-        location: formData.location.trim(),
-        role: 'broker',
-        bio: formData.bio?.trim() || '',
-        
-        // Broker-specific data
-        brokerProfile: {
-          experience: formData.experience?.trim() || '',
-          specialization: ['Rubber Trading'], // Simplified for now
-          companyName: formData.companyName?.trim() || '',
-          companyAddress: '',
-          education: '',
-          previousWork: ''
-        }
-      };
+      // Prepare form data for multipart/form-data
+      const form = new FormData();
+      form.append('name', formData.name.trim());
+      form.append('email', formData.email.trim().toLowerCase());
+      form.append('password', formData.password);
+      form.append('phone', formData.phone.trim());
+      form.append('dob', formData.dob);
+      form.append('location', formData.location.trim());
+      form.append('role', 'broker');
+      form.append('bio', formData.bio?.trim() || '');
+      form.append('experience', formData.experience?.trim() || '');
+      form.append('companyName', formData.companyName?.trim() || '');
+      if (formData.idProof) {
+        form.append('idProof', formData.idProof);
+      }
 
-      console.log('Sending broker data:', brokerData);
-      console.log('Experience field value:', formData.experience);
-      console.log('Broker profile:', brokerData.brokerProfile);
-      
       // Additional validation before sending
-      if (!brokerData.brokerProfile.experience) {
+      if (!formData.experience) {
         console.error('Experience field is missing!');
         showNotification('Please select an experience level.', 'error');
-        setLoading(false);
-        return;
-      }
-      
-      if (!brokerData.brokerProfile.specialization || brokerData.brokerProfile.specialization.length === 0) {
-        console.error('Specialization is missing!');
-        showNotification('Specialization is required.', 'error');
         setLoading(false);
         return;
       }
@@ -192,22 +209,33 @@ const BrokerRegister = () => {
       // Try the backend server first, fallback to mock if needed
       const response = await fetch('http://localhost:5000/api/auth/register-broker', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(brokerData),
+        body: form,
       });
 
       const data = await response.json();
-      
-      console.log('Response status:', response.status);
-      console.log('Response data:', data);
 
       if (response.ok) {
-        showNotification('Registration successful! Please check your email for verification.', 'success');
+        let ocrMsg = '';
+        if (data.data && data.data.ocrResult) {
+          const ocr = data.data.ocrResult;
+          if (ocr.status === 'passed') {
+            ocrMsg = 'ID Proof OCR verification passed.';
+          } else if (ocr.status === 'under_review' || ocr.status === 'failed') {
+            ocrMsg = 'ID Proof OCR verification needs manual review.';
+          } else if (ocr.status === 'error') {
+            ocrMsg = 'OCR error: ' + (ocr.notes || 'Unknown error');
+          }
+          if (ocr.extracted) {
+            ocrMsg += `\nExtracted Name: ${ocr.extracted.name || '-'}\nExtracted DOB: ${ocr.extracted.dob || '-'}`;
+          }
+        }
+        showNotification(
+          'Registration successful! Your account is pending admin approval. Please check your email for updates.' + (ocrMsg ? '\n' + ocrMsg : ''),
+          'success'
+        );
         setTimeout(() => {
           navigate('/login');
-        }, 2000);
+        }, 4000);
       } else {
         setErrors({ submit: data.message || 'Registration failed' });
         showNotification(data.message || 'Registration failed. Please try again.', 'error');
@@ -333,8 +361,9 @@ const BrokerRegister = () => {
                   Basic Information
                 </h3>
 
-                {/* Name and Email Row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                {/* Name, Email, and DOB Row */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {/* Full Name Field */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -415,6 +444,47 @@ const BrokerRegister = () => {
                           <p className="text-sm text-green-600 flex items-center">
                             <CheckCircle className="h-4 w-4 mr-1 flex-shrink-0" />
                             Email format is valid
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Date of Birth Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Date of Birth *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="date"
+                        name="dob"
+                        value={formData.dob}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="YYYY-MM-DD"
+                        className={`w-full pl-4 pr-4 py-3 border rounded-xl focus:ring-2 transition-all duration-200 bg-white/50 backdrop-blur-sm ${
+                          errors.dob
+                            ? 'border-red-500 focus:ring-red-500 focus:border-red-500 bg-red-50/50'
+                            : fieldTouched.dob && !errors.dob
+                              ? 'border-green-500 focus:ring-green-500 focus:border-green-500 bg-green-50/50'
+                              : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500'
+                        }`}
+                        disabled={loading}
+                        max={new Date().toISOString().split('T')[0]}
+                      />
+                    </div>
+                    {fieldTouched.dob && (
+                      <div className="mt-2">
+                        {errors.dob ? (
+                          <p className="text-sm text-red-600 flex items-center">
+                            <AlertCircle className="h-4 w-4 mr-1 flex-shrink-0" />
+                            {errors.dob}
+                          </p>
+                        ) : (
+                          <p className="text-sm text-green-600 flex items-center">
+                            <CheckCircle className="h-4 w-4 mr-1 flex-shrink-0" />
+                            DOB looks good
                           </p>
                         )}
                       </div>
@@ -758,6 +828,40 @@ const BrokerRegister = () => {
                           </p>
                         )}
                       </div>
+                    )}
+                  </div>
+
+                  {/* ID Proof Upload */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      ID Proof * <span className="text-xs text-gray-500">(JPG, PNG - Max 5MB)</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/jpg"
+                        onChange={(e) => handleFileUpload(e.target.files[0])}
+                        className="hidden"
+                        id="idproof-upload"
+                        disabled={loading}
+                      />
+                      <label
+                        htmlFor="idproof-upload"
+                        className={`w-full flex flex-col items-center justify-center px-4 py-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
+                          errors.idProof ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      >
+                        <CreditCard className="w-8 h-8 text-gray-400 mb-2" />
+                        <span className="text-sm text-gray-600">
+                          {formData.idProof ? formData.idProof.name : 'Upload ID Proof'}
+                        </span>
+                      </label>
+                    </div>
+                    {errors.idProof && (
+                      <p className="text-red-500 text-sm mt-1 flex items-center">
+                        <AlertCircle className="w-4 h-4 mr-1" />
+                        {errors.idProof}
+                      </p>
                     )}
                   </div>
                 </div>

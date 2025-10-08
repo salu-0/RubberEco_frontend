@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import toastService from '../services/toastService';
 import Navbar from '../components/Navbar';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { useNavigate } from 'react-router-dom';
 
 // Eagerly import all nursery images from assets and build a lookup by base filename
@@ -67,22 +68,48 @@ const Nursery = () => {
   const [booking, setBooking] = useState({ plantId: '', variety: '', quantity: 100, advancePercent: 10 });
   const [placing, setPlacing] = useState(false);
   const [rzLoaded, setRzLoaded] = useState(false);
+  const [centerStockData, setCenterStockData] = useState({});
+  const [receiptPromptOpen, setReceiptPromptOpen] = useState(false);
+  const [pendingReceiptBookingId, setPendingReceiptBookingId] = useState('');
   
 
   useEffect(() => {
     const load = async () => {
       try {
-        // Load centers and varieties in parallel
-        const [cRes, vRes] = await Promise.all([
+        // Load centers, varieties, and plants in parallel
+        const [cRes, vRes, pRes] = await Promise.all([
           fetch(`${import.meta.env.VITE_API_BASE_URL}/nursery/centers`),
-          fetch(`${import.meta.env.VITE_API_BASE_URL}/nursery/varieties`)
+          fetch(`${import.meta.env.VITE_API_BASE_URL}/nursery/varieties`),
+          fetch(`${import.meta.env.VITE_API_BASE_URL}/nursery/plants`)
         ]);
         
         const cData = await cRes.json();
         const vData = await vRes.json();
+        const pData = await pRes.json();
         
         setCenters(cData.data || []);
         setVarieties(vData.data || []);
+        setPlants(pData.data || []);
+        
+        // Build stock data for each center
+        const stockMap = {};
+        (pData.data || []).forEach(plant => {
+          const centerId = plant.nurseryCenterId?._id || plant.nurseryCenterId;
+          if (!centerId) return;
+          
+          if (!stockMap[centerId]) {
+            stockMap[centerId] = [];
+          }
+          
+          const variety = plant.variety || plant.clone || plant.name;
+          stockMap[centerId].push({
+            variety,
+            stock: plant.stockAvailable || 0,
+            price: plant.unitPrice || 0
+          });
+        });
+        
+        setCenterStockData(stockMap);
       } catch (e) {
         setError('Failed to load nursery centers');
       } finally {
@@ -189,6 +216,9 @@ const Nursery = () => {
             const verifyData = await verifyRes.json();
             if (!verifyData.success) throw new Error(verifyData.message || 'Payment verification failed');
             toastService.success('Payment received. Your booking advance is confirmed and pending approval.', { duration: 6000 });
+            
+            setPendingReceiptBookingId(String(data.data._id));
+            setReceiptPromptOpen(true);
             setBooking({ plantId: '', quantity: 100, advancePercent: 10 });
           } catch (err) {
             toastService.error(err.message || 'Payment verification failed');
@@ -265,7 +295,7 @@ const Nursery = () => {
                     
                     {/* Variety Count Badge */}
                     <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold">
-                      2 Varieties Available
+                      {centerStockData[c._id]?.length || 0} Varieties Available
                     </div>
                   </div>
                   
@@ -302,16 +332,48 @@ const Nursery = () => {
                       </div>
                     </div>
                     
-                    {/* Specialty */}
-                    {c.specialty && (
+                    {/* Stock Information */}
+                    {centerStockData[c._id] && centerStockData[c._id].length > 0 && (
                       <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-4">
                         <div className="flex items-start">
                           <svg className="w-4 h-4 text-emerald-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                          </svg>
+                          <div className="flex-1">
+                            <div className="text-sm font-semibold text-emerald-800 mb-2">Available Varieties & Stock</div>
+                            <div className="space-y-1">
+                              {centerStockData[c._id].map((item, idx) => (
+                                <div key={idx} className="flex justify-between items-center text-sm">
+                                  <span className="text-emerald-700 font-medium">{item.variety}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                      item.stock > 50 ? 'bg-green-100 text-green-800' :
+                                      item.stock > 10 ? 'bg-yellow-100 text-yellow-800' :
+                                      item.stock > 0 ? 'bg-orange-100 text-orange-800' :
+                                      'bg-red-100 text-red-800'
+                                    }`}>
+                                      {item.stock} units
+                                    </span>
+                                    <span className="text-emerald-600 font-semibold">₹{item.price}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Specialty */}
+                    {c.specialty && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                        <div className="flex items-start">
+                          <svg className="w-4 h-4 text-blue-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           <div>
-                            <div className="text-sm font-semibold text-emerald-800 mb-1">Specialty</div>
-                            <div className="text-sm text-emerald-700">{c.specialty}</div>
+                            <div className="text-sm font-semibold text-blue-800 mb-1">Specialty</div>
+                            <div className="text-sm text-blue-700">{c.specialty}</div>
                           </div>
                         </div>
                       </div>
@@ -342,6 +404,38 @@ const Nursery = () => {
       </div>
 
       {/* Booking moved to full page at /nursery/:centerId */}
+      <ConfirmDialog
+        open={receiptPromptOpen}
+        title="Payment successful"
+        message="Would you like to download your receipt now?"
+        confirmText="Download"
+        cancelText="Later"
+        onCancel={() => setReceiptPromptOpen(false)}
+        onConfirm={async () => {
+          setReceiptPromptOpen(false);
+          if (!pendingReceiptBookingId) return;
+          try {
+            const token = localStorage.getItem('token') || '';
+            const resp = await fetch(`${import.meta.env.VITE_API_BASE_URL}/nursery/bookings/${pendingReceiptBookingId}/receipt`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!resp.ok) throw new Error('Failed to download receipt');
+            const blob = await resp.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `nursery-receipt-${pendingReceiptBookingId}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+            toastService.success('Receipt downloaded successfully!', { duration: 3000 });
+          } catch (e) {
+            toastService.error('Failed to download receipt. You can download it later from Payment Status.');
+          }
+          setPendingReceiptBookingId('');
+        }}
+      />
     </div>
   );
 };

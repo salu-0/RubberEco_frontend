@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useCart } from '../context/CartContext';
 import {
   Menu,
   X,
@@ -18,6 +19,7 @@ const Navbar = ({ transparent = false, fixed = true }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { items } = useCart() || { items: [] };
 
   // Initialize navigation guard
   const { clearNavigationHistory } = useNavigationGuard();
@@ -99,7 +101,8 @@ const Navbar = ({ transparent = false, fixed = true }) => {
       { name: 'Features', path: '/', scrollTo: 'features' },
       { name: 'Training', path: '/training' },
       { name: 'Markets', path: '/markets' },
-      { name: 'Nursery', path: '/nursery' }
+      { name: 'Nursery', path: '/nursery' },
+      { name: 'Shop', path: '/shop' }
     ];
 
     return baseItems;
@@ -108,8 +111,11 @@ const Navbar = ({ transparent = false, fixed = true }) => {
   const navItems = getNavItems();
 
   const handleLogout = () => {
+    // Clear all authentication tokens and user data
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('nurseryAdminToken');
+    localStorage.removeItem('nurseryAdminUser');
     setUser(null);
     setShowUserMenu(false);
 
@@ -215,6 +221,14 @@ const Navbar = ({ transparent = false, fixed = true }) => {
                 </Link>
               </motion.div>
             ))}
+            {user && (
+              <Link to="/cart" className={`relative font-medium ${getTextClasses()} ${getHoverClasses()}`}>
+                Cart
+                {items?.length > 0 && (
+                  <span className="ml-2 inline-flex items-center justify-center text-xs px-1.5 min-w-5 h-5 rounded-full bg-indigo-600 text-white">{items.length}</span>
+                )}
+              </Link>
+            )}
             
             {/* Auth Buttons / User Menu */}
             <div className="flex items-center space-x-4">
@@ -323,6 +337,9 @@ const Navbar = ({ transparent = false, fixed = true }) => {
                   {item.name}
                 </Link>
               ))}
+              {user && (
+                <Link to="/cart" onClick={() => setIsOpen(false)} className="font-medium text-gray-700 hover:text-primary-600 py-2">Cart {items?.length ? `(${items.length})` : ''}</Link>
+              )}
               
               <div className="border-t border-gray-200 pt-4 space-y-3">
                 {user ? (

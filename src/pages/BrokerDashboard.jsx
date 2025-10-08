@@ -178,8 +178,11 @@ const BrokerDashboard = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => {
+                  // Clear all authentication tokens and user data
                   localStorage.removeItem('token');
                   localStorage.removeItem('user');
+                  localStorage.removeItem('nurseryAdminToken');
+                  localStorage.removeItem('nurseryAdminUser');
                   navigate('/login');
                 }}
               >

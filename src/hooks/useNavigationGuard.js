@@ -21,16 +21,42 @@ export const useNavigationGuard = ({
   // Get user data from localStorage
   const getUserData = useCallback(() => {
     try {
+      // Check for regular user first (for regular user interface)
       const userData = localStorage.getItem('user');
       const token = localStorage.getItem('token');
+      
+      if (userData && token) {
+        return {
+          user: JSON.parse(userData),
+          token,
+          isLoggedIn: true,
+          isNurseryAdmin: false
+        };
+      }
+
+      // Check for nursery admin (but don't consider them logged in for regular interface)
+      const nurseryAdminUser = localStorage.getItem('nurseryAdminUser');
+      const nurseryAdminToken = localStorage.getItem('nurseryAdminToken');
+      
+      if (nurseryAdminUser && nurseryAdminToken) {
+        const user = JSON.parse(nurseryAdminUser);
+        return {
+          user: { ...user, role: 'nursery_admin' },
+          token: nurseryAdminToken,
+          isLoggedIn: false, // Don't consider nursery admin as logged in for regular interface
+          isNurseryAdmin: true
+        };
+      }
+
       return {
-        user: userData ? JSON.parse(userData) : null,
-        token,
-        isLoggedIn: !!(userData && token)
+        user: null,
+        token: null,
+        isLoggedIn: false,
+        isNurseryAdmin: false
       };
     } catch (error) {
       console.error('Error parsing user data:', error);
-      return { user: null, token: null, isLoggedIn: false };
+      return { user: null, token: null, isLoggedIn: false, isNurseryAdmin: false };
     }
   }, []);
 
@@ -121,7 +147,26 @@ export const useNavigationGuard = ({
 
   // Utility function to navigate with proper history management
   const guardedNavigate = useCallback((to, options = {}) => {
-    const { user, isLoggedIn } = getUserData();
+    const { user, isLoggedIn, isNurseryAdmin } = getUserData();
+    
+    // If nursery admin tries to navigate to any user interface routes, redirect to nursery admin dashboard
+    // Only do this if they have valid nursery admin tokens (are actually logged in as nursery admin)
+    if (isNurseryAdmin) {
+      const nurseryAdminToken = localStorage.getItem('nurseryAdminToken');
+      const nurseryAdminUser = localStorage.getItem('nurseryAdminUser');
+      
+      // Only redirect if they have valid nursery admin authentication
+      if (nurseryAdminToken && nurseryAdminUser) {
+        const userInterfaceRoutes = ['/', '/home', '/training', '/nursery', '/markets', '/pricing', '/about', '/careers', '/features', '/login', '/register', '/register-broker', '/forgot-password', '/profile', '/admin-dashboard', '/staff-dashboard', '/broker-dashboard'];
+        const isUserInterfaceRoute = userInterfaceRoutes.some(route => to.startsWith(route));
+        
+        if (isUserInterfaceRoute && to !== '/nursery-admin/dashboard') {
+          console.log('🚫 Nursery admin trying to access user interface route, redirecting to nursery admin dashboard:', to);
+          navigate('/nursery-admin/dashboard', { replace: true });
+          return;
+        }
+      }
+    }
     
     // If navigating to login pages while authenticated, redirect appropriately
     if (isLoggedIn && (to === '/login' || to === '/register' || to === '/forgot-password')) {
@@ -132,6 +177,8 @@ export const useNavigationGuard = ({
         navigate('/broker-dashboard', { replace: true });
       } else if (user?.role === 'staff' && user?.useStaffDashboard) {
         navigate('/staff-dashboard', { replace: true });
+      } else if (isNurseryAdmin) {
+        navigate('/nursery-admin/dashboard', { replace: true });
       } else {
         navigate('/home', { replace: true });
       }

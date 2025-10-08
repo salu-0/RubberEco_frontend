@@ -525,9 +525,11 @@ const StaffDashboard = ({ darkMode }) => {
   const handleSignOut = () => {
     console.log('🚪 Staff user signing out...');
 
-    // Clear localStorage
+    // Clear all authentication tokens and user data
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('nurseryAdminToken');
+    localStorage.removeItem('nurseryAdminUser');
     localStorage.removeItem('redirectAfterLogin');
 
     // Clear any other stored data

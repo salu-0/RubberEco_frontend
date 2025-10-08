@@ -207,8 +207,15 @@ const Login = () => {
 
         // Delay redirect to show success message
         setTimeout(() => {
+          // Nursery admin users go to nursery admin dashboard
+          if (role === 'nursery_admin') {
+            localStorage.setItem('nurseryAdminToken', data.token);
+            localStorage.setItem('nurseryAdminUser', JSON.stringify(data.user));
+            localStorage.removeItem('redirectAfterLogin'); // Clean up any stored redirect
+            guardedNavigate('/nursery-admin/dashboard');
+          }
           // Staff users always go to staff dashboard, regardless of redirect
-          if (role === 'staff' && data.user.useStaffDashboard) {
+          else if (role === 'staff' && data.user.useStaffDashboard) {
             localStorage.removeItem('redirectAfterLogin'); // Clean up any stored redirect
             guardedNavigate('/staff-dashboard');
           }

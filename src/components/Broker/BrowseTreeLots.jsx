@@ -250,6 +250,9 @@ const BrowseTreeLots = () => {
   const filterAndSortLots = () => {
     let filtered = [...treeLots];
 
+    // Remove lots already bidded by the logged-in broker
+    filtered = filtered.filter(lot => !lot.hasMyBid);
+
     // Search filter
     if (searchTerm) {
       filtered = filtered.filter(lot => 

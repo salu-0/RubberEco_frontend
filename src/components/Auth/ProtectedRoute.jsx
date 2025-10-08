@@ -18,6 +18,30 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
+      // Check if user is a nursery admin - only redirect if they're trying to access protected routes
+      // Don't redirect if they're trying to access login/register pages
+      const nurseryAdminToken = localStorage.getItem('nurseryAdminToken');
+      const nurseryAdminUser = localStorage.getItem('nurseryAdminUser');
+
+      if (nurseryAdminToken && nurseryAdminUser) {
+        try {
+          const user = JSON.parse(nurseryAdminUser);
+          // Only redirect nursery admins if they're not trying to access auth pages
+          const authPages = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-success'];
+          const isAuthPage = authPages.some(page => location.pathname === page);
+          
+          if (!isAuthPage) {
+            console.log('🚫 Nursery admin trying to access user interface, redirecting to nursery admin dashboard');
+            setIsAuthenticated(false); // This will trigger redirect to login, but we'll handle nursery admin redirect below
+            return;
+          }
+        } catch (error) {
+          console.error('Error parsing nursery admin user data:', error);
+          localStorage.removeItem('nurseryAdminUser');
+          localStorage.removeItem('nurseryAdminToken');
+        }
+      }
+
       // Check for JWT token (MongoDB login)
       const token = localStorage.getItem('token');
       const userData = localStorage.getItem('user');
@@ -74,6 +98,29 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
         </div>
       </div>
     );
+  }
+
+  // Check if user is a nursery admin trying to access user interface
+  // Only redirect if they're not trying to access auth pages
+  const nurseryAdminToken = localStorage.getItem('nurseryAdminToken');
+  const nurseryAdminUser = localStorage.getItem('nurseryAdminUser');
+  
+  if (nurseryAdminToken && nurseryAdminUser) {
+    try {
+      const user = JSON.parse(nurseryAdminUser);
+      // Only redirect nursery admins if they're not trying to access auth pages
+      const authPages = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-success'];
+      const isAuthPage = authPages.some(page => location.pathname === page);
+      
+      if (!isAuthPage) {
+        console.log('🚫 Nursery admin trying to access user interface, redirecting to nursery admin dashboard');
+        return <Navigate to="/nursery-admin/dashboard" replace />;
+      }
+    } catch (error) {
+      console.error('Error parsing nursery admin user data:', error);
+      localStorage.removeItem('nurseryAdminUser');
+      localStorage.removeItem('nurseryAdminToken');
+    }
   }
 
   // Redirect to login if not authenticated

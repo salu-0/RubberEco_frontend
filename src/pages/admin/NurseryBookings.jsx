@@ -5,6 +5,8 @@ const NurseryBookings = ({ darkMode }) => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selected, setSelected] = useState(null);
 
   // Self-detect dark mode to match other admin sections if prop is not provided
   const computedDarkMode = typeof darkMode === 'boolean'
@@ -50,6 +52,15 @@ const NurseryBookings = ({ darkMode }) => {
   };
 
   useEffect(() => { load(); }, []);
+
+  const openDetails = (b) => {
+    setSelected(b);
+    setDetailsOpen(true);
+  };
+  const closeDetails = () => {
+    setDetailsOpen(false);
+    setSelected(null);
+  };
 
   const decide = async (id, action) => {
     try {
@@ -174,6 +185,7 @@ const NurseryBookings = ({ darkMode }) => {
                         <td className="px-4 py-3 capitalize">{renderStatusBadge(b.status)}</td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
+                            <button className={`${computedDarkMode ? 'px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors' : 'px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors'}`} onClick={() => openDetails(b)}>View</button>
                             <button className={`${computedDarkMode ? 'px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-500 text-white transition-colors' : 'px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors'}`} onClick={() => decide(b._id, 'approve')}>Approve</button>
                             <button className={`${computedDarkMode ? 'px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white transition-colors' : 'px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors'}`} onClick={() => decide(b._id, 'reject')}>Reject</button>
                           </div>
@@ -186,6 +198,68 @@ const NurseryBookings = ({ darkMode }) => {
             </div>
           )}
         </div>
+        {detailsOpen && selected && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40" onClick={closeDetails} />
+            <div className={`${computedDarkMode ? 'bg-gray-800 text-white border border-gray-700' : 'bg-white text-gray-900 border border-gray-200'} relative w-full max-w-2xl rounded-2xl shadow-2xl`}> 
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Booking Details</h3>
+                <button onClick={closeDetails} className="text-gray-500 hover:text-gray-700">✕</button>
+              </div>
+              <div className="p-6 space-y-4 text-sm">
+                <div>
+                  <div className="text-gray-500">Farmer</div>
+                  <div className="font-semibold">{selected.farmerName}</div>
+                  <div className="text-gray-600">{selected.farmerEmail}</div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-gray-500">Nursery Center</div>
+                    <div className="font-semibold">{selected.nurseryCenterName || selected?.nurseryCenterId?.name || 'N/A'}</div>
+                    {selected?.nurseryCenterId?.location && (
+                      <div className="text-gray-600">{selected.nurseryCenterId.location}</div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-gray-500">Plant</div>
+                    <div className="font-semibold">{selected.plantName}</div>
+                    <div className="text-gray-600">Qty: {selected.quantity}</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <div className="text-gray-500">Total</div>
+                    <div className="font-semibold">{formatCurrency(selected.amountTotal)}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500">Advance</div>
+                    <div className="font-semibold">{selected.advancePercent}% {selected?.payment?.advancePaid ? 'Paid' : 'Unpaid'}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500">Status</div>
+                    <div className="font-semibold capitalize">{selected.status}</div>
+                  </div>
+                </div>
+                {selected?.payment?.advancePaymentId && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-gray-500">Payment ID</div>
+                      <div className="font-mono text-xs">{selected.payment.advancePaymentId}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Order ID</div>
+                      <div className="font-mono text-xs">{selected.payment.advanceOrderId || '-'}</div>
+                    </div>
+                  </div>
+                )}
+                <div className="pt-2 text-xs text-gray-500">Created: {new Date(selected.createdAt).toLocaleString()}</div>
+                <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-2">
+                  <button className={`${computedDarkMode ? 'px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200' : 'px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800'}`} onClick={closeDetails}>Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

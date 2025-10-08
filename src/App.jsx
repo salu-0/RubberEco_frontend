@@ -24,10 +24,18 @@ import BidPage from './pages/BidPage';
 import Profile from './pages/Profile';
 import JoinAsStaff from './pages/JoinAsStaff';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
+import NurseryAdminProtectedRoute from './components/Auth/NurseryAdminProtectedRoute';
 import AuthCallback from './components/Auth/AuthCallback';
 import VerifySuccess from './pages/VerifySuccess';
+import NurseryAdminLogin from './pages/NurseryAdminLogin';
+import NurseryAdminDashboard from './pages/NurseryAdminDashboard';
 import Toast from './components/Toast';
 // import CertificateVerification from './pages/CertificateVerification';
+import Shop from './pages/Shop';
+import ProductDetail from './pages/ProductDetail';
+import Cart from './pages/Cart';
+import Checkout from './pages/Checkout';
+import Orders from './pages/Orders';
 
 function App() {
   return (
@@ -46,6 +54,12 @@ function App() {
       <Route path="/about" element={<ProtectedRoute requiredRole="farmer"><About /></ProtectedRoute>} />
       <Route path="/nursery" element={<ProtectedRoute requiredRole="farmer"><Nursery /></ProtectedRoute>} />
       <Route path="/nursery/:centerId" element={<ProtectedRoute requiredRole="farmer"><NurseryCenter /></ProtectedRoute>} />
+      <Route path="/shop" element={<ProtectedRoute requiredRole="farmer"><Shop /></ProtectedRoute>} />
+      <Route path="/shop/:id" element={<ProtectedRoute requiredRole="farmer"><ProductDetail /></ProtectedRoute>} />
+      <Route path="/cart" element={<ProtectedRoute requiredRole="farmer"><Cart /></ProtectedRoute>} />
+      <Route path="/checkout" element={<ProtectedRoute requiredRole="farmer"><Checkout /></ProtectedRoute>} />
+      <Route path="/orders" element={<ProtectedRoute requiredRole="farmer"><Orders /></ProtectedRoute>} />
+      <Route path="/orders/:orderId" element={<ProtectedRoute requiredRole="farmer"><Orders /></ProtectedRoute>} />
       <Route path="/careers" element={<ProtectedRoute requiredRole="farmer"><Careers /></ProtectedRoute>} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
@@ -59,6 +73,8 @@ function App() {
       <Route path="/staff-dashboard" element={<ProtectedRoute><StaffDashboard /></ProtectedRoute>} />
       <Route path="/broker-dashboard" element={<ProtectedRoute><BrokerDashboard /></ProtectedRoute>} />
       <Route path="/bid/:lotId" element={<ProtectedRoute><BidPage /></ProtectedRoute>} />
+      <Route path="/nursery-admin/login" element={<NurseryAdminLogin />} />
+      <Route path="/nursery-admin/dashboard" element={<NurseryAdminProtectedRoute><NurseryAdminDashboard /></NurseryAdminProtectedRoute>} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       </Routes>
       <Toast />

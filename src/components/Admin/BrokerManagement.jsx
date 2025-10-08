@@ -18,7 +18,7 @@ import {
 } from 'react-icons/fa';
 import './BrokerManagement.css';
 
-const BrokerManagement = ({ darkMode = true }) => {
+const BrokerManagement = ({ darkMode = true, onBrokerStatusChange }) => {
   const [brokers, setBrokers] = useState([]);
   const [filteredBrokers, setFilteredBrokers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,6 +60,7 @@ const BrokerManagement = ({ darkMode = true }) => {
         console.log('📊 Broker data received:', data);
 
         if (data.success && data.users) {
+          console.log('📊 Raw broker data from API:', data.users);
           // Transform Register collection data to match component structure
           const transformedBrokers = data.users.map(user => ({
             _id: user.id,
@@ -69,19 +70,28 @@ const BrokerManagement = ({ darkMode = true }) => {
             location: user.location || 'Not specified',
             createdAt: user.created_at || user.createdAt,
             bio: user.bio || 'No bio provided',
+            dob: user.dob || null,
             isVerified: user.isVerified,
             brokerProfile: {
               licenseNumber: user.brokerDetails?.licenseNumber || 'Pending',
-              experience: 'Not specified',
+              experience: user.brokerProfile?.experience || 'Not specified',
               specialization: ['Rubber Trading'], // Default specialization
-              companyName: user.brokerDetails?.companyName || 'Not specified',
+              companyName: user.brokerDetails?.companyName || user.brokerProfile?.companyName || 'Not specified',
               companyAddress: 'Not provided',
               education: 'Not specified',
               previousWork: 'Not specified',
-              verificationStatus: user.isVerified ? 'verified' : 'pending',
+              verificationStatus: user.brokerProfile?.verificationStatus || (user.isVerified ? 'approved' : 'pending'),
               rating: user.brokerDetails?.rating || 0,
               totalDeals: user.brokerDetails?.successfulDeals || 0,
-              successfulDeals: user.brokerDetails?.successfulDeals || 0
+              successfulDeals: user.brokerDetails?.successfulDeals || 0,
+              // Check OCR status from brokerProfile first, then from verification field
+              ocrValidationStatus: user.brokerProfile?.ocrValidationStatus || 
+                                 (user.verification?.idOcr?.status === 'passed' ? 'passed' : 
+                                  user.verification?.idOcr?.status === 'failed' ? 'failed' : 
+                                  user.verification?.idOcr?.status === 'under_review' ? 'failed' : 
+                                  user.verification?.idOcr?.status === 'error' ? 'failed' : 'not_checked'),
+              ocrValidationReason: user.brokerProfile?.ocrValidationReason || 
+                                 user.verification?.idOcr?.notes || ''
             }
           }));
 
@@ -137,13 +147,18 @@ const BrokerManagement = ({ darkMode = true }) => {
                 ...broker,
                 brokerProfile: {
                   ...broker.brokerProfile,
-                  verificationStatus: action === 'verify' ? 'verified' : 'rejected',
+                  verificationStatus: action === 'verify' ? 'approved' : 'rejected',
                   verificationDate: new Date().toISOString()
                 }
               }
             : broker
         )
       );
+
+      // Call the callback to refresh the notification count
+      if (onBrokerStatusChange) {
+        onBrokerStatusChange();
+      }
 
       alert(`Broker ${action === 'verify' ? 'verified' : 'rejected'} successfully!`);
     } catch (error) {
@@ -155,11 +170,14 @@ const BrokerManagement = ({ darkMode = true }) => {
   const getStatusInfo = (status) => {
     switch (status) {
       case 'verified':
+      case 'approved':
         return { color: '#48bb78', bgColor: '#f0fff4', text: 'Verified' };
       case 'rejected':
         return { color: '#e53e3e', bgColor: '#fed7d7', text: 'Rejected' };
       case 'pending':
         return { color: '#ed8936', bgColor: '#fffaf0', text: 'Pending' };
+      case 'under_review':
+        return { color: '#9f7aea', bgColor: '#faf5ff', text: 'Under Review' };
       default:
         return { color: '#a0aec0', bgColor: '#f7fafc', text: 'Unknown' };
     }
@@ -309,15 +327,40 @@ const BrokerCard = ({ broker, darkMode, onVerify, onViewDetails, getStatusInfo, 
           <h3 className={`text-xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{broker.name}</h3>
           <p className={`text-sm font-medium mb-3 ${darkMode ? 'text-green-400' : 'text-green-600'}`}>{broker.brokerProfile.companyName}</p>
           <div className="space-y-2">
-            <div className={`flex items-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <div className={`flex items-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}> 
               <FaEnvelope className="mr-2 text-green-500" /> {broker.email}
             </div>
-            <div className={`flex items-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <div className={`flex items-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}> 
               <FaPhone className="mr-2 text-green-500" /> {broker.phone}
             </div>
-            <div className={`flex items-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <div className={`flex items-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}> 
               <FaMapMarkerAlt className="mr-2 text-green-500" /> {broker.location}
             </div>
+            {/* OCR Status Badge - styled like staff requests */}
+            {broker.brokerProfile.ocrValidationStatus === 'passed' && (
+              <span
+                className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium border bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700/50 ml-1"
+                title="OCR verification passed - Admin approval still required"
+              >
+                OCR: passed ✓
+              </span>
+            )}
+            {broker.brokerProfile.ocrValidationStatus === 'failed' && (
+              <span
+                className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium border bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700/50 ml-1 cursor-help"
+                title={`OCR Failed: ${broker.brokerProfile.ocrValidationReason || 'Unknown error'}. Click 'View Details' to see full OCR analysis.`}
+              >
+                OCR: failed{broker.brokerProfile.ocrValidationReason ? ` - ${broker.brokerProfile.ocrValidationReason}` : ''}
+              </span>
+            )}
+            {broker.brokerProfile.ocrValidationStatus === 'not_checked' && (
+              <span
+                className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium border bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800/50 dark:text-gray-300 dark:border-gray-700/50 ml-1"
+                title="OCR: not checked"
+              >
+                OCR: not checked
+              </span>
+            )}
           </div>
         </div>
 
@@ -331,7 +374,7 @@ const BrokerCard = ({ broker, darkMode, onVerify, onViewDetails, getStatusInfo, 
           >
             {statusInfo.text}
           </div>
-          <div className={`flex items-center text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+          <div className={`flex items-center text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}> 
             <FaCalendarAlt className="mr-1" />
             <span>Registered: {formatDate(broker.createdAt)}</span>
           </div>
@@ -376,7 +419,8 @@ const BrokerCard = ({ broker, darkMode, onVerify, onViewDetails, getStatusInfo, 
           <FaEye /> <span>View Details</span>
         </motion.button>
 
-        {broker.brokerProfile.verificationStatus === 'pending' && (
+        {(broker.brokerProfile.verificationStatus === 'pending' || 
+          broker.brokerProfile.verificationStatus === 'under_review') && (
           <div className="flex space-x-2">
             <motion.button
               className="flex items-center space-x-1 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
@@ -384,7 +428,7 @@ const BrokerCard = ({ broker, darkMode, onVerify, onViewDetails, getStatusInfo, 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <FaCheck /> <span>Verify</span>
+              <FaCheck /> <span>Accept</span>
             </motion.button>
             <motion.button
               className="flex items-center space-x-1 px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
@@ -418,8 +462,98 @@ const BrokerDetailsSection = ({ broker, onBack, onVerify, getStatusInfo, formatD
     return value && value !== 'Not specified' && value !== 'Not provided' && value.trim() !== '';
   };
 
+  // Helper function to render OCR failure details
+  const renderOCRFailureDetails = () => {
+    if (broker.brokerProfile?.ocrValidationStatus !== 'failed') return null;
+
+    const ocrData = broker.verification?.idOcr || {};
+    const extracted = ocrData.extracted || {};
+    const matched = ocrData.matched || {};
+    
+    return (
+      <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+        <h4 className="text-sm font-semibold text-red-800 mb-3">OCR Verification Failure Details</h4>
+        <div className="space-y-2 text-sm">
+          <div>
+            <span className="font-medium text-red-700">Reason:</span>
+            <span className="ml-2 text-red-600">{broker.brokerProfile?.ocrValidationReason || 'Unknown error'}</span>
+          </div>
+          
+          {ocrData.confidence && (
+            <div>
+              <span className="font-medium text-red-700">OCR Confidence:</span>
+              <span className="ml-2 text-red-600">{Math.round(ocrData.confidence)}%</span>
+            </div>
+          )}
+          
+          <div className="mt-3">
+            <span className="font-medium text-red-700">Name Verification:</span>
+            <div className="ml-4 mt-1">
+              <div className="text-red-600">
+                <span className="font-medium">Provided:</span> {broker.name}
+              </div>
+              <div className="text-red-600">
+                <span className="font-medium">Extracted:</span> {extracted.name || 'Not found'}
+              </div>
+              <div className="text-red-600">
+                <span className="font-medium">Match:</span> 
+                <span className={`ml-1 font-semibold ${matched.name ? 'text-green-600' : 'text-red-600'}`}>
+                  {matched.name ? '✓ Yes' : '✗ No'}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-3">
+            <span className="font-medium text-red-700">Date of Birth Verification:</span>
+            <div className="ml-4 mt-1">
+              <div className="text-red-600">
+                <span className="font-medium">Provided:</span> {broker.dob || 'Not provided during registration'}
+              </div>
+              <div className="text-red-600">
+                <span className="font-medium">Extracted:</span> {extracted.dob || 'Not found'}
+              </div>
+              <div className="text-red-600">
+                <span className="font-medium">Match:</span> 
+                <span className={`ml-1 font-semibold ${matched.dob ? 'text-green-600' : 'text-red-600'}`}>
+                  {matched.dob ? '✓ Yes' : '✗ No'}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          {ocrData.rawText && (
+            <div className="mt-3">
+              <span className="font-medium text-red-700">Raw OCR Text:</span>
+              <div className="mt-1 p-2 bg-gray-100 rounded text-xs font-mono text-gray-700 max-h-32 overflow-y-auto">
+                {ocrData.rawText}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="broker-details-section">
+      {/* OCR Status Badge */}
+      <div className="mb-4">
+        {broker.brokerProfile?.ocrValidationStatus === 'passed' && (
+          <div className="flex items-center gap-2">
+            <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">OCR: passed ✓</span>
+            <span className="text-xs text-gray-600 italic">Admin approval still required</span>
+          </div>
+        )}
+        {broker.brokerProfile?.ocrValidationStatus === 'failed' && (
+          <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-semibold mr-2" title={broker.brokerProfile.ocrValidationReason || undefined}>
+            OCR: failed{broker.brokerProfile.ocrValidationReason ? ` - ${broker.brokerProfile.ocrValidationReason}` : ''}
+          </span>
+        )}
+        {broker.brokerProfile?.ocrValidationStatus === 'not_checked' && (
+          <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-semibold mr-2">OCR: not checked</span>
+        )}
+      </div>
       {/* Header */}
       <div className="details-header">
         <div className="header-left">
@@ -436,13 +570,14 @@ const BrokerDetailsSection = ({ broker, onBack, onVerify, getStatusInfo, formatD
           </h2>
         </div>
         <div className="header-right">
-          {broker.brokerProfile?.verificationStatus === 'pending' && (
+          {(broker.brokerProfile?.verificationStatus === 'pending' || 
+            broker.brokerProfile?.verificationStatus === 'under_review') && (
             <div className="action-buttons">
               <button 
                 className="btn-verify"
                 onClick={() => onVerify('verify')}
               >
-                <FaCheck /> Verify Broker
+                <FaCheck /> Accept Broker
               </button>
               <button 
                 className="btn-reject"
@@ -544,6 +679,9 @@ const BrokerDetailsSection = ({ broker, onBack, onVerify, getStatusInfo, formatD
           </div>
         </div>
       </div>
+      
+      {/* OCR Failure Details */}
+      {renderOCRFailureDetails()}
     </div>
   );
 };

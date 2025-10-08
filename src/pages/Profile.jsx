@@ -47,6 +47,7 @@ import TrainingRegistration, { TrainingSchedule } from '../components/Farmer/Tra
 import PaymentStatus from '../components/Farmer/PaymentStatus';
 import FertilizerRainGuardRequest from '../components/Farmer/FertilizerRainGuardRequest';
 import TreeLotListing from '../components/Farmer/TreeLotListing';
+import NurseryBookings from '../components/Farmer/NurseryBookings';
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -75,6 +76,7 @@ const Profile = () => {
   });
   const [showAssignedWorkers, setShowAssignedWorkers] = useState(false);
   const [isTreeLotListingOpen, setIsTreeLotListingOpen] = useState(false);
+  const [isNurseryBookingsOpen, setIsNurseryBookingsOpen] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
   const navigate = useNavigate();
 
@@ -880,8 +882,11 @@ const Profile = () => {
   };
 
   const handleLogout = () => {
+    // Clear all authentication tokens and user data
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('nurseryAdminToken');
+    localStorage.removeItem('nurseryAdminUser');
     navigate('/');
   };
 
@@ -1051,9 +1056,35 @@ const Profile = () => {
 
                       {/* Training section removed per request */}
 
-                      {/* Market & Finance */}
+                      {/* Nursery & Market */}
                       <div className="mb-4">
-                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Market & Finance</h3>
+                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Nursery & Market</h3>
+                        <button
+                          className="w-full flex items-center p-3 text-left hover:bg-emerald-50 rounded-lg transition-colors group"
+                          onClick={() => navigate('/nursery')}
+                        >
+                          <div className="bg-emerald-100 p-2 rounded-lg mr-3">
+                            <TreePine className="h-4 w-4 text-emerald-600" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-gray-900">Book Nursery Saplings</div>
+                            <div className="text-xs text-gray-500">Order plants & saplings</div>
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-emerald-600" />
+                        </button>
+                        <button
+                          className="w-full flex items-center p-3 text-left hover:bg-emerald-50 rounded-lg transition-colors group"
+                          onClick={() => setIsNurseryBookingsOpen(true)}
+                        >
+                          <div className="bg-emerald-100 p-2 rounded-lg mr-3">
+                            <CreditCard className="h-4 w-4 text-emerald-600" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-gray-900">My Nursery Bookings</div>
+                            <div className="text-xs text-gray-500">View booked & paid details</div>
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-emerald-600" />
+                        </button>
                         <button
                           className="w-full flex items-center p-3 text-left hover:bg-purple-50 rounded-lg transition-colors group"
                           onClick={() => setIsTreeLotListingOpen(true)}
@@ -1552,6 +1583,11 @@ const Profile = () => {
       <TreeLotListing
         isOpen={isTreeLotListingOpen}
         onClose={() => setIsTreeLotListingOpen(false)}
+      />
+
+      <NurseryBookings
+        isOpen={isNurseryBookingsOpen}
+        onClose={() => setIsNurseryBookingsOpen(false)}
       />
     </div>
   );

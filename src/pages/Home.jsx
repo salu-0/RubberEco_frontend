@@ -245,9 +245,9 @@ export default function Home() {
     preventBackToHome: false
   });
 
-  // Check if admin, staff, or broker user is trying to access home page
+  // Check if admin, staff, broker, or nursery admin user is trying to access home page
   useEffect(() => {
-    const { user, isLoggedIn } = getUserData();
+    const { user, isLoggedIn, isNurseryAdmin } = getUserData();
     if (isLoggedIn && user?.role === 'admin') {
       console.log('🚫 Admin user detected on home page, redirecting to dashboard');
       navigate('/admin-dashboard', { replace: true });
@@ -257,6 +257,9 @@ export default function Home() {
     } else if (isLoggedIn && user?.role === 'broker') {
       console.log('🚫 Broker user detected on home page, redirecting to broker dashboard');
       navigate('/broker-dashboard', { replace: true });
+    } else if (isNurseryAdmin) {
+      console.log('🚫 Nursery admin detected on home page, redirecting to nursery admin dashboard');
+      navigate('/nursery-admin/dashboard', { replace: true });
     }
   }, [navigate, getUserData]);
 

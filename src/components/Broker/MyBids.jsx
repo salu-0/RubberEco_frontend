@@ -24,6 +24,7 @@ import b1Image from '../../assets/images/bid/b1.jpg';
 import b2Image from '../../assets/images/bid/b2.jpg';
 import b3Image from '../../assets/images/bid/b3.jpg';
 import { getSafeImageUrl, handleImageError } from '../../utils/imageUtils';
+import toastService from '../../services/toastService';
 
 const MyBids = () => {
   const [myBids, setMyBids] = useState([]);
@@ -577,7 +578,30 @@ const BidCard = ({ bid, getStatusInfo, formatCurrency, formatDateTime, getDaysRe
           )}
 
           {bid.status === 'winning' && (
-            <button className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-xl hover:from-yellow-600 hover:to-yellow-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+            <button
+              onClick={async () => {
+                try {
+                  const token = localStorage.getItem('token');
+                  if (!token) return;
+                  const res = await fetch(`http://localhost:5000/api/bids/${bid.lotId}/alerts`, {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                      'Content-Type': 'application/json'
+                    }
+                  });
+                  if (res.ok) {
+                    toastService.success(`Reminder enabled. We'll email you 24 hours before Lot #${bid.lotId} bidding ends.`, { duration: 6000 });
+                  } else {
+                    toastService.error('Could not enable reminder. Please try again.');
+                  }
+                } catch (e) {
+                  console.warn('Failed to set alert', e);
+                  toastService.error('Could not enable reminder. Please try again.');
+                }
+              }}
+              className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-xl hover:from-yellow-600 hover:to-yellow-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
               <Bell className="h-4 w-4" />
               <span className="text-sm font-medium">Set Alert</span>
             </button>
