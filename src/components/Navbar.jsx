@@ -276,14 +276,14 @@ const Navbar = ({ transparent = false, fixed = true }) => {
                         className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
                       >
                         <User className="h-4 w-4" />
-                        <span>Profile</span>
+                        <span>{t('navigation.profile')}</span>
                       </Link>
                       <button
                         onClick={handleLogout}
                         className="w-full flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors"
                       >
                         <LogOut className="h-4 w-4" />
-                        <span>Logout</span>
+                        <span>{t('navigation.logout')}</span>
                       </button>
                     </motion.div>
                   )}

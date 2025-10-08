@@ -22,20 +22,38 @@ export const LANGUAGES = {
   }
 };
 
-// Translation function
+// Translation function with English fallback
 const translate = (key, translations, fallback = key) => {
   const keys = key.split('.');
   let value = translations;
-  
+
   for (const k of keys) {
     if (value && typeof value === 'object' && k in value) {
       value = value[k];
     } else {
+      // Try fallback to English if not already English
+      if (translations !== enTranslations) {
+        let enValue = enTranslations;
+        for (const k2 of keys) {
+          if (enValue && typeof enValue === 'object' && k2 in enValue) {
+            enValue = enValue[k2];
+          } else {
+            return fallback;
+          }
+        }
+        if (typeof enValue === 'string' || Array.isArray(enValue) || (typeof enValue === 'object' && enValue !== null)) {
+          return enValue;
+        }
+      }
       return fallback;
     }
   }
-  
-  return typeof value === 'string' ? value : fallback;
+
+  // Return value as-is if it's a string, array, or object (for non-string translations)
+  if (typeof value === 'string' || Array.isArray(value) || (typeof value === 'object' && value !== null)) {
+    return value;
+  }
+  return fallback;
 };
 
 export const LanguageProvider = ({ children }) => {

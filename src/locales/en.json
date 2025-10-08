@@ -1,4 +1,21 @@
 {
+  "shop": {
+    "rubber": "Rubber",
+    "shop": "Shop",
+    "subtitle": "Tools, agrochemicals, protective gear, RPCs, and processing equipment.",
+    "searchProducts": "Search products",
+    "allCategories": "All categories",
+    "popularity": "Popularity",
+    "priceLowToHigh": "Price: Low to High",
+    "priceHighToLow": "Price: High to Low",
+    "maxPrice": "Max Price",
+    "inStock": "In stock",
+    "rpcCertified": "RPC Certified",
+    "addToCart": "Add to Cart",
+    "buyNow": "Buy Now"
+  },
+  "findLocalMarkets": "Find Local Rubber Markets",
+  "findLocalMarketsSub": "Discover rubber sheet selling markets near you with real-time prices, ratings, and detailed information to help you get the best deals.",
   "common": {
     "loading": "Loading...",
     "save": "Save",
@@ -57,22 +74,25 @@
   },
   "farmer": {
     "dashboard": "Farmer Dashboard",
-    "welcome": "Welcome to your Rubber Farm Management",
-    "totalTrees": "Total Trees",
-    "activeLots": "Active Lots",
-    "pendingRequests": "Pending Requests",
-    "monthlyYield": "Monthly Yield",
-    "landRegistration": "Land Registration",
-    "treeLots": "Tree Lots",
-    "serviceRequests": "Service Requests",
-    "marketplace": "Marketplace",
-    "training": "Training",
-    "profile": "Profile",
-    "addNewLot": "Add New Lot",
-    "viewAllLots": "View All Lots",
-    "requestService": "Request Service",
-    "browseMarket": "Browse Market",
-    "enrollTraining": "Enroll in Training"
+    "quickActions": "Quick Actions",
+    "active": "Active",
+    "pending": "Pending",
+    "complete": "Complete",
+    "tappingServices": "Tapping Services",
+    "requestRubberTapper": "Request Rubber Tapper",
+    "submitNewRequest": "Submit new request",
+    "viewTappingSchedule": "View Tapping Schedule",
+    "checkSchedules": "Check schedules",
+    "applications": "Applications",
+    "applyForLandLease": "Apply for Land Lease",
+    "submitApplication": "Submit application",
+    "checkApplicationStatus": "Check Application Status",
+    "monitorProgress": "Monitor progress",
+    "nurseryAndMarket": "Nursery & Market",
+    "bookNurserySaplings": "Book Nursery Saplings",
+    "orderPlantsAndSaplings": "Order plants & saplings",
+    "myNurseryBookings": "My Nursery Bookings",
+    "viewBookedAndPaidDetails": "View booked & paid details"
   },
   "broker": {
     "dashboard": "Broker Dashboard",
@@ -91,33 +111,7 @@
     "bidAmount": "Bid Amount",
     "bidStatus": "Bid Status"
   },
-  "admin": {
-    "dashboard": "Admin Dashboard",
-    "welcome": "Welcome back! Here's what's happening today.",
-    "totalUsers": "Total Users",
-    "totalFarmers": "Total Farmers",
-    "totalBrokers": "Total Brokers",
-    "totalStaff": "Total Staff",
-    "pendingRequests": "Pending Requests",
-    "manageUsers": "Manage Users",
-    "staffManagement": "Staff Management",
-    "brokerManagement": "Broker Management",
-    "landVerification": "Land Verification",
-    "reports": "Reports"
-  },
   "land": {
-    "registration": "Land Registration",
-    "title": "Land Title",
-    "location": "Location",
-    "area": "Area (acres)",
-    "surveyNumber": "Survey Number",
-    "ownerName": "Owner Name",
-    "phoneNumber": "Phone Number",
-    "address": "Address",
-    "district": "District",
-    "state": "State",
-    "pincode": "Pincode",
-    "landType": "Land Type",
     "topography": "Topography",
     "roadAccess": "Road Access",
     "electricityAvailable": "Electricity Available",
@@ -142,8 +136,8 @@
     "lotDescription": "Lot Description",
     "estimatedYield": "Estimated Yield (kg)",
     "harvestDate": "Harvest Date",
-    "basePrice": "Base Price (₹/kg)",
-    "status": "Status",
+    "competitivePay": "Competitive Pay",
+    "employeeRating": "Employee Rating",
     "active": "Active",
     "sold": "Sold",
     "pending": "Pending",
@@ -181,14 +175,21 @@
     "bidHistory": "Bid History"
   },
   "training": {
-    "title": "Training Programs",
-    "availablePrograms": "Available Programs",
-    "enrollNow": "Enroll Now",
-    "enrolled": "Enrolled",
-    "completed": "Completed",
-    "inProgress": "In Progress",
-    "enrollmentSuccess": "Enrolled successfully!",
-    "enrollmentFailed": "Enrollment failed. Please try again."
+    "heading": "Training",
+    "heading2": "& Education",
+    "heroSub": "Enhance your rubber plantation skills with our comprehensive training programs. Learn from industry experts and improve your plantation's productivity.",
+    "browseModules": "Browse Modules",
+    "loginToStart": "Login to Start Learning",
+    "modulesTitle": "Training Modules",
+    "modulesSub": "Structured learning paths for all skill levels",
+    "lessons": "lessons",
+    "loginToAccess": "Login to Access",
+    "startModule": "Start Module",
+    "featuresTitle": "Learning Features",
+    "featuresSub": "Everything you need for effective learning",
+    "practicalTitle": "Practical Training Sessions",
+    "practicalSub": "Hands-on training with expert instructors at real plantation sites",
+    "viewSchedules": "View Training Schedules"
   },
   "profile": {
     "title": "Profile",
@@ -288,27 +289,70 @@
     "total": "Total",
     "checkout": "Checkout"
   },
-  "errors": {
-    "networkError": "Network error. Please check your connection.",
-    "serverError": "Server error. Please try again later.",
-    "unauthorized": "Unauthorized access. Please login again.",
-    "forbidden": "Access forbidden.",
-    "notFound": "Resource not found.",
-    "validationError": "Please check your input and try again.",
-    "unknownError": "An unknown error occurred. Please try again."
-  }
-  ,
+
   "recruitment": {
-    "title": "Jobs Available!",
-    "subtitle": "Join Kerala's Best Rubber Company",
-    "urgentOpenings": "URGENT OPENINGS",
-    "nowHiring": "NOW HIRING",
-    "workWithUs": "Work With Us - Good Jobs!",
-    "greatOpportunities": "Great opportunities in rubber farming work",
+  "jobsAvailableNowSub": "Find the right job for you. Good pay, steady work, and opportunities to learn and grow.",
+    "positions": [
+      {
+        "title": "Field Tapping Specialist",
+        "description": "Expert rubber tappers with 2+ years experience",
+        "requirements": [
+          "Professional tapping skills",
+          "Early morning availability",
+          "Physical fitness"
+        ],
+        "salary": "₹25,000 - ₹35,000/month",
+        "location": "Kerala Districts",
+        "type": "Full-time",
+        "urgent": true
+      },
+      {
+        "title": "Quality Control Inspector",
+        "description": "Ensure latex quality and collection standards",
+        "requirements": [
+          "Quality assessment skills",
+          "Attention to detail",
+          "Basic education"
+        ],
+        "salary": "₹20,000 - ₹28,000/month",
+        "location": "Processing Centers",
+        "type": "Full-time",
+        "urgent": true
+      },
+      {
+        "title": "Trainer",
+        "description": "Train staff and farmers on best practices and techniques",
+        "requirements": [
+          "Teaching skills",
+          "Technical expertise",
+          "Communication skills"
+        ],
+        "salary": "₹35,000 - ₹45,000/month",
+        "location": "Training Centers",
+        "type": "Full-time",
+        "urgent": true
+      },
+      {
+        "title": "Collection Supervisor",
+        "description": "Supervise latex collection and transportation",
+        "requirements": [
+          "Leadership skills",
+          "Logistics experience",
+          "Team management"
+        ],
+        "salary": "₹30,000 - ₹40,000/month",
+        "location": "Multiple Locations",
+        "type": "Full-time",
+        "urgent": true
+      }
+    ],
+    "workWithUs": "Work With Us",
+    "greatOpportunities": "Great opportunities in rubber plantation",
     "applyNow": "Apply Now",
     "jobsAvailableNow": "Jobs Available Now",
     "urgent": "URGENT",
     "whyChooseUs": "Why Choose Us?",
+    "whyChooseUsSub": "We offer good jobs with fair pay, benefits, and respect. Join our team and grow with us.",
     "applyNowQuick": "Apply Now - Quick Process!",
     "learnMoreCareers": "Learn More About Careers",
     "joinTagline": "🚀 Join 500+ professionals already building their careers with us!",
@@ -319,16 +363,34 @@
     "catchy5": "⭐ Join RubberEco Family - We Care For You!",
     "stats": {
       "happyEmployees": "500+ Happy Employees",
-      "industryLeader": "Industry Leader",
-      "competitivePay": "Competitive Pay",
-      "employeeRating": "Employee Rating"
+      "industryLeader": "Industry Leader"
     },
-    "positions": {
-      "fieldTappingSpecialists": "Field Tapping Specialists",
-      "qualityControlInspectors": "Quality Control Inspectors",
-      "trainers": "Trainers",
-      "collectionSupervisors": "Collection Supervisors"
-    },
+    "cards": [
+      {
+        "title": "Health Insurance",
+        "description": "Comprehensive medical coverage for you and your family."
+      },
+      {
+        "title": "Competitive Salary",
+        "description": "Above-market pay with performance bonuses."
+      },
+      {
+        "title": "Flexible Hours",
+        "description": "Work-life balance with flexible scheduling."
+      },
+      {
+        "title": "Skill Development",
+        "description": "Regular training and certification programs."
+      },
+      {
+        "title": "Job Security",
+        "description": "Stable employment with growth opportunities."
+      },
+      {
+        "title": "Modern Tools",
+        "description": "Latest equipment and technology support."
+      }
+    ],
     "benefits": {
       "b1": "💰 Competitive salary up to ₹40,000/month",
       "b2": "🏥 Complete health insurance coverage",
@@ -336,6 +398,63 @@
       "b4": "🕐 Flexible working hours",
       "b5": "🎯 Performance-based bonuses",
       "b6": "🤝 Supportive work environment"
+    },
+    "benefitsTitle": {
+      "competitiveSalary": "Competitive Salary",
+      "healthInsurance": "Health Insurance",
+      "flexibleHours": "Flexible Hours",
+      "skillDevelopment": "Skill Development",
+      "jobSecurity": "Job Security",
+      "modernTools": "Modern Tools"
+    },
+    "benefitsDesc": {
+      "competitiveSalary": "Above-market rates with performance bonuses",
+      "healthInsurance": "Comprehensive medical coverage for you and family",
+      "flexibleHours": "Work-life balance with flexible scheduling",
+      "skillDevelopment": "Regular training and certification programs",
+      "jobSecurity": "Stable employment with growth opportunities",
+      "modernTools": "Latest equipment and technology support"
     }
+  },
+  "profilePage": {
+    "listTreeLotsForBidding": "List Tree Lots for Bidding",
+    "createBiddingListings": "Create bidding listings",
+    "viewPaymentStatus": "View Payment Status",
+    "checkPayments": "Check payments",
+    "skilledServices": "Skilled Services",
+    "requestFertilizerRainGuard": "Request Fertilizer/Rain Guard",
+    "requestServices": "Request services",
+    "viewAssignedWorkers": "View Assigned Workers",
+    "checkAssignments": "Check assignments",
+    "recentActivity": "Recent Activity",
+    "noRecentActivities": "No recent activities",
+    "startBySubmittingTappingRequest": "Start by submitting a tapping request",
+    "yourActivitiesWillAppearHere": "Your activities will appear here",
+    "accountActions": "Account Actions",
+    "logout": "Logout",
+    "fullName": "Full Name",
+    "emailAddress": "Email Address",
+    "phoneNumber": "Phone Number",
+    "location": "Location",
+    "aboutMe": "About Me",
+    "noBioProvidedYet": "No bio provided yet.",
+    "editProfile": "Edit Profile",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "nursery": {
+    "rubber": "Rubber",
+    "nursery": "Nursery",
+    "discoverNearby": "Discover nearby centers, varieties and booking info",
+    "viewDetails": "View Details",
+    "varietiesAvailable": "Varieties Available",
+    "availableVarietiesStock": "Available Varieties & Stock",
+    "units": "units",
+    "specialty": "Specialty",
+    "clickToViewVarieties": "Click to view varieties",
+    "paymentSuccess": "Payment successful",
+    "downloadReceiptPrompt": "Would you like to download your receipt now?",
+    "download": "Download",
+    "later": "Later"
   }
 }

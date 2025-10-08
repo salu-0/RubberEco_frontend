@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -22,6 +23,7 @@ import PracticalTraining from './PracticalTraining';
 import { getUserData } from '../utils/api';
 
 const Training = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -227,14 +229,13 @@ const Training = () => {
           >
             <h1 className="text-5xl lg:text-6xl font-bold mb-6">
               <span className="bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
-                Training
+                {t('training.heading')}
               </span>
               <br />
-              <span className="text-gray-900">& Education</span>
+              <span className="text-gray-900">{t('training.heading2')}</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              Enhance your rubber plantation skills with our comprehensive training programs. 
-              Learn from industry experts and improve your plantation's productivity.
+              {t('training.heroSub')}
             </p>
             <div className="flex justify-center">
               {isAuthenticated ? (
@@ -250,7 +251,7 @@ const Training = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <span>Browse Modules</span>
+                  <span>{t('training.browseModules')}</span>
                   <ArrowRight className="w-5 h-5" />
                 </motion.button>
               ) : (
@@ -260,7 +261,7 @@ const Training = () => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <span>Login to Start Learning</span>
+                    <span>{t('training.loginToStart')}</span>
                     <ArrowRight className="w-5 h-5" />
                   </motion.button>
                 </Link>
@@ -281,10 +282,10 @@ const Training = () => {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Training Modules
+              {t('training.modulesTitle')}
             </h2>
             <p className="text-xl text-gray-600">
-              Structured learning paths for all skill levels
+              {t('training.modulesSub')}
             </p>
           </motion.div>
 
@@ -329,7 +330,7 @@ const Training = () => {
                       </div>
                       <div className="flex items-center space-x-1">
                         <BookOpen className="h-4 w-4" />
-                        <span>{module.lessons} lessons</span>
+                        <span>{module.lessons} {t('training.lessons')}</span>
                       </div>
                       <div className="flex items-center space-x-1">
                         <Star className="h-4 w-4 text-yellow-400 fill-current" />
@@ -347,8 +348,8 @@ const Training = () => {
                       {!isAuthenticated && <Lock className="w-4 h-4" />}
                       <span>
                         {!isAuthenticated
-                          ? 'Login to Access'
-                          : 'Start Module'
+                          ? t('training.loginToAccess')
+                          : t('training.startModule')
                         }
                       </span>
                     </button>
@@ -371,10 +372,10 @@ const Training = () => {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Learning Features
+              {t('training.featuresTitle')}
             </h2>
             <p className="text-xl text-gray-600">
-              Everything you need for effective learning
+              {t('training.featuresSub')}
             </p>
           </motion.div>
 
@@ -410,10 +411,10 @@ const Training = () => {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Practical Training Sessions
+              {t('training.practicalTitle')}
             </h2>
             <p className="text-xl text-gray-600 mb-8">
-              Hands-on training with expert instructors at real plantation sites
+              {t('training.practicalSub')}
             </p>
             <motion.button
               onClick={() => setIsPracticalTrainingOpen(true)}
@@ -422,7 +423,7 @@ const Training = () => {
               whileTap={{ scale: 0.95 }}
             >
               <Users className="w-5 h-5" />
-              <span>View Training Schedules</span>
+              <span>{t('training.viewSchedules')}</span>
             </motion.button>
           </motion.div>
 

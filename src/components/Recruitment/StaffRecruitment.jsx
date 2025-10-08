@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -18,84 +19,40 @@ import {
 } from 'lucide-react';
 
 const StaffRecruitment = ({ darkMode = false }) => {
+  const { t } = useLanguage();
   const [hoveredCard, setHoveredCard] = useState(null);
   const navigate = useNavigate();
 
-  const positions = [
-    {
-      title: "Field Tapping Specialist",
-      icon: TreePine,
-      description: "Expert rubber tappers with 2+ years experience",
-      requirements: ["Professional tapping skills", "Early morning availability", "Physical fitness"],
-      salary: "₹25,000 - ₹35,000/month",
-      location: "Kerala Districts",
-      type: "Full-time",
-      urgent: true
-    },
-    {
-      title: "Quality Control Inspector",
-      icon: Award,
-      description: "Ensure latex quality and collection standards",
-      requirements: ["Quality assessment skills", "Attention to detail", "Basic education"],
-      salary: "₹20,000 - ₹28,000/month",
-      location: "Processing Centers",
-      type: "Full-time",
-      urgent: true
-    },
-    {
-      title: "Trainer",
-      icon: Users,
-      description: "Train staff and farmers on best practices and techniques",
-      requirements: ["Teaching skills", "Technical expertise", "Communication skills"],
-      salary: "₹35,000 - ₹45,000/month",
-      location: "Training Centers",
-      type: "Full-time",
-      urgent: true
-    },
-    {
-      title: "Collection Supervisor",
-      icon: Target,
-      description: "Supervise latex collection and transportation",
-      requirements: ["Leadership skills", "Logistics experience", "Team management"],
-      salary: "₹30,000 - ₹40,000/month",
-      location: "Multiple Locations",
-      type: "Full-time",
-      urgent: true
-    }
+  // Job card icons in order
+  const jobIcons = [TreePine, Award, Users, Target];
+
+  // Get job positions from translations
+  const positionsData = t('recruitment.positions');
+  const positions = Array.isArray(positionsData)
+    ? positionsData.map((job, idx) => ({
+        ...job,
+        icon: jobIcons[idx] || Users // fallback icon
+      }))
+    : [];
+
+  const cardIcons = [
+    Shield,
+    DollarSign,
+    Clock,
+    Award,
+    Heart,
+    Zap
   ];
 
-  const benefits = [
-    {
-      icon: DollarSign,
-      title: "Competitive Salary",
-      description: "Above-market rates with performance bonuses"
-    },
-    {
-      icon: Shield,
-      title: "Health Insurance",
-      description: "Comprehensive medical coverage for you and family"
-    },
-    {
-      icon: Clock,
-      title: "Flexible Hours",
-      description: "Work-life balance with flexible scheduling"
-    },
-    {
-      icon: Award,
-      title: "Skill Development",
-      description: "Regular training and certification programs"
-    },
-    {
-      icon: Heart,
-      title: "Job Security",
-      description: "Stable employment with growth opportunities"
-    },
-    {
-      icon: Zap,
-      title: "Modern Tools",
-      description: "Latest equipment and technology support"
-    }
-  ];
+  // Get cards from translations
+  const cards = t('recruitment.cards');
+  const benefits = Array.isArray(cards)
+    ? cards.map((card, idx) => ({
+        icon: cardIcons[idx],
+        title: card.title,
+        description: card.description
+      }))
+    : [];
 
 
 
@@ -127,11 +84,10 @@ const StaffRecruitment = ({ darkMode = false }) => {
             className="text-center"
           >
             <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
-              Work With Us - Good Jobs Available!
+              {t('recruitment.workWithUs')}
             </h1>
             <p className="text-xl md:text-2xl text-green-100 mb-8 max-w-3xl mx-auto">
-              Join Kerala's best rubber company. Good salary, benefits, and secure jobs.
-              Help farmers while building your future.
+              {t('recruitment.greatOpportunities')}
             </p>
             <div className="flex justify-center">
               <motion.button
@@ -141,7 +97,7 @@ const StaffRecruitment = ({ darkMode = false }) => {
                 className="px-8 py-4 bg-white text-green-700 font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-2"
               >
                 <Briefcase className="h-5 w-5" />
-                <span>Apply Now</span>
+                <span>{t('recruitment.applyNow')}</span>
                 <ArrowRight className="h-5 w-5" />
               </motion.button>
             </div>
@@ -159,10 +115,10 @@ const StaffRecruitment = ({ darkMode = false }) => {
             className="text-center mb-16"
           >
             <h2 className={`text-4xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              Why Choose RubberEco?
+              {t('recruitment.whyChooseUs')}
             </h2>
             <p className={`text-xl ${darkMode ? 'text-gray-300' : 'text-gray-600'} max-w-3xl mx-auto`}>
-              We offer good jobs with fair pay, benefits, and respect. Join our team and grow with us.
+              {t('recruitment.whyChooseUsSub')}
             </p>
           </motion.div>
 
@@ -201,12 +157,12 @@ const StaffRecruitment = ({ darkMode = false }) => {
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <h2 className={`text-4xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              Jobs Available Now
-            </h2>
-            <p className={`text-xl ${darkMode ? 'text-gray-300' : 'text-gray-600'} max-w-3xl mx-auto`}>
-              Find the right job for you. Good pay, steady work, and opportunities to learn and grow.
-            </p>
+              <h2 className={`text-4xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                {t('recruitment.jobsAvailableNow')}
+              </h2>
+              <p className={`text-xl ${darkMode ? 'text-gray-300' : 'text-gray-600'} max-w-3xl mx-auto`}>
+                {t('recruitment.jobsAvailableNowSub')}
+              </p>
           </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

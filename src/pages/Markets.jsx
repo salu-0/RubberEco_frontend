@@ -27,6 +27,7 @@ import {
   Award
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import { useLanguage } from '../context/LanguageContext';
 import GoogleMapsSetup from '../components/GoogleMapsSetup';
 import { useNavigationGuard } from '../hooks/useNavigationGuard';
 
@@ -43,6 +44,7 @@ const marketImages = {
 
 // Market Finder Component
 const MarketFinder = ({ onMarketClick }) => {
+  const { t } = useLanguage();
   const [location, setLocation] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedMarket, setSelectedMarket] = useState(null);
@@ -437,11 +439,10 @@ const MarketFinder = ({ onMarketClick }) => {
           transition={{ duration: 0.6 }}
         >
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Find Local Rubber Markets
+            {t('findLocalMarkets')}
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Discover rubber sheet selling markets near you with real-time prices,
-            ratings, and detailed information to help you get the best deals.
+            {t('findLocalMarketsSub')}
           </p>
         </motion.div>
 
@@ -1292,6 +1293,7 @@ const GoogleMapComponent = ({ markets, selectedMarket }) => {
 };
 
 const Markets = () => {
+  const { t, currentLanguage } = useLanguage();
   const navigate = useNavigate();
   const [selectedTimeframe, setSelectedTimeframe] = useState('1M');
   const [showMarketModal, setShowMarketModal] = useState(false);
@@ -1523,10 +1525,10 @@ const Markets = () => {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Global Rubber Markets
+              {t('market.globalMarkets')}
             </h2>
             <p className="text-xl text-gray-600">
-              Real-time prices from major exchanges worldwide
+              {t('market.globalMarketsSub')}
             </p>
           </motion.div>
 
@@ -1578,7 +1580,7 @@ const Markets = () => {
           >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
-                <h3 className="text-xl font-bold text-gray-900">Price Chart - RSS3 Grade</h3>
+                <h3 className="text-xl font-bold text-gray-900">{t('market.priceChart')}</h3>
                 <button
                   onClick={() => handleTimeframeChange(selectedTimeframe)} // Trigger refresh
                   className="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
@@ -1657,11 +1659,11 @@ const Markets = () => {
             {/* Price Statistics */}
             <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center p-4 bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl border border-primary-200">
-                <div className="text-sm text-primary-600 mb-1 font-medium">Current Price</div>
+                <div className="text-sm text-primary-600 mb-1 font-medium">{t('market.currentPrice')}</div>
                 <div className="text-xl font-bold text-primary-900">₹{priceData[priceData.length - 1]?.price}/kg</div>
               </div>
               <div className="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200">
-                <div className="text-sm text-gray-600 mb-1 font-medium">Change</div>
+                <div className="text-sm text-gray-600 mb-1 font-medium">{t('market.change')}</div>
                 <div className={`text-xl font-bold flex items-center justify-center ${
                   parseFloat(priceChange.percentage) >= 0 ? 'text-green-600' : 'text-red-600'
                 }`}>
@@ -1674,11 +1676,11 @@ const Markets = () => {
                 </div>
               </div>
               <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
-                <div className="text-sm text-green-600 mb-1 font-medium">High ({selectedTimeframe})</div>
+                <div className="text-sm text-green-600 mb-1 font-medium">{t('market.high')} ({selectedTimeframe})</div>
                 <div className="text-xl font-bold text-green-900">₹{Math.max(...priceData.map(d => d.price)).toFixed(2)}</div>
               </div>
               <div className="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-xl border border-red-200">
-                <div className="text-sm text-red-600 mb-1 font-medium">Low ({selectedTimeframe})</div>
+                <div className="text-sm text-red-600 mb-1 font-medium">{t('market.low')} ({selectedTimeframe})</div>
                 <div className="text-xl font-bold text-red-900">₹{Math.min(...priceData.map(d => d.price)).toFixed(2)}</div>
               </div>
             </div>
@@ -1690,11 +1692,11 @@ const Markets = () => {
                   <BarChart3 className="h-6 w-6 text-blue-600" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-blue-900 mb-1">Market Insight</h4>
+                  <h4 className="text-sm font-semibold text-blue-900 mb-1">{t('market.marketInsight')}</h4>
                   <p className="text-sm text-blue-700">
                     {parseFloat(priceChange.percentage) >= 0
-                      ? `RSS3 prices are trending upward with a ${priceChange.percentage}% increase. Strong demand from automotive and industrial sectors is driving the positive momentum.`
-                      : `RSS3 prices have declined by ${Math.abs(priceChange.percentage)}% due to seasonal factors and market adjustments. This presents potential buying opportunities for long-term investors.`
+                      ? t('market.insightUp').replace('%{percent}', priceChange.percentage)
+                      : t('market.insightDown').replace('%{percent}', Math.abs(priceChange.percentage))
                     }
                   </p>
                 </div>
@@ -1715,7 +1717,7 @@ const Markets = () => {
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-3xl font-bold text-gray-900 mb-8">Market Insights</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-8">{t('market.insights')}</h2>
               <div className="space-y-6">
                 {marketInsights.map((insight, index) => (
                   <div key={index} className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
@@ -1737,7 +1739,7 @@ const Markets = () => {
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-3xl font-bold text-gray-900 mb-8">Price Alerts</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-8">{t('market.priceAlerts')}</h2>
               <div className="space-y-4">
                 {priceAlerts.map((alert, index) => (
                   <div key={index} className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
@@ -1757,7 +1759,7 @@ const Markets = () => {
               <div className="mt-6">
                 <Link to="/register">
                   <button className="w-full bg-gradient-to-r from-primary-500 to-primary-600 text-white py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-300">
-                    Set Up Custom Alerts
+                    {t('market.setCustomAlerts')}
                   </button>
                 </Link>
               </div>

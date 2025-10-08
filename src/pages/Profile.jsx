@@ -964,8 +964,8 @@ const Profile = () => {
                         <TreePine className="h-5 w-5 text-white" />
                       </div>
                       <div className="ml-3">
-                        <h2 className="text-lg font-bold text-gray-900">Farmer Dashboard</h2>
-                        <p className="text-sm text-gray-500">Quick Actions</p>
+                        <h2 className="text-lg font-bold text-gray-900">{t('farmer.dashboard')}</h2>
+                        <p className="text-sm text-gray-500">{t('farmer.quickActions')}</p>
                       </div>
                     </div>
 
@@ -976,19 +976,19 @@ const Profile = () => {
                           <div className="text-lg font-bold text-blue-600">
                             {farmerStats.loading ? '...' : farmerStats.active}
                           </div>
-                          <div className="text-xs text-blue-500">Active</div>
+                          <div className="text-xs text-blue-500">{t('farmer.active')}</div>
                         </div>
                         <div className="bg-yellow-50 p-3 rounded-lg text-center">
                           <div className="text-lg font-bold text-yellow-600">
                             {farmerStats.loading ? '...' : farmerStats.pending}
                           </div>
-                          <div className="text-xs text-yellow-500">Pending</div>
+                          <div className="text-xs text-yellow-500">{t('farmer.pending')}</div>
                         </div>
                         <div className="bg-green-50 p-3 rounded-lg text-center">
                           <div className="text-lg font-bold text-green-600">
                             {farmerStats.loading ? '...' : farmerStats.complete}
                           </div>
-                          <div className="text-xs text-green-500">Complete</div>
+                          <div className="text-xs text-green-500">{t('farmer.complete')}</div>
                         </div>
                       </div>
                     </div>
@@ -997,7 +997,7 @@ const Profile = () => {
                     <nav className="space-y-1">
                       {/* Tapping Services */}
                       <div className="mb-4">
-                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Tapping Services</h3>
+                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('farmer.tappingServices')}</h3>
                         <button
                           className="w-full flex items-center p-3 text-left hover:bg-blue-50 rounded-lg transition-colors group"
                           onClick={() => setIsTapperRequestOpen(true)}
@@ -1006,8 +1006,8 @@ const Profile = () => {
                             <Users className="h-4 w-4 text-blue-600" />
                           </div>
                           <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">Request Rubber Tapper</div>
-                            <div className="text-xs text-gray-500">Submit new request</div>
+                            <div className="text-sm font-medium text-gray-900">{t('farmer.requestRubberTapper')}</div>
+                            <div className="text-xs text-gray-500">{t('farmer.submitNewRequest')}</div>
                           </div>
                           <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-blue-600" />
                         </button>
@@ -1019,8 +1019,8 @@ const Profile = () => {
                             <Clock className="h-4 w-4 text-blue-600" />
                           </div>
                           <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">View Tapping Schedule</div>
-                            <div className="text-xs text-gray-500">Check schedules</div>
+                            <div className="text-sm font-medium text-gray-900">{t('farmer.viewTappingSchedule')}</div>
+                            <div className="text-xs text-gray-500">{t('farmer.checkSchedules')}</div>
                           </div>
                           <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-blue-600" />
                         </button>
@@ -1028,7 +1028,7 @@ const Profile = () => {
 
                       {/* Applications */}
                       <div className="mb-4">
-                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Applications</h3>
+                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('farmer.applications')}</h3>
                         <button
                           className="w-full flex items-center p-3 text-left hover:bg-green-50 rounded-lg transition-colors group"
                           onClick={() => setIsLandLeaseOpen(true)}
@@ -1037,8 +1037,8 @@ const Profile = () => {
                             <MapPin className="h-4 w-4 text-green-600" />
                           </div>
                           <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">Apply for Land Lease</div>
-                            <div className="text-xs text-gray-500">Submit application</div>
+                            <div className="text-sm font-medium text-gray-900">{t('farmer.applyForLandLease')}</div>
+                            <div className="text-xs text-gray-500">{t('farmer.submitApplication')}</div>
                           </div>
                           <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-green-600" />
                         </button>
@@ -1050,8 +1050,8 @@ const Profile = () => {
                             <CheckSquare className="h-4 w-4 text-green-600" />
                           </div>
                           <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">Check Application Status</div>
-                            <div className="text-xs text-gray-500">Monitor progress</div>
+                            <div className="text-sm font-medium text-gray-900">{t('farmer.checkApplicationStatus')}</div>
+                            <div className="text-xs text-gray-500">{t('farmer.monitorProgress')}</div>
                           </div>
                           <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-green-600" />
                         </button>
@@ -1061,7 +1061,7 @@ const Profile = () => {
 
                       {/* Nursery & Market */}
                       <div className="mb-4">
-                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Nursery & Market</h3>
+                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('farmer.nurseryAndMarket')}</h3>
                         <button
                           className="w-full flex items-center p-3 text-left hover:bg-emerald-50 rounded-lg transition-colors group"
                           onClick={() => navigate('/nursery')}
@@ -1070,8 +1070,8 @@ const Profile = () => {
                             <TreePine className="h-4 w-4 text-emerald-600" />
                           </div>
                           <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">Book Nursery Saplings</div>
-                            <div className="text-xs text-gray-500">Order plants & saplings</div>
+                            <div className="text-sm font-medium text-gray-900">{t('farmer.bookNurserySaplings')}</div>
+                            <div className="text-xs text-gray-500">{t('farmer.orderPlantsAndSaplings')}</div>
                           </div>
                           <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-emerald-600" />
                         </button>
@@ -1083,8 +1083,8 @@ const Profile = () => {
                             <CreditCard className="h-4 w-4 text-emerald-600" />
                           </div>
                           <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">My Nursery Bookings</div>
-                            <div className="text-xs text-gray-500">View booked & paid details</div>
+                            <div className="text-sm font-medium text-gray-900">{t('farmer.myNurseryBookings')}</div>
+                            <div className="text-xs text-gray-500">{t('farmer.viewBookedAndPaidDetails')}</div>
                           </div>
                           <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-emerald-600" />
                         </button>
@@ -1096,8 +1096,8 @@ const Profile = () => {
                             <TreePine className="h-4 w-4 text-purple-600" />
                           </div>
                           <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">List Tree Lots for Bidding</div>
-                            <div className="text-xs text-gray-500">Create bidding listings</div>
+                            <div className="text-sm font-medium text-gray-900">{t('profilePage.listTreeLotsForBidding')}</div>
+                            <div className="text-xs text-gray-500">{t('profilePage.createBiddingListings')}</div>
                           </div>
                           <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-purple-600" />
                         </button>
@@ -1109,8 +1109,8 @@ const Profile = () => {
                             <CreditCard className="h-4 w-4 text-orange-600" />
                           </div>
                           <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">View Payment Status</div>
-                            <div className="text-xs text-gray-500">Check payments</div>
+                            <div className="text-sm font-medium text-gray-900">{t('profilePage.viewPaymentStatus')}</div>
+                            <div className="text-xs text-gray-500">{t('profilePage.checkPayments')}</div>
                           </div>
                           <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-orange-600" />
                         </button>
@@ -1118,7 +1118,7 @@ const Profile = () => {
 
                       {/* Skilled Services */}
                       <div className="mb-4">
-                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Skilled Services</h3>
+                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('profilePage.skilledServices')}</h3>
                         <button
                           className="w-full flex items-center p-3 text-left hover:bg-red-50 rounded-lg transition-colors group"
                           onClick={() => setIsFertilizerRequestOpen(true)}
@@ -1127,8 +1127,8 @@ const Profile = () => {
                             <Wrench className="h-4 w-4 text-red-600" />
                           </div>
                           <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">Request Fertilizer/Rain Guard</div>
-                            <div className="text-xs text-gray-500">Request services</div>
+                            <div className="text-sm font-medium text-gray-900">{t('profilePage.requestFertilizerRainGuard')}</div>
+                            <div className="text-xs text-gray-500">{t('profilePage.requestServices')}</div>
                           </div>
                           <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-red-600" />
                         </button>
@@ -1140,8 +1140,8 @@ const Profile = () => {
                             <UserCheck className="h-4 w-4 text-red-600" />
                           </div>
                           <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">View Assigned Workers</div>
-                            <div className="text-xs text-gray-500">Check assignments</div>
+                            <div className="text-sm font-medium text-gray-900">{t('profilePage.viewAssignedWorkers')}</div>
+                            <div className="text-xs text-gray-500">{t('profilePage.checkAssignments')}</div>
                           </div>
                           <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-red-600" />
                         </button>
@@ -1173,7 +1173,7 @@ const Profile = () => {
                   >
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                       <Clock className="h-5 w-5 mr-2 text-gray-600" />
-                      Recent Activity
+                      {t('profilePage.recentActivity')}
                     </h3>
                     <div className="space-y-3">
                       {activitiesLoading ? (
@@ -1233,8 +1233,8 @@ const Profile = () => {
                         // Empty state
                         <div className="text-center py-6">
                           <Clock className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                          <p className="text-sm text-gray-500">No recent activities</p>
-                          <p className="text-xs text-gray-400 mt-1">Your activities will appear here</p>
+                          <p className="text-sm text-gray-500">{t('profilePage.noRecentActivities')}</p>
+                          <p className="text-xs text-gray-400 mt-1">{t('profilePage.yourActivitiesWillAppearHere')}</p>
                         </div>
                       )}
                     </div>
@@ -1335,7 +1335,7 @@ const Profile = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Profile Information</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('profile.title')}</h2>
 
             {/* Profile Image Section */}
             <div className="flex flex-col items-center mb-8 p-6 bg-gray-50 rounded-xl">
@@ -1415,7 +1415,7 @@ const Profile = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <User className="h-4 w-4 inline mr-2" />
-                  Full Name
+                  {t('profilePage.fullName')}
                 </label>
                 {isEditing ? (
                   <div>
@@ -1442,7 +1442,7 @@ const Profile = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <Mail className="h-4 w-4 inline mr-2" />
-                  Email Address
+                  {t('profilePage.emailAddress')}
                 </label>
                 <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">{user.email}</p>
                 <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
@@ -1452,7 +1452,7 @@ const Profile = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <Phone className="h-4 w-4 inline mr-2" />
-                  Phone Number
+                  {t('profilePage.phoneNumber')}
                 </label>
                 {isEditing ? (
                   <div>
@@ -1483,7 +1483,7 @@ const Profile = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <MapPin className="h-4 w-4 inline mr-2" />
-                  Location
+                  {t('profilePage.location')}
                 </label>
                 {isEditing ? (
                   <div>
@@ -1510,7 +1510,7 @@ const Profile = () => {
             {/* Bio */}
             <div className="mt-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                About Me
+                {t('profilePage.aboutMe')}
               </label>
               {isEditing ? (
                 <textarea
@@ -1523,21 +1523,21 @@ const Profile = () => {
                 />
               ) : (
                 <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg min-h-[100px]">
-                  {user.bio || 'No bio provided yet.'}
+                  {user.bio || t('profilePage.noBioProvidedYet')}
                 </p>
               )}
             </div>
 
             {/* Account Actions */}
             <div className="mt-8 pt-6 border-t border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Actions</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('profilePage.accountActions')}</h3>
               <div className="flex flex-wrap gap-4">
                 <button
                   onClick={handleLogout}
                   className="flex items-center space-x-2 text-red-600 hover:text-red-700 transition-colors"
                 >
                   <LogOut className="h-4 w-4" />
-                  <span>Logout</span>
+                  <span>{t('profilePage.logout')}</span>
                 </button>
               </div>
             </div>

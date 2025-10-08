@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import toastService from '../services/toastService';
 import Navbar from '../components/Navbar';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -56,6 +57,7 @@ const resolveCenterImage = (centerName) => {
 };
 
 const Nursery = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [centers, setCenters] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -242,11 +244,11 @@ const Nursery = () => {
       <div className="pt-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
           <h1 className="text-5xl md:text-6xl font-extrabold leading-tight animate-in fade-in-0 slide-in-from-top-4 duration-1000">
-            <span className="text-transparent bg-clip-text bg-gradient-to-b from-green-700 to-green-500">Rubber</span>
-            <span className="text-gray-900">&nbsp;Nursery</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-b from-green-700 to-green-500">{t('nursery.rubber')}</span>
+            <span className="text-gray-900">&nbsp;{t('nursery.nursery')}</span>
           </h1>
           <p className="mt-4 text-lg text-gray-600 animate-in fade-in-0 slide-in-from-top-4 duration-1000 delay-200">
-            Discover nearby centers, varieties and booking info
+            {t('nursery.discoverNearby')}
           </p>
           <div className="mt-6 flex justify-center">
             <div className="w-24 h-1 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full animate-in slide-in-from-left-4 duration-1000 delay-300"></div>
@@ -290,12 +292,12 @@ const Nursery = () => {
                     
                     {/* Hover Badge */}
                     <div className="absolute top-4 right-4 bg-emerald-500 text-white px-3 py-1 rounded-full text-xs font-semibold opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-                      View Details
+                      {t('nursery.viewDetails')}
                     </div>
                     
                     {/* Variety Count Badge */}
                     <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold">
-                      {centerStockData[c._id]?.length || 0} Varieties Available
+                      {centerStockData[c._id]?.length || 0} {t('nursery.varietiesAvailable')}
                     </div>
                   </div>
                   
@@ -340,22 +342,22 @@ const Nursery = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                           </svg>
                           <div className="flex-1">
-                            <div className="text-sm font-semibold text-emerald-800 mb-2">Available Varieties & Stock</div>
+                            <div className="text-sm font-semibold text-emerald-800 mb-2">{t('nursery.availableVarietiesStock')}</div>
                             <div className="space-y-1">
                               {centerStockData[c._id].map((item, idx) => (
                                 <div key={idx} className="flex justify-between items-center text-sm">
-                                  <span className="text-emerald-700 font-medium">{item.variety}</span>
-                                  <div className="flex items-center gap-2">
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                      item.stock > 50 ? 'bg-green-100 text-green-800' :
-                                      item.stock > 10 ? 'bg-yellow-100 text-yellow-800' :
-                                      item.stock > 0 ? 'bg-orange-100 text-orange-800' :
-                                      'bg-red-100 text-red-800'
-                                    }`}>
-                                      {item.stock} units
-                                    </span>
-                                    <span className="text-emerald-600 font-semibold">₹{item.price}</span>
-                                  </div>
+                                    <span className="text-emerald-700 font-medium">{item.variety}</span>
+                                    <div className="flex items-center gap-2">
+                                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                        item.stock > 50 ? 'bg-green-100 text-green-800' :
+                                        item.stock > 10 ? 'bg-yellow-100 text-yellow-800' :
+                                        item.stock > 0 ? 'bg-orange-100 text-orange-800' :
+                                        'bg-red-100 text-red-800'
+                                      }`}>
+                                        {item.stock} {t('nursery.units')}
+                                      </span>
+                                      <span className="text-emerald-600 font-semibold">₹{item.price}</span>
+                                    </div>
                                 </div>
                               ))}
                             </div>
@@ -372,7 +374,7 @@ const Nursery = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           <div>
-                            <div className="text-sm font-semibold text-blue-800 mb-1">Specialty</div>
+                            <div className="text-sm font-semibold text-blue-800 mb-1">{t('nursery.specialty')}</div>
                             <div className="text-sm text-blue-700">{c.specialty}</div>
                           </div>
                         </div>
@@ -382,7 +384,7 @@ const Nursery = () => {
                     {/* Action Button */}
                     <div className="flex items-center justify-between">
                       <div className="text-sm text-gray-500">
-                        Click to view varieties
+                        {t('nursery.clickToViewVarieties')}
                       </div>
                       <div className="bg-emerald-500 text-white p-2 rounded-full group-hover:bg-emerald-600 transition-colors duration-300">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -406,10 +408,10 @@ const Nursery = () => {
       {/* Booking moved to full page at /nursery/:centerId */}
       <ConfirmDialog
         open={receiptPromptOpen}
-        title="Payment successful"
-        message="Would you like to download your receipt now?"
-        confirmText="Download"
-        cancelText="Later"
+  title={t('nursery.paymentSuccess')}
+  message={t('nursery.downloadReceiptPrompt')}
+  confirmText={t('nursery.download')}
+  cancelText={t('nursery.later')}
         onCancel={() => setReceiptPromptOpen(false)}
         onConfirm={async () => {
           setReceiptPromptOpen(false);

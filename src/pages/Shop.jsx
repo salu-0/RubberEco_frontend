@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { products as allProducts, categories } from '../data/products';
@@ -10,6 +11,7 @@ const Badge = ({ show, children }) => show ? (
 ) : null;
 
 export default function Shop() {
+  const { t } = useLanguage();
   const { addItem } = useCart();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
@@ -45,16 +47,16 @@ export default function Shop() {
       <div className="pt-20 max-w-6xl mx-auto px-4 py-6">
         <div className="mb-8 text-center">
           <h1 className="text-5xl md:text-6xl font-extrabold leading-tight">
-            <span className="text-transparent bg-clip-text bg-gradient-to-b from-green-700 to-green-500">Rubber</span>
-            <span className="text-gray-900">&nbsp;Shop</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-b from-green-700 to-green-500">{t('shop.rubber')}</span>
+            <span className="text-gray-900">&nbsp;{t('shop.shop')}</span>
           </h1>
-          <p className="mt-3 text-lg text-gray-600">Tools, agrochemicals, protective gear, RPCs, and processing equipment.</p>
+          <p className="mt-3 text-lg text-gray-600">{t('shop.subtitle')}</p>
           <div className="mt-5 flex justify-center">
             <div className="w-24 h-1 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full"></div>
           </div>
         </div>
         <div className="flex flex-wrap gap-3 justify-center md:justify-end items-center">
-          <input className="border rounded px-3 py-2" placeholder="Search products" value={search} onChange={e => setSearch(e.target.value)} />
+          <input className="border rounded px-3 py-2" placeholder={t('shop.searchProducts')} value={search} onChange={e => setSearch(e.target.value)} />
           <div className="flex items-center gap-2">
             <img 
               src={tappingToolIcon} 
@@ -65,17 +67,17 @@ export default function Shop() {
               }}
             />
             <select className="border rounded px-3 py-2" value={category} onChange={e => setCategory(e.target.value)}>
-              <option value="all">All categories</option>
+              <option value="all">{t('shop.allCategories')}</option>
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
           <select className="border rounded px-3 py-2" value={sort} onChange={e => setSort(e.target.value)}>
-            <option value="pop">Popularity</option>
-            <option value="price-asc">Price: Low to High</option>
-            <option value="price-desc">Price: High to Low</option>
+            <option value="pop">{t('shop.popularity')}</option>
+            <option value="price-asc">{t('shop.priceLowToHigh')}</option>
+            <option value="price-desc">{t('shop.priceHighToLow')}</option>
           </select>
           <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">Max Price</label>
+            <label className="text-sm text-gray-600">{t('shop.maxPrice')}</label>
             <input type="number" min="0" className="w-24 border rounded px-2 py-2" value={price} onChange={e => setPrice(Number(e.target.value)||0)} />
           </div>
         </div>
@@ -95,10 +97,10 @@ export default function Shop() {
                 </h3>
                 <span className="font-semibold">₹{p.price.toFixed(2)}</span>
               </div>
-              <div className="text-xs text-gray-600 mt-1">In stock: <span className="font-medium">{p.stock}</span></div>
+              <div className="text-xs text-gray-600 mt-1">{t('shop.inStock')}: <span className="font-medium">{p.stock}</span></div>
               <div className="text-xs text-gray-500 mt-1">
                 <span className="uppercase">{p.brand}</span>
-                <Badge show={p.rpcCertified}>RPC Certified</Badge>
+                <Badge show={p.rpcCertified}>{t('shop.rpcCertified')}</Badge>
               </div>
               <p className="text-sm text-gray-600 mt-2 line-clamp-2">{p.description}</p>
               <div className="mt-auto pt-4 flex items-center justify-between opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
@@ -106,13 +108,13 @@ export default function Shop() {
                   className="px-3 py-2 rounded bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                   onClick={() => addItem(p, 1)}
                 >
-                  Add to Cart
+                  {t('shop.addToCart')}
                 </button>
                 <button
                   className="px-3 py-2 rounded border border-green-600 text-green-700 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                   onClick={() => { addItem(p, 1); navigate('/cart'); }}
                 >
-                  Buy Now
+                  {t('shop.buyNow')}
                 </button>
               </div>
             </div>
