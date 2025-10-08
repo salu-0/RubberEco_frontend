@@ -16,8 +16,10 @@ import { supabase } from "../../supabaseClient";
 import Navbar from '../Navbar';
 import { useNavigationGuard } from '../../hooks/useNavigationGuard';
 import EmailVerificationAlert from './EmailVerificationAlert';
+import { useLanguage } from '../../context/LanguageContext';
 
 const Login = () => {
+  const { /* t not used to keep form English */ } = useLanguage();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -60,6 +62,8 @@ const Login = () => {
       }
     }
   }, [guardedNavigate, getUserData]);
+
+  // Keep global language (for navbar), but form strings remain English
 
   // Enhanced validation functions
   const validateEmail = (email) => {
@@ -409,6 +413,8 @@ const Login = () => {
             <p className="text-gray-600">Sign in to your RubberEco account</p>
           </div>
 
+          {/* Language selection hidden on login; default is enforced to English */}
+
           <form onSubmit={handleLogin} className="space-y-6">
             {/* Email Field */}
             <motion.div
@@ -417,7 +423,7 @@ const Login = () => {
               transition={{ delay: 0.1 }}
             >
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
+                Email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

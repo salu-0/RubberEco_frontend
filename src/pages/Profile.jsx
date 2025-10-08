@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
+import LanguageSelector from '../components/LanguageSelector';
 import AssignedWorkersModal from '../components/AssignedWorkers/AssignedWorkersModal';
 import {
   User,
@@ -50,6 +52,7 @@ import TreeLotListing from '../components/Farmer/TreeLotListing';
 import NurseryBookings from '../components/Farmer/NurseryBookings';
 
 const Profile = () => {
+  const { t } = useLanguage();
   const [user, setUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
@@ -1142,6 +1145,21 @@ const Profile = () => {
                           </div>
                           <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-red-600" />
                         </button>
+                      </div>
+
+                      {/* Language Settings */}
+                      <div className="mb-4">
+                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                          {t('settings.language')}
+                        </h3>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <LanguageSelector 
+                            variant="buttons" 
+                            size="small"
+                            showFlags={true}
+                            showNativeNames={true}
+                          />
+                        </div>
                       </div>
                     </nav>
                   </motion.div>

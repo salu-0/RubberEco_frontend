@@ -11,28 +11,31 @@ import {
   DollarSign
 } from 'lucide-react';
 
+import { useLanguage } from '../../context/LanguageContext';
+
 const RecruitmentBanner = ({ darkMode = false, compact = false }) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const catchyQuotes = [
-    "🌟 Good Jobs Available - Join Our Team Today!",
-    "🚀 Work With Kerala's Best Rubber Company!",
-    "💼 Steady Work, Good Pay, Bright Future!",
-    "🌱 Help Farmers, Earn Well, Grow Together!",
-    "⭐ Join RubberEco Family - We Care For You!"
+    t('recruitment.catchy1'),
+    t('recruitment.catchy2'),
+    t('recruitment.catchy3'),
+    t('recruitment.catchy4'),
+    t('recruitment.catchy5')
   ];
 
   const quickStats = [
-    { icon: Users, label: "500+ Happy Employees", value: "500+" },
-    { icon: Award, label: "Industry Leader", value: "#1" },
-    { icon: DollarSign, label: "Competitive Pay", value: "₹35K+" },
-    { icon: Star, label: "Employee Rating", value: "4.8/5" }
+    { icon: Users, label: t('recruitment.stats.happyEmployees'), value: "500+" },
+    { icon: Award, label: t('recruitment.stats.industryLeader'), value: "#1" },
+    { icon: DollarSign, label: t('recruitment.stats.competitivePay'), value: "₹35K+" },
+    { icon: Star, label: t('recruitment.stats.employeeRating'), value: "4.8/5" }
   ];
 
   const urgentPositions = [
-    "Field Tapping Specialists",
-    "Quality Control Inspectors",
-    "Trainers",
-    "Collection Supervisors"
+    t('recruitment.positions.fieldTappingSpecialists'),
+    t('recruitment.positions.qualityControlInspectors'),
+    t('recruitment.positions.trainers'),
+    t('recruitment.positions.collectionSupervisors')
   ];
 
   if (compact) {
@@ -50,13 +53,13 @@ const RecruitmentBanner = ({ darkMode = false, compact = false }) => {
             <div className="flex-1">
               <div className="flex items-center mb-2">
                 <Briefcase className="h-5 w-5 text-green-200 mr-2" />
-                <span className="text-green-200 text-sm font-medium">NOW HIRING</span>
+                <span className="text-green-200 text-sm font-medium">{t('recruitment.nowHiring')}</span>
               </div>
               <h3 className="text-xl font-bold text-white mb-2">
-                Work With Us - Good Jobs!
+                {t('recruitment.workWithUs')}
               </h3>
               <p className="text-green-100 text-sm mb-3">
-                Great opportunities in rubber farming work
+                {t('recruitment.greatOpportunities')}
               </p>
               <div className="flex flex-wrap gap-2 mb-4">
                 {urgentPositions.slice(0, 2).map((position, index) => (
@@ -75,7 +78,7 @@ const RecruitmentBanner = ({ darkMode = false, compact = false }) => {
               onClick={() => navigate('/join-as-staff')}
               className="px-6 py-3 bg-white text-green-700 font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2"
             >
-              <span>Apply Now</span>
+              <span>{t('recruitment.applyNow')}</span>
               <ArrowRight className="h-4 w-4" />
             </motion.button>
           </div>
@@ -114,13 +117,13 @@ const RecruitmentBanner = ({ darkMode = false, compact = false }) => {
                 <Users className="h-8 w-8 text-white" />
               </div>
               <div>
-                <h2 className="text-3xl font-bold text-white">Jobs Available!</h2>
-                <p className="text-green-100">Join Kerala's Best Rubber Company</p>
+                <h2 className="text-3xl font-bold text-white">{t('recruitment.title')}</h2>
+                <p className="text-green-100">{t('recruitment.subtitle')}</p>
               </div>
             </div>
             <div className="text-right">
               <div className="px-4 py-2 bg-yellow-400 text-yellow-900 rounded-full text-sm font-bold">
-                URGENT OPENINGS
+                {t('recruitment.urgentOpenings')}
               </div>
             </div>
           </div>
@@ -164,7 +167,7 @@ const RecruitmentBanner = ({ darkMode = false, compact = false }) => {
           {/* Left Column - Positions */}
           <div>
             <h3 className={`text-2xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              🔥 Jobs Available Now
+              🔥 {t('recruitment.jobsAvailableNow')}
             </h3>
             <div className="space-y-3">
               {urgentPositions.map((position, index) => (
@@ -182,7 +185,7 @@ const RecruitmentBanner = ({ darkMode = false, compact = false }) => {
                     </span>
                   </div>
                   <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full">
-                    URGENT
+                    {t('recruitment.urgent')}
                   </span>
                 </motion.div>
               ))}
@@ -192,16 +195,16 @@ const RecruitmentBanner = ({ darkMode = false, compact = false }) => {
           {/* Right Column - Benefits */}
           <div>
             <h3 className={`text-2xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              💎 Why Choose Us?
+              💎 {t('recruitment.whyChooseUs')}
             </h3>
             <div className="space-y-4">
               {[
-                "💰 Competitive salary up to ₹40,000/month",
-                "🏥 Complete health insurance coverage",
-                "📈 Career growth & skill development",
-                "🕐 Flexible working hours",
-                "🎯 Performance-based bonuses",
-                "🤝 Supportive work environment"
+                t('recruitment.benefits.b1'),
+                t('recruitment.benefits.b2'),
+                t('recruitment.benefits.b3'),
+                t('recruitment.benefits.b4'),
+                t('recruitment.benefits.b5'),
+                t('recruitment.benefits.b6')
               ].map((benefit, index) => (
                 <motion.div
                   key={benefit}
@@ -230,7 +233,7 @@ const RecruitmentBanner = ({ darkMode = false, compact = false }) => {
               className="px-8 py-4 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-2"
             >
               <Briefcase className="h-5 w-5" />
-              <span>Apply Now - Quick Process!</span>
+              <span>{t('recruitment.applyNowQuick')}</span>
               <ArrowRight className="h-5 w-5" />
             </motion.button>
             <motion.button
@@ -239,11 +242,11 @@ const RecruitmentBanner = ({ darkMode = false, compact = false }) => {
               onClick={() => navigate('/careers')}
               className={`px-8 py-4 border-2 ${darkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'} font-semibold rounded-full transition-all duration-300`}
             >
-              Learn More About Careers
+              {t('recruitment.learnMoreCareers')}
             </motion.button>
           </div>
           <p className={`mt-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-            🚀 Join 500+ professionals already building their careers with us!
+            {t('recruitment.joinTagline')}
           </p>
         </div>
       </div>

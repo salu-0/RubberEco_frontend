@@ -15,8 +15,11 @@ import {
 } from 'lucide-react';
 import { supabase } from "../../supabaseClient"; 
 import Navbar from '../Navbar';
+import { useEffect } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const Register = () => {
+  const { /* keep global language unchanged */ } = useLanguage();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -31,6 +34,8 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
   const navigate = useNavigate();
+
+  // Keep global language (navbar) unchanged; form uses English strings below
 
   // Enhanced validation functions
   const validateName = (name) => {

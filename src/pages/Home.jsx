@@ -8,6 +8,7 @@ import {
   Clock, Users, Award, TrendingUp
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import { useLanguage } from '../context/LanguageContext';
 import RecruitmentBanner from '../components/Recruitment/RecruitmentBanner';
 import RubberAIChatbot from '../components/RubberAIChatbot';
 import plantImage from '../assets/images/img6.jpeg';
@@ -31,6 +32,7 @@ import img7 from '../assets/images/img7.jpeg';
 
 
 const Hero = () => {
+  const { t } = useLanguage();
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image */}
@@ -180,7 +182,7 @@ const Hero = () => {
               >
                 <Zap className="w-4 h-4 mr-2" />
               </motion.div>
-              AI-Powered Plantation Management
+              {t('home.badge')}
             </motion.div>
 
             <h1 className="text-5xl lg:text-7xl font-bold leading-tight mb-6">
@@ -219,8 +221,7 @@ const Hero = () => {
               animate={{ opacity: 1 }}
               transition={{ delay: 1.0, duration: 1 }}
             >
-              Maximize yield, optimize operations, and increase profitability with our
-              cutting-edge digital platform designed specifically for rubber plantation management.
+              {t('home.subtitle')}
             </motion.p>
 
             {/* Animated CTA Button */}
@@ -238,6 +239,7 @@ const Hero = () => {
 
 export default function Home() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   // Initialize navigation guard to redirect admin users
   const { getUserData } = useNavigationGuard({
@@ -316,10 +318,10 @@ export default function Home() {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              🌿 RubberEco Key Features
+              🌿 {t('home.featuresTitle')}
             </h2>
             <p className="text-xl text-gray-600">
-              Comprehensive platform connecting all stakeholders in the rubber industry
+              {t('home.featuresSubtitle')}
             </p>
           </motion.div>
 
@@ -355,7 +357,7 @@ export default function Home() {
                     whileInView={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 }}
                   >
-                    1. Integrated Service System
+                    {t('home.features.f1Title')}
                   </motion.h3>
                   <motion.p
                     className="text-gray-700 mb-4"
@@ -363,7 +365,7 @@ export default function Home() {
                     whileInView={{ opacity: 1 }}
                     transition={{ delay: 0.4 }}
                   >
-                    One-stop platform for farmers, staff, brokers, and admins.
+                    {t('home.features.f1P1')}
                   </motion.p>
                   <motion.p
                     className="text-gray-600"
@@ -371,7 +373,7 @@ export default function Home() {
                     whileInView={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
                   >
-                    Connects all stakeholders for efficient communication and coordination.
+                    {t('home.features.f1P2')}
                   </motion.p>
 
                   {/* Hover arrow */}
@@ -381,7 +383,7 @@ export default function Home() {
                     whileInView={{ x: 0 }}
                     transition={{ delay: 0.6 }}
                   >
-                    <span className="text-sm font-medium mr-2">Learn more</span>
+                    <span className="text-sm font-medium mr-2">{t('home.features.learnMore')}</span>
                     <ArrowRight className="w-4 h-4" />
                   </motion.div>
                 </div>
@@ -419,7 +421,7 @@ export default function Home() {
                     whileInView={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.4 }}
                   >
-                    2. Tapping & Collection Management
+                    {t('home.features.f2Title')}
                   </motion.h3>
                   <motion.p
                     className="text-gray-700 mb-2"
@@ -427,7 +429,7 @@ export default function Home() {
                     whileInView={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
                   >
-                    Farmers can request tapping services.
+                    {t('home.features.f2P1')}
                   </motion.p>
                   <motion.p
                     className="text-gray-600"
@@ -435,7 +437,7 @@ export default function Home() {
                     whileInView={{ opacity: 1 }}
                     transition={{ delay: 0.6 }}
                   >
-                    Staff can assign rubber tappers and update latex/sheet collection in real-time.
+                    {t('home.features.f2P2')}
                   </motion.p>
 
                   {/* Hover arrow */}
@@ -445,7 +447,7 @@ export default function Home() {
                     whileInView={{ x: 0 }}
                     transition={{ delay: 0.7 }}
                   >
-                    <span className="text-sm font-medium mr-2">Learn more</span>
+                    <span className="text-sm font-medium mr-2">{t('home.features.learnMore')}</span>
                     <ArrowRight className="w-4 h-4" />
                   </motion.div>
                 </div>
@@ -483,7 +485,7 @@ export default function Home() {
                     whileInView={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.5 }}
                   >
-                    3. Market Price & Training Info
+                    {t('home.features.f3Title')}
                   </motion.h3>
                   <motion.p
                     className="text-gray-700 mb-2"
@@ -491,7 +493,7 @@ export default function Home() {
                     whileInView={{ opacity: 1 }}
                     transition={{ delay: 0.6 }}
                   >
-                    Farmers can view daily updated market prices.
+                    {t('home.features.f3P1')}
                   </motion.p>
                   <motion.p
                     className="text-gray-600"
@@ -499,7 +501,7 @@ export default function Home() {
                     whileInView={{ opacity: 1 }}
                     transition={{ delay: 0.7 }}
                   >
-                    Offers registration and certification for tapping training programs.
+                    {t('home.features.f3P2')}
                   </motion.p>
 
                   {/* Hover arrow */}
@@ -509,7 +511,7 @@ export default function Home() {
                     whileInView={{ x: 0 }}
                     transition={{ delay: 0.8 }}
                   >
-                    <span className="text-sm font-medium mr-2">Learn more</span>
+                    <span className="text-sm font-medium mr-2">{t('home.features.learnMore')}</span>
                     <ArrowRight className="w-4 h-4" />
                   </motion.div>
                 </div>
@@ -547,7 +549,7 @@ export default function Home() {
                     whileInView={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.6 }}
                   >
-                    4. Smart Skilled Worker Requests
+                    {t('home.features.f4Title')}
                   </motion.h3>
                   <motion.p
                     className="text-gray-700 mb-2"
@@ -555,7 +557,7 @@ export default function Home() {
                     whileInView={{ opacity: 1 }}
                     transition={{ delay: 0.7 }}
                   >
-                    Request services like fertilizer application or rain guard installation.
+                    {t('home.features.f4P1')}
                   </motion.p>
                   <motion.p
                     className="text-gray-600"
@@ -563,7 +565,7 @@ export default function Home() {
                     whileInView={{ opacity: 1 }}
                     transition={{ delay: 0.8 }}
                   >
-                    Skilled workers are assigned automatically based on availability and region.
+                    {t('home.features.f4P2')}
                   </motion.p>
 
                   {/* Hover arrow */}
@@ -573,7 +575,7 @@ export default function Home() {
                     whileInView={{ x: 0 }}
                     transition={{ delay: 0.9 }}
                   >
-                    <span className="text-sm font-medium mr-2">Learn more</span>
+                    <span className="text-sm font-medium mr-2">{t('home.features.learnMore')}</span>
                     <ArrowRight className="w-4 h-4" />
                   </motion.div>
                 </div>
@@ -596,10 +598,10 @@ export default function Home() {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              🌿 Our Plantation Gallery
+              🌿 {t('home.galleryTitle')}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Explore the beauty and efficiency of modern rubber plantation management through our comprehensive visual showcase
+              {t('home.gallerySubtitle')}
             </p>
           </motion.div>
 
@@ -623,8 +625,8 @@ export default function Home() {
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <div className="absolute bottom-4 left-4 text-white">
-                  <h3 className="text-lg font-semibold">Plantation Overview</h3>
-                  <p className="text-sm opacity-90">Modern rubber tree cultivation</p>
+                  <h3 className="text-lg font-semibold">{t('home.gallery.g1Title')}</h3>
+                  <p className="text-sm opacity-90">{t('home.gallery.g1P')}</p>
                 </div>
               </div>
             </motion.div>
@@ -647,8 +649,8 @@ export default function Home() {
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <div className="absolute bottom-4 left-4 text-white">
-                  <h3 className="text-lg font-semibold">Tapping Excellence</h3>
-                  <p className="text-sm opacity-90">Professional latex collection</p>
+                  <h3 className="text-lg font-semibold">{t('home.gallery.g2Title')}</h3>
+                  <p className="text-sm opacity-90">{t('home.gallery.g2P')}</p>
                 </div>
               </div>
             </motion.div>
@@ -671,8 +673,8 @@ export default function Home() {
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <div className="absolute bottom-4 left-4 text-white">
-                  <h3 className="text-lg font-semibold">Sustainable Practices</h3>
-                  <p className="text-sm opacity-90">Eco-friendly cultivation methods</p>
+                  <h3 className="text-lg font-semibold">{t('home.gallery.g3Title')}</h3>
+                  <p className="text-sm opacity-90">{t('home.gallery.g3P')}</p>
                 </div>
               </div>
             </motion.div>
@@ -828,9 +830,9 @@ export default function Home() {
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl font-bold mb-4">Get in Touch</h2>
+            <h2 className="text-4xl font-bold mb-4">{t('home.contact.title')}</h2>
             <p className="text-xl text-gray-300">
-              Ready to revolutionize your rubber plantation management? Contact us today!
+              {t('home.contact.subtitle')}
             </p>
           </motion.div>
 
@@ -842,7 +844,7 @@ export default function Home() {
               transition={{ duration: 0.8 }}
               viewport={{ once: true }}
             >
-              <h3 className="text-2xl font-bold mb-8">Contact Information</h3>
+              <h3 className="text-2xl font-bold mb-8">{t('home.contact.contactInfo')}</h3>
 
               <div className="space-y-6">
                 <motion.div
@@ -854,7 +856,7 @@ export default function Home() {
                     <Mail className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="font-semibold">Email</p>
+                    <p className="font-semibold">{t('home.contact.email')}</p>
                     <p className="text-gray-300">info@rubbereco.com</p>
                   </div>
                 </motion.div>
@@ -868,7 +870,7 @@ export default function Home() {
                     <Phone className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="font-semibold">Phone</p>
+                    <p className="font-semibold">{t('home.contact.phone')}</p>
                     <p className="text-gray-300">+1 (555) 123-4567</p>
                   </div>
                 </motion.div>
@@ -882,7 +884,7 @@ export default function Home() {
                     <MapPin className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="font-semibold">Address</p>
+                    <p className="font-semibold">{t('home.contact.address')}</p>
                     <p className="text-gray-300">123 Plantation Ave, Rubber City, RC 12345</p>
                   </div>
                 </motion.div>
@@ -896,7 +898,7 @@ export default function Home() {
                     <Clock className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="font-semibold">Business Hours</p>
+                    <p className="font-semibold">{t('home.contact.businessHours')}</p>
                     <p className="text-gray-300">Mon - Fri: 9:00 AM - 6:00 PM</p>
                   </div>
                 </motion.div>
@@ -910,7 +912,7 @@ export default function Home() {
               transition={{ duration: 0.8 }}
               viewport={{ once: true }}
             >
-              <h3 className="text-2xl font-bold mb-8">Why Choose RubberEco?</h3>
+              <h3 className="text-2xl font-bold mb-8">{t('home.contact.whyChoose')}</h3>
 
               <div className="grid grid-cols-2 gap-6">
                 <motion.div
@@ -920,7 +922,7 @@ export default function Home() {
                 >
                   <Users className="w-8 h-8 mx-auto mb-3 text-primary-400" />
                   <p className="text-2xl font-bold">1000+</p>
-                  <p className="text-gray-300">Active Users</p>
+                  <p className="text-gray-300">{t('home.contact.activeUsers')}</p>
                 </motion.div>
 
                 <motion.div
@@ -930,7 +932,7 @@ export default function Home() {
                 >
                   <Award className="w-8 h-8 mx-auto mb-3 text-accent-400" />
                   <p className="text-2xl font-bold">99%</p>
-                  <p className="text-gray-300">Satisfaction</p>
+                  <p className="text-gray-300">{t('home.contact.satisfaction')}</p>
                 </motion.div>
 
                 <motion.div
@@ -940,7 +942,7 @@ export default function Home() {
                 >
                   <TrendingUp className="w-8 h-8 mx-auto mb-3 text-secondary-400" />
                   <p className="text-2xl font-bold">35%</p>
-                  <p className="text-gray-300">Yield Increase</p>
+                  <p className="text-gray-300">{t('home.contact.yieldIncrease')}</p>
                 </motion.div>
 
                 <motion.div
@@ -950,7 +952,7 @@ export default function Home() {
                 >
                   <Clock className="w-8 h-8 mx-auto mb-3 text-primary-400" />
                   <p className="text-2xl font-bold">24/7</p>
-                  <p className="text-gray-300">Support</p>
+                  <p className="text-gray-300">{t('home.contact.support')}</p>
                 </motion.div>
               </div>
             </motion.div>

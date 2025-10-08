@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useCart } from '../context/CartContext';
+import { useLanguage } from '../context/LanguageContext';
+import LanguageSelector from './LanguageSelector';
 import {
   Menu,
   X,
@@ -13,6 +15,7 @@ import {
 import { useNavigationGuard } from '../hooks/useNavigationGuard';
 
 const Navbar = ({ transparent = false, fixed = true }) => {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [user, setUser] = useState(null);
@@ -97,12 +100,12 @@ const Navbar = ({ transparent = false, fixed = true }) => {
 
     // Regular users and non-authenticated users get full navigation
     const baseItems = [
-      { name: 'Home', path: '/' },
-      { name: 'Features', path: '/', scrollTo: 'features' },
-      { name: 'Training', path: '/training' },
-      { name: 'Markets', path: '/markets' },
-      { name: 'Nursery', path: '/nursery' },
-      { name: 'Shop', path: '/shop' }
+      { name: t('navigation.home'), path: '/' },
+      { name: t('navigation.features'), path: '/', scrollTo: 'features' },
+      { name: t('navigation.training'), path: '/training' },
+      { name: t('navigation.markets'), path: '/markets' },
+      { name: t('navigation.nursery'), path: '/nursery' },
+      { name: t('navigation.shop'), path: '/shop' }
     ];
 
     return baseItems;
@@ -180,7 +183,7 @@ const Navbar = ({ transparent = false, fixed = true }) => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <motion.div 
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-2 pr-1 md:pr-2"
             whileHover={{ scale: 1.05 }}
           >
             <Link to="/" className="flex items-center space-x-2">
@@ -198,7 +201,7 @@ const Navbar = ({ transparent = false, fixed = true }) => {
           </motion.div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-8 ml-3 lg:ml-6">
             {navItems.map((item) => (
               <motion.div key={item.name}>
                 <Link
@@ -223,11 +226,16 @@ const Navbar = ({ transparent = false, fixed = true }) => {
             ))}
             {user && (
               <Link to="/cart" className={`relative font-medium ${getTextClasses()} ${getHoverClasses()}`}>
-                Cart
+                {t('navigation.cart')}
                 {items?.length > 0 && (
                   <span className="ml-2 inline-flex items-center justify-center text-xs px-1.5 min-w-5 h-5 rounded-full bg-indigo-600 text-white">{items.length}</span>
                 )}
               </Link>
+            )}
+            {location.pathname !== '/login' && location.pathname !== '/register' && (
+              <div className="ml-4">
+                <LanguageSelector variant="dropdown" size="small" />
+              </div>
             )}
             
             {/* Auth Buttons / User Menu */}
@@ -237,9 +245,9 @@ const Navbar = ({ transparent = false, fixed = true }) => {
                 <div className="relative">
                   <button
                     onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="flex items-center space-x-3 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 hover:bg-white/30 transition-all duration-300"
+                    className="flex items-center space-x-3 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 hover:bg-white/30 transition-all duration-300 max-w-[220px]"
                   >
-                    <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white text-sm font-bold overflow-hidden">
+                    <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white text-sm font-bold overflow-hidden flex-shrink-0">
                       {user.profileImage ? (
                         <img
                           src={user.profileImage}
@@ -250,7 +258,7 @@ const Navbar = ({ transparent = false, fixed = true }) => {
                         user.name ? user.name.charAt(0).toUpperCase() : 'U'
                       )}
                     </div>
-                    <span className="text-gray-700 font-medium hidden sm:block">{user.name}</span>
+                    <span className="text-gray-700 font-medium hidden sm:block whitespace-nowrap truncate max-w-[120px]">{user.name}</span>
                     <ChevronDown className="h-4 w-4 text-gray-600" />
                   </button>
 
@@ -293,7 +301,7 @@ const Navbar = ({ transparent = false, fixed = true }) => {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      Login
+                      {t('navigation.login')}
                     </motion.button>
                   </Link>
                 )
@@ -302,7 +310,7 @@ const Navbar = ({ transparent = false, fixed = true }) => {
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="md:hidden ml-1">
             <button
               onClick={() => setIsOpen(!isOpen)}
               className={`transition-colors ${getTextClasses()} ${getHoverClasses()}`}
@@ -338,7 +346,12 @@ const Navbar = ({ transparent = false, fixed = true }) => {
                 </Link>
               ))}
               {user && (
-                <Link to="/cart" onClick={() => setIsOpen(false)} className="font-medium text-gray-700 hover:text-primary-600 py-2">Cart {items?.length ? `(${items.length})` : ''}</Link>
+                <Link to="/cart" onClick={() => setIsOpen(false)} className="font-medium text-gray-700 hover:text-primary-600 py-2">{t('navigation.cart')} {items?.length ? `(${items.length})` : ''}</Link>
+              )}
+              {location.pathname !== '/login' && location.pathname !== '/register' && (
+                <div className="pt-2">
+                  <LanguageSelector variant="dropdown" size="small" />
+                </div>
               )}
               
               <div className="border-t border-gray-200 pt-4 space-y-3">
@@ -368,7 +381,7 @@ const Navbar = ({ transparent = false, fixed = true }) => {
                       className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 font-medium transition-colors py-2"
                     >
                       <User className="h-4 w-4" />
-                      <span>Profile</span>
+                        <span>{t('navigation.profile')}</span>
                     </Link>
                     <button
                       onClick={() => {
@@ -378,7 +391,7 @@ const Navbar = ({ transparent = false, fixed = true }) => {
                       className="flex items-center space-x-2 text-red-600 hover:text-red-700 font-medium transition-colors py-2 w-full text-left"
                     >
                       <LogOut className="h-4 w-4" />
-                      <span>Logout</span>
+                      <span>{t('navigation.logout')}</span>
                     </button>
                   </>
                 ) : (
@@ -386,7 +399,7 @@ const Navbar = ({ transparent = false, fixed = true }) => {
                   location.pathname !== '/login' && (
                     <Link to="/login" onClick={() => setIsOpen(false)}>
                       <button className="w-full bg-gradient-to-r from-primary-500 to-primary-600 text-white px-6 py-2 rounded-full font-medium">
-                        Login
+                        {t('navigation.login')}
                       </button>
                     </Link>
                   )
