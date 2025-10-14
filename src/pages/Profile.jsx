@@ -1147,20 +1147,7 @@ const Profile = () => {
                         </button>
                       </div>
 
-                      {/* Language Settings */}
-                      <div className="mb-4">
-                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                          {t('settings.language')}
-                        </h3>
-                        <div className="p-3 bg-gray-50 rounded-lg">
-                          <LanguageSelector 
-                            variant="buttons" 
-                            size="small"
-                            showFlags={true}
-                            showNativeNames={true}
-                          />
-                        </div>
-                      </div>
+                      {/* Language Settings removed as per request */}
                     </nav>
                   </motion.div>
 

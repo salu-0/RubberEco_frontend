@@ -29,8 +29,10 @@ import {
   MoreVertical
 } from 'lucide-react';
 import { isRequired, numericValidator } from '../../utils/validation';
+import { useLanguage } from '../../context/LanguageContext';
 
 const TapperRequest = ({ isOpen, onClose }) => {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('new-request');
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
@@ -656,8 +658,8 @@ const TapperRequest = ({ isOpen, onClose }) => {
               <Users className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Tapper Services</h2>
-              <p className="text-green-100">Request and manage rubber tapping services</p>
+              <h2 className="text-xl font-bold text-white">{t('tapperRequest.title', 'Tapper Services')}</h2>
+              <p className="text-green-100">{t('tapperRequest.subtitle', 'Request and manage rubber tapping services')}</p>
             </div>
           </div>
           <button
@@ -714,8 +716,8 @@ const TapperRequest = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Content */}
-        <div className="p-6 max-h-[calc(90vh-200px)] overflow-y-auto">
+  {/* Content */}
+  <div className="p-6 max-h-[calc(90vh-200px)] overflow-y-auto">
           {activeTab === 'new-request' && (
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -727,12 +729,12 @@ const TapperRequest = ({ isOpen, onClose }) => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <TreePine className="h-5 w-5 mr-2 text-green-500" />
-                    Farm Details
+                    {t('tapperRequest.farmDetails', 'Farm Details')}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Farm Location *
+                        {t('tapperRequest.farmLocation', 'Farm Location')} *
                       </label>
                       <div className="relative">
                         <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -742,17 +744,17 @@ const TapperRequest = ({ isOpen, onClose }) => {
                           value={requestForm.farmLocation}
                           onChange={(e) => handleInputChange('farmLocation', e.target.value)}
                           className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                          placeholder="Enter your farm location (e.g., Village, District, State)"
+                          placeholder={t('tapperRequest.farmLocationPlaceholder', 'Enter your farm location (e.g., Village, District, State)')}
                         />
                       </div>
                       <p className="text-xs text-gray-500 mt-2">
-                        💡 Be as specific as possible (e.g., "123 Farm Road, Village Name, District, State")
+                        💡 {t('tapperRequest.farmLocationHint', 'Be as specific as possible (e.g., "123 Farm Road, Village Name, District, State")')}
                       </p>
                     </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Farm Size *
+                        {t('tapperRequest.farmSize', 'Farm Size')} *
                       </label>
                       <input
                         type="number"
@@ -760,7 +762,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
                         value={requestForm.farmSize}
                         onChange={(e) => handleInputChange('farmSize', e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        placeholder="e.g., 5"
+                        placeholder={t('tapperRequest.farmSizePlaceholder', 'e.g., 5')}
                         min="0.1"
                         max="500"
                         step="0.1"
@@ -772,7 +774,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Number of Trees *
+                        {t('tapperRequest.numberOfTrees', 'Number of Trees')} *
                       </label>
                       <input
                         type="number"
@@ -780,7 +782,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
                         value={requestForm.numberOfTrees}
                         onChange={(e) => handleInputChange('numberOfTrees', e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        placeholder="Enter number of trees"
+                        placeholder={t('tapperRequest.numberOfTreesPlaceholder', 'Enter number of trees')}
                         min="1"
                         max="1000"
                       />
@@ -791,7 +793,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Tapping Type *
+                        {t('tapperRequest.tappingType', 'Tapping Type')} *
                       </label>
                       <select
                         required
@@ -799,10 +801,10 @@ const TapperRequest = ({ isOpen, onClose }) => {
                         onChange={(e) => handleInputChange('tappingType', e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       >
-                        <option value="daily">Daily Tapping</option>
-                        <option value="alternate_day">Alternate Day Tapping</option>
-                        <option value="weekly">Weekly Tapping</option>
-                        <option value="slaughter">Slaughter Tapping</option>
+                        <option value="daily">{t('tapperRequest.tappingTypeDaily', 'Daily Tapping')}</option>
+                        <option value="alternate_day">{t('tapperRequest.tappingTypeAlternateDay', 'Alternate Day Tapping')}</option>
+                        <option value="weekly">{t('tapperRequest.tappingTypeWeekly', 'Weekly Tapping')}</option>
+                        <option value="slaughter">{t('tapperRequest.tappingTypeSlaughter', 'Slaughter Tapping')}</option>
                       </select>
                     </div>
                   </div>
@@ -812,12 +814,12 @@ const TapperRequest = ({ isOpen, onClose }) => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <Calendar className="h-5 w-5 mr-2 text-green-500" />
-                    Schedule Details
+                    {t('tapperRequest.scheduleDetails', 'Schedule Details')}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Start Date *
+                        {t('tapperRequest.startDate', 'Start Date')} *
                       </label>
                       <input
                         type="date"
@@ -830,17 +832,17 @@ const TapperRequest = ({ isOpen, onClose }) => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Preferred Time
+                        {t('tapperRequest.preferredTime', 'Preferred Time')}
                       </label>
                       <select
                         value={requestForm.preferredTime}
                         onChange={(e) => handleInputChange('preferredTime', e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       >
-                        <option value="early_morning">Early Morning (4 AM - 6 AM)</option>
-                        <option value="morning">Morning (6 AM - 10 AM)</option>
-                        <option value="afternoon">Afternoon (2 PM - 6 PM)</option>
-                        <option value="evening">Evening (6 PM - 8 PM)</option>
+                        <option value="early_morning">{t('tapperRequest.preferredTimeEarlyMorning', 'Early Morning (4 AM - 6 AM)')}</option>
+                        <option value="morning">{t('tapperRequest.preferredTimeMorning', 'Morning (6 AM - 10 AM)')}</option>
+                        <option value="afternoon">{t('tapperRequest.preferredTimeAfternoon', 'Afternoon (2 PM - 6 PM)')}</option>
+                        <option value="evening">{t('tapperRequest.preferredTimeEvening', 'Evening (6 PM - 8 PM)')}</option>
                       </select>
                     </div>
                   </div>
@@ -850,27 +852,27 @@ const TapperRequest = ({ isOpen, onClose }) => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <FileText className="h-5 w-5 mr-2 text-green-500" />
-                    Additional Details
+                    {t('tapperRequest.additionalDetails', 'Additional Details')}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Urgency Level
+                        {t('tapperRequest.urgencyLevel', 'Urgency Level')}
                       </label>
                       <select
                         value={requestForm.urgency}
                         onChange={(e) => handleInputChange('urgency', e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       >
-                        <option value="low">Low - Can wait</option>
-                        <option value="normal">Normal - Standard timing</option>
-                        <option value="high">High - Urgent</option>
+                        <option value="low">{t('tapperRequest.urgencyLow', 'Low - Can wait')}</option>
+                        <option value="normal">{t('tapperRequest.urgencyNormal', 'Normal - Standard timing')}</option>
+                        <option value="high">{t('tapperRequest.urgencyHigh', 'High - Urgent')}</option>
                       </select>
                     </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Rate Per Tree *
+                        {t('tapperRequest.ratePerTree', 'Rate Per Tree')} *
                       </label>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -880,7 +882,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
                           value={requestForm.budgetPerTree}
                           onChange={(e) => handleInputChange('budgetPerTree', e.target.value)}
                           className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                          placeholder="e.g., 3"
+                          placeholder={t('tapperRequest.ratePerTreePlaceholder', 'e.g., 3')}
                           min="1"
                           max="100"
                           step="0.5"
@@ -889,20 +891,20 @@ const TapperRequest = ({ isOpen, onClose }) => {
                           <p className="text-xs text-red-600 mt-1">{formErrors.budgetPerTree}</p>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">Amount in ₹ per tree for cutting/tapping service</p>
+                      <p className="text-xs text-gray-500 mt-1">{t('tapperRequest.ratePerTreeHint', 'Amount in ₹ per tree for cutting/tapping service')}</p>
                     </div>
                   </div>
                   
                   <div className="mt-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Special Requirements
+                      {t('tapperRequest.specialRequirements', 'Special Requirements')}
                     </label>
                     <textarea
                       value={requestForm.specialRequirements}
                       onChange={(e) => handleInputChange('specialRequirements', e.target.value)}
                       rows={3}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="Any special requirements or instructions..."
+                      placeholder={t('tapperRequest.specialRequirementsPlaceholder', 'Any special requirements or instructions...')}
                     />
                   </div>
                 </div>
@@ -1212,7 +1214,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
             </motion.div>
           )}
         </div>
-      </motion.div>
+  </motion.div>
 
       {/* Request Details Modal */}
       {showRequestDetails && selectedRequest && (
@@ -1674,355 +1676,19 @@ const TapperRequest = ({ isOpen, onClose }) => {
                       }
                     })
                     .map((application, index) => (
-                    <motion.div
-                      key={application._id}
-                      className="bg-gray-50 rounded-xl p-6 border border-gray-200"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-3">
-                            <div className="p-2 rounded-lg bg-blue-100">
-                              <User className="h-5 w-5 text-blue-600" />
-                            </div>
-                            <div>
-                              <h3 className="text-lg font-semibold text-gray-900">
-                                {application.staffName || application.staffProfile?.name || 'Staff Member'}
-                              </h3>
-                              <p className="text-sm text-gray-600 capitalize">
-                                {application.staffRole || application.staffProfile?.role || 'Staff'}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div className="space-y-2">
-                              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                <Mail className="h-4 w-4" />
-                                <span>{application.staffEmail || application.staffProfile?.email || 'Email not provided'}</span>
-                              </div>
-                              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                <Phone className="h-4 w-4" />
-                                <span>{application.staffPhone || application.staffProfile?.phone || 'Phone not provided'}</span>
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                <Calendar className="h-4 w-4" />
-                                <span>Applied: {new Date(application.submittedAt).toLocaleDateString()}</span>
-                              </div>
-                              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                <Star className="h-4 w-4" />
-                                <span>Status: {application.status}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Staff's Proposed Terms - Prominent Display */}
-                          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-4 mb-4">
-                            <h4 className="font-semibold text-blue-900 mb-3 text-lg">📋 Staff's Proposed Terms</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {/* Rate Information */}
-                              <div className="bg-white p-3 rounded-lg border border-blue-200">
-                                <h5 className="font-medium text-blue-900 mb-2">💰 Rate & Pricing</h5>
-                                <div className="space-y-2 text-sm">
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">Rate per tree:</span>
-                                    <span className="font-bold text-blue-900">
-                                      ₹{typeof application.proposedRate === 'object' ? 
-                                        (application.proposedRate.amount || application.proposedRate.rate) : 
-                                        application.proposedRate || 'Not specified'}
-                                    </span>
-                                  </div>
-                                  {application.proposedTreeCount && (
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Tree count:</span>
-                                      <span className="font-medium text-blue-900">{application.proposedTreeCount}</span>
-                                    </div>
-                                  )}
-                                  {typeof application.proposedRate === 'object' && (
-                                    <>
-                                      {application.proposedRate.includesEquipment && (
-                                        <div className="text-green-700 text-xs">✅ Includes equipment</div>
-                                      )}
-                                      {application.proposedRate.includesTransport && (
-                                        <div className="text-green-700 text-xs">✅ Includes transport</div>
-                                      )}
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Experience & Availability */}
-                              <div className="bg-white p-3 rounded-lg border border-blue-200">
-                                <h5 className="font-medium text-blue-900 mb-2">👨‍🌾 Experience & Availability</h5>
-                                <div className="space-y-2 text-sm">
-                                  {application.experience?.yearsOfExperience && (
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Experience:</span>
-                                      <span className="font-medium text-blue-900">{application.experience.yearsOfExperience} years</span>
-                                    </div>
-                                  )}
-                                  {application.availability && (
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Availability:</span>
-                                      <span className="font-medium text-blue-900">
-                                        {application.availability.startDate ? 
-                                          new Date(application.availability.startDate).toLocaleDateString() : 
-                                          'Flexible'}
-                                      </span>
-                                    </div>
-                                  )}
-                                  {application.experience?.skills && application.experience.skills.length > 0 && (
-                                    <div className="text-xs text-gray-600">
-                                      Skills: {application.experience.skills.slice(0, 3).join(', ')}
-                                      {application.experience.skills.length > 3 && '...'}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Staff's Message */}
-                            {application.coverLetter && (
-                              <div className="mt-3 bg-white p-3 rounded-lg border border-blue-200">
-                                <h5 className="font-medium text-blue-900 mb-2">💬 Staff's Message</h5>
-                                <p className="text-sm text-gray-700 italic">"{application.coverLetter}"</p>
-                              </div>
-                            )}
-                            {application.negotiation?.currentProposal && application.negotiation.currentProposal.proposedBy === 'staff' && (
-                              <div className="mt-2 flex justify-end">
-                                <button
-                                  onClick={() => handleEnhancedNegotiate(application)}
-                                  className="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white rounded-md text-sm flex items-center space-x-1"
-                                  title="View and respond to the staff's proposal"
-                                >
-                                  <MessageCircle className="h-3 w-3" />
-                                  <span>View Proposal</span>
-                                </button>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Application Details */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            {application.experience && (
-                              <div className="bg-white p-3 rounded-lg border">
-                                <h4 className="font-medium text-gray-900 mb-2 text-sm">Experience Details:</h4>
-                                <div className="space-y-1 text-xs text-gray-700">
-                                  {application.experience.yearsOfExperience && (
-                                    <div>• {application.experience.yearsOfExperience} years experience</div>
-                                  )}
-                                  {application.experience.previousWork && (
-                                    <div>• {application.experience.previousWork}</div>
-                                  )}
-                                  {application.experience.skills && application.experience.skills.length > 0 && (
-                                    <div>• Skills: {application.experience.skills.join(', ')}</div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-
-                            {application.location && (
-                              <div className="bg-white p-3 rounded-lg border">
-                                <h4 className="font-medium text-gray-900 mb-2 text-sm">Location & Logistics:</h4>
-                                <div className="text-xs text-gray-700">
-                                  {application.location.currentLocation && (
-                                    <div>• Location: {application.location.currentLocation}</div>
-                                  )}
-                                  {application.location.distanceFromFarm && (
-                                    <div>• Distance: {application.location.distanceFromFarm} km</div>
-                                  )}
-                                  {application.location.transportationMode && (
-                                    <div>• Transport: {application.location.transportationMode}</div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-
-                          {application.coverLetter && (
-                            <div className="mb-4">
-                              <h4 className="font-medium text-gray-900 mb-2">Cover Letter:</h4>
-                              <p className="text-sm text-gray-700 bg-white p-3 rounded-lg border">
-                                {application.coverLetter}
-                              </p>
-                            </div>
-                          )}
-
-                          {application.suitabilityReasons && application.suitabilityReasons.length > 0 && (
-                            <div className="mb-4">
-                              <h4 className="font-medium text-gray-900 mb-2">Why they're suitable:</h4>
-                              <div className="space-y-1">
-                                {application.suitabilityReasons.map((reason, idx) => (
-                                  <div key={idx} className="flex items-center space-x-2 text-sm text-gray-700">
-                                    <CheckCircle className="h-3 w-3 text-green-500" />
-                                    <span>{reason}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Negotiation Status */}
-                          <div className="mb-4">
-                            <h4 className="font-medium text-gray-900 mb-2">Negotiation Status:</h4>
-                            <div className="bg-white p-3 rounded-lg border">
-                              <div className="space-y-3 text-sm">
-                                {/* Application Status */}
-                                <div className="flex items-center justify-between">
-                                  <span className="text-gray-600">Application Status:</span>
-                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    application.status === 'submitted' ? 'bg-blue-100 text-blue-800' :
-                                    application.status === 'negotiating' ? 'bg-orange-100 text-orange-800' :
-                                    (application.status === 'agreed' || application.status === 'accepted') ? 'bg-green-100 text-green-800' :
-                                    'bg-gray-100 text-gray-800'
-                                  }`}>
-                                    {application.status}
-                                  </span>
-                                </div>
-
-                                {/* Staff's Initial Proposal */}
-                                {application.proposedRate && (
-                                  <div className="bg-blue-50 p-2 rounded border border-blue-200">
-                                    <div className="font-medium text-blue-900 mb-1">Staff's Initial Proposal:</div>
-                                    <div className="text-xs text-blue-800">
-                                      <div>• Rate: ₹{typeof application.proposedRate === 'object' ? 
-                                        (application.proposedRate.amount || application.proposedRate.rate) : 
-                                        application.proposedRate} per tree</div>
-                                      {application.proposedTreeCount && (
-                                        <div>• Tree Count: {application.proposedTreeCount}</div>
-                                      )}
-                                      {application.coverLetter && (
-                                        <div>• Notes: {application.coverLetter.substring(0, 100)}...</div>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Current Negotiation Proposal */}
-                                {application.negotiation?.currentProposal && (
-                                  <div className="bg-orange-50 p-2 rounded border border-orange-200">
-                                    <div className="font-medium text-orange-900 mb-1">Current Proposal:</div>
-                                    <div className="text-xs text-orange-800">
-                                      <div>• Rate: ₹{application.negotiation.currentProposal.proposedRate} per tree</div>
-                                      <div>• Tree Count: {application.negotiation.currentProposal.proposedTreeCount}</div>
-                                      <div>• Proposed by: {application.negotiation.currentProposal.proposedBy}</div>
-                                      {application.negotiation.currentProposal.notes && (
-                                        <div>• Notes: {application.negotiation.currentProposal.notes}</div>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Negotiation History */}
-                                {application.negotiation?.history && application.negotiation.history.length > 0 && (
-                                  <div className="bg-gray-50 p-2 rounded border border-gray-200">
-                                    <div className="font-medium text-gray-900 mb-1">Negotiation History:</div>
-                                    <div className="text-xs text-gray-700 space-y-1">
-                                      {application.negotiation.history.slice(-3).map((proposal, idx) => (
-                                        <div key={idx} className="flex justify-between">
-                                          <span>{proposal.proposedBy}: ₹{proposal.proposedRate} ({proposal.proposedTreeCount} trees)</span>
-                                          <span className={`px-1 rounded text-xs ${
-                                            proposal.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                                            proposal.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                            proposal.status === 'countered' ? 'bg-yellow-100 text-yellow-800' :
-                                            'bg-blue-100 text-blue-800'
-                                          }`}>
-                                            {proposal.status}
-                                          </span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Final Agreement */}
-                                {application.negotiation?.finalAgreement && (
-                                  <div className="bg-green-50 p-2 rounded border border-green-200">
-                                    <div className="font-medium text-green-900 mb-1">✅ Final Agreement:</div>
-                                    <div className="text-xs text-green-800">
-                                      <div>• Agreed Rate: ₹{application.negotiation.finalAgreement.agreedRate} per tree</div>
-                                      <div>• Agreed Tree Count: {application.negotiation.finalAgreement.agreedTreeCount}</div>
-                                      <div>• Agreed on: {new Date(application.negotiation.finalAgreement.agreedAt).toLocaleDateString()}</div>
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* No Negotiation Started */}
-                                {!application.negotiation && application.status === 'submitted' && (
-                                  <div className="bg-gray-50 p-2 rounded border border-gray-200">
-                                    <div className="text-xs text-gray-600">
-                                      No negotiation started yet. Click "Start Negotiation" to begin.
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="ml-4 flex flex-col space-y-2">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            application.status === 'submitted' ? 'bg-blue-100 text-blue-800' :
-                            application.status === 'under_review' ? 'bg-yellow-100 text-yellow-800' :
-                            application.status === 'shortlisted' ? 'bg-purple-100 text-purple-800' :
-                            application.status === 'selected' ? 'bg-green-100 text-green-800' :
-                            application.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                            application.status === 'negotiating' ? 'bg-orange-100 text-orange-800' :
-                            (application.status === 'agreed' || application.status === 'accepted') ? 'bg-green-100 text-green-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {application.status === 'submitted' ? 'Submitted' :
-                             application.status === 'under_review' ? 'Under Review' :
-                             application.status === 'shortlisted' ? 'Shortlisted' :
-                             application.status === 'selected' ? 'Selected' :
-                             application.status === 'rejected' ? 'Rejected' :
-                             application.status === 'negotiating' ? 'Negotiating' :
-                             (application.status === 'agreed' || application.status === 'accepted') ? 'Accepted' :
-                             application.status}
-                          </span>
-                          
-                          {/* Primary Action - Negotiate */}
-                          <button 
-                            onClick={() => handleEnhancedNegotiate(application)}
-                            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors font-medium ${
-                              (application.status === 'agreed' || application.status === 'accepted')
-                                ? 'bg-green-600 text-white hover:bg-green-700' 
-                                : application.status === 'negotiating'
-                                ? 'bg-orange-600 text-white hover:bg-orange-700'
-                                : 'bg-blue-600 text-white hover:bg-blue-700'
-                            }`}
-                          >
-                            <MessageCircle className="h-4 w-4" />
-                            <span className="text-sm">
-                              {(application.status === 'agreed' || application.status === 'accepted') ? 'View Agreement' :
-                               (application.negotiation?.currentProposal && application.negotiation.currentProposal.proposedBy === 'staff') ? 'View Proposal' :
-                               application.status === 'negotiating' ? 'Continue Negotiation' :
-                               'Start Negotiation'}
-                            </span>
-                          </button>
-                          
-                          {/* Secondary Actions */}
-                          <div className="flex space-x-2">
-                            <button className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 transition-colors px-2 py-1 rounded text-xs hover:bg-blue-50">
-                              <Phone className="h-3 w-3" />
-                              <span>Call</span>
-                            </button>
-                            <button className="flex items-center space-x-1 text-green-600 hover:text-green-800 transition-colors px-2 py-1 rounded text-xs hover:bg-green-50">
-                              <Mail className="h-3 w-3" />
-                              <span>Email</span>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </div>
+                      <motion.div
+                        key={application._id}
+                        className="bg-gray-50 rounded-xl p-6 border border-gray-200"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                      >
+                        {/* ...existing code for each application... */}
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
           </motion.div>
         </div>
       )}

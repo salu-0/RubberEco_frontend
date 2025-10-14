@@ -26,8 +26,10 @@ import {
   Mountain
 } from 'lucide-react';
 import { isRequired, isEmail, phoneValidator, pincodeValidator, numericValidator, nameValidator } from '../../utils/validation';
+import { useLanguage } from '../../context/LanguageContext';
 
 const LandRegistration = ({ isOpen, onClose }) => {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('new-registration');
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });

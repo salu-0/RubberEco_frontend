@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 import { motion } from 'framer-motion';
 import {
   CreditCard,
@@ -20,6 +21,7 @@ import {
 } from 'lucide-react';
 
 const PaymentStatus = ({ isOpen, onClose }) => {
+  const { t } = useLanguage();
   const [payments, setPayments] = useState([]);
   const [filteredPayments, setFilteredPayments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -193,8 +195,8 @@ const PaymentStatus = ({ isOpen, onClose }) => {
               <CreditCard className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Payment Status</h2>
-              <p className="text-green-100">Track all your payments and transactions</p>
+              <h2 className="text-xl font-bold text-white">{t('paymentStatus.title', 'Payment Status')}</h2>
+              <p className="text-green-100">{t('paymentStatus.subtitle', 'Track all your payments and transactions')}</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
