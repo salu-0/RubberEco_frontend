@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useLanguage } from '../../context/LanguageContext';
+import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 const StaffRecruitment = ({ darkMode = false }) => {
-  const { t } = useLanguage();
+  const { t } = useTranslation();
   const [hoveredCard, setHoveredCard] = useState(null);
   const navigate = useNavigate();
 

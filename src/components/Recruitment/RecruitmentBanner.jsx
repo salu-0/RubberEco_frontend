@@ -11,11 +11,11 @@ import {
   DollarSign
 } from 'lucide-react';
 
-import { useLanguage } from '../../context/LanguageContext';
+import { useTranslation } from 'react-i18next';
 
 const RecruitmentBanner = ({ darkMode = false, compact = false }) => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t } = useTranslation();
   const catchyQuotes = [
     t('recruitment.catchy1'),
     t('recruitment.catchy2'),

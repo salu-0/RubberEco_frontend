@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useLanguage } from '../context/LanguageContext';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Globe, Check } from 'lucide-react';
 
@@ -10,11 +10,14 @@ const LanguageSelector = ({
   showNativeNames = true,
   className = ''
 }) => {
-  const { currentLanguage, changeLanguage, getCurrentLanguageInfo, getAvailableLanguages } = useLanguage();
+  const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
-  
-  const currentLangInfo = getCurrentLanguageInfo();
-  const availableLanguages = getAvailableLanguages();
+  const availableLanguages = [
+  { code: 'en', name: 'English', nativeName: 'English', flag: '🇺🇸' },
+  { code: 'ml', name: '', nativeName: 'മലയാളം', flag: '🇮🇳' }
+  ];
+  const currentLanguage = i18n.language;
+  const currentLangInfo = availableLanguages.find(l => l.code === currentLanguage) || availableLanguages[0];
 
   const sizeClasses = {
     small: 'text-sm px-2 py-1',
@@ -23,7 +26,7 @@ const LanguageSelector = ({
   };
 
   const handleLanguageChange = (languageCode) => {
-    changeLanguage(languageCode);
+    i18n.changeLanguage(languageCode);
     setIsOpen(false);
   };
 
@@ -33,8 +36,9 @@ const LanguageSelector = ({
         {availableLanguages.map((lang) => (
           <motion.button
             key={lang.code}
-            onClick={() => changeLanguage(lang.code)}
-            className={`
+            onClick={() => handleLanguageChange(lang.code)}
+            className={
+              `
               ${sizeClasses[size]}
               flex items-center gap-2 rounded-lg border transition-all duration-200
               ${currentLanguage === lang.code
@@ -42,7 +46,8 @@ const LanguageSelector = ({
                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-green-300'
               }
               ${size === 'small' ? 'px-2 py-1' : 'px-3 py-2'}
-            `}
+              `
+            }
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >

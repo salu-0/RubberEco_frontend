@@ -26,10 +26,10 @@ import {
   Mountain
 } from 'lucide-react';
 import { isRequired, isEmail, phoneValidator, pincodeValidator, numericValidator, nameValidator } from '../../utils/validation';
-import { useLanguage } from '../../context/LanguageContext';
+import { useTranslation } from 'react-i18next';
 
 const LandRegistration = ({ isOpen, onClose }) => {
-  const { t } = useLanguage();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('new-registration');
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
@@ -414,8 +414,8 @@ const LandRegistration = ({ isOpen, onClose }) => {
               <Map className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Land Registration for Rubber Tapping Tenancy</h2>
-              <p className="text-green-100">Register your land for future rubber tapping tenancy opportunities</p>
+              <h2 className="text-xl font-bold text-white">{t('landRegistration.title', 'Rubber Tapping Tenancy')}</h2>
+              <p className="text-green-100">{t('landRegistration.subtitle', 'Register your land for Rubber Tapping Tenancy')}</p>
             </div>
           </div>
           <button
@@ -458,7 +458,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
               }`}
             >
               <Plus className="h-4 w-4 inline mr-2" />
-              New Registration
+              {t('landRegistration.newRegistration', 'New Registration')}
             </button>
             <div className="flex items-center space-x-2">
               <button
@@ -470,7 +470,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
                 }`}
               >
                 <FileText className="h-4 w-4 inline mr-2" />
-                My Registered Lands ({myLands.length})
+                {t('landRegistration.myRegisteredLands', 'My Registered Lands')} ({myLands.length})
               </button>
               {activeTab === 'my-lands' && (
                 <button
@@ -498,12 +498,12 @@ const LandRegistration = ({ isOpen, onClose }) => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <User className="h-5 w-5 mr-2 text-green-500" />
-                    Owner Information
+                    {t('landRegistration.ownerInformation', 'Owner Information')}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Full Name <span className="text-red-500">*</span>
+                        {t('profile.name', 'Full Name')} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -514,7 +514,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
                         className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                           formErrors.ownerName ? 'border-red-500' : 'border-gray-300'
                         }`}
-                        placeholder="Enter your full name (first and last name)"
+                        placeholder={t('profile.namePlaceholder', 'Enter full name (e.g., Raju Kumar)')}
                       />
                       {formErrors.ownerName && <p className="text-xs text-red-500 mt-1">{formErrors.ownerName}</p>}
                       {!formErrors.ownerName && registrationForm.ownerName && (
@@ -523,7 +523,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Father's Name <span className="text-red-500">*</span>
+                        {t('profile.fatherName', "Father's Name")} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -534,7 +534,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
                         className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                           formErrors.fatherName ? 'border-red-500' : 'border-gray-300'
                         }`}
-                        placeholder="Enter father's name (first and last name)"
+                        placeholder={t('profile.fatherNamePlaceholder', "Enter father's name (e.g., Kumar Raju)")}
                       />
                       {formErrors.fatherName && <p className="text-xs text-red-500 mt-1">{formErrors.fatherName}</p>}
                       {!formErrors.fatherName && registrationForm.fatherName && (
@@ -543,7 +543,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Phone Number *
+                        {t('profile.phone', 'Phone Number')} *
                       </label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -553,14 +553,14 @@ const LandRegistration = ({ isOpen, onClose }) => {
                           value={registrationForm.phoneNumber}
                           onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
                           className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                          placeholder="+91 98765 43210"
+                          placeholder={t('profile.phonePlaceholder', 'Enter phone number (e.g., +91 98765 43210)')}
                         />
                       </div>
                       {formErrors.phoneNumber && <p className="text-xs text-red-500 mt-1">{formErrors.phoneNumber}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email Address
+                        {t('profile.email', 'Email Address')}
                       </label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -572,7 +572,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
                           className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                             formErrors.email ? 'border-red-500' : 'border-gray-300'
                           }`}
-                          placeholder="your.email@example.com"
+                          placeholder={t('profile.emailPlaceholder', 'Enter email address (e.g., your@email.com)')}
                         />
                       </div>
                       {formErrors.email && <p className="text-xs text-red-500 mt-1">{formErrors.email}</p>}
@@ -582,7 +582,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Current Address *
+                        {t('profile.address', 'Current Address')} *
                       </label>
                       <div className="relative">
                         <Home className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -592,7 +592,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
                           onChange={(e) => handleInputChange('address', e.target.value)}
                           rows={3}
                           className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                          placeholder="Enter your complete address"
+                          placeholder={t('profile.addressPlaceholder', 'Enter your complete address')}
                         />
                       </div>
                       {formErrors.address && <p className="text-xs text-red-500 mt-1">{formErrors.address}</p>}
@@ -604,24 +604,24 @@ const LandRegistration = ({ isOpen, onClose }) => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <Map className="h-5 w-5 mr-2 text-green-500" />
-                    Land Details
+                    {t('landRegistration.landDetails', 'Land Details')}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Land Title/Name <span className="text-gray-500 text-xs">(Optional)</span>
+                        {t('land.title', 'Land Title/Name')} <span className="text-gray-500 text-xs">({t('optional', 'Optional')})</span>
                       </label>
                       <input
                         type="text"
                         value={registrationForm.landTitle}
                         onChange={(e) => handleInputChange('landTitle', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        placeholder="e.g., Family Farm, Ancestral Land, or leave blank"
+                        placeholder={t('land.titlePlaceholder', 'e.g., Family Farm, Ancestral Land, or leave blank')}
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Survey Number *
+                        {t('land.surveyNumber', 'Survey Number')} *
                       </label>
                       <input
                         type="text"
@@ -629,13 +629,13 @@ const LandRegistration = ({ isOpen, onClose }) => {
                         value={registrationForm.surveyNumber}
                         onChange={(e) => handleInputChange('surveyNumber', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        placeholder="e.g., 123/4A"
+                        placeholder={t('land.surveyNumberPlaceholder', 'e.g., 123/4A')}
                       />
                       {formErrors.surveyNumber && <p className="text-xs text-red-500 mt-1">{formErrors.surveyNumber}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        District *
+                        {t('land.district', 'District')} *
                       </label>
                       <select
                         required
@@ -643,7 +643,8 @@ const LandRegistration = ({ isOpen, onClose }) => {
                         onChange={(e) => handleInputChange('district', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       >
-                        <option value="">Select District</option>
+                        <option value="">ജില്ല തിരഞ്ഞെടുക്കുക (Select District)</option>
+                        <option value="">{t('land.selectDistrict', 'Select District')}</option>
                         <option value="Kottayam">Kottayam</option>
                         <option value="Wayanad">Wayanad</option>
                         <option value="Ernakulam">Ernakulam</option>
@@ -656,7 +657,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Pincode *
+                        {t('land.pincode', 'Pincode')} *
                       </label>
                       <input
                         type="text"
@@ -664,13 +665,13 @@ const LandRegistration = ({ isOpen, onClose }) => {
                         value={registrationForm.pincode}
                         onChange={(e) => handleInputChange('pincode', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        placeholder="e.g., 686001"
+                        placeholder={t('land.pincodePlaceholder', 'e.g., 686001')}
                       />
                       {formErrors.pincode && <p className="text-xs text-red-500 mt-1">{formErrors.pincode}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Total Area *
+                        {t('land.totalArea', 'Total Area')} *
                       </label>
                       <input
                         type="text"
@@ -678,7 +679,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
                         value={registrationForm.totalArea}
                         onChange={(e) => handleInputChange('totalArea', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        placeholder="e.g., 5.2 hectares"
+                        placeholder={t('land.areaPlaceholder', 'e.g., 5.2 hectares')}
                       />
                       {formErrors.totalArea && <p className="text-xs text-red-500 mt-1">{formErrors.totalArea}</p>}
                     </div>
@@ -687,7 +688,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
 
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Land Location/Address *
+                        {t('land.location', 'Land Location/Address')} *
                       </label>
                       <div className="relative">
                         <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -697,7 +698,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
                           onChange={(e) => handleInputChange('landLocation', e.target.value)}
                           rows={3}
                           className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                          placeholder="Enter complete land address with landmarks"
+                          placeholder={t('land.locationPlaceholder', 'Full land address, including landmarks')}
                         />
                       </div>
                       {formErrors.landLocation && <p className="text-xs text-red-500 mt-1">{formErrors.landLocation}</p>}
@@ -709,7 +710,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <TreePine className="h-5 w-5 mr-2 text-green-500" />
-                    Rubber Plantation Details
+                    {t('landRegistration.rubberPlantationDetails', 'Rubber Plantation Details')}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
@@ -717,38 +718,38 @@ const LandRegistration = ({ isOpen, onClose }) => {
                       <>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Number of Trees
+                            {t('land.numberOfTrees', 'Number of Trees')}
                           </label>
                           <input
                             type="number"
                             value={registrationForm.numberOfTrees}
                             onChange={(e) => handleInputChange('numberOfTrees', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                            placeholder="e.g., 500"
+                            placeholder={t('land.numberOfTreesPlaceholder', 'e.g., 500')}
                           />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Tree Age (Years)
+                            {t('land.treeAge', 'Tree Age (years)')}
                           </label>
                           <input
                             type="number"
                             value={registrationForm.treeAge}
                             onChange={(e) => handleInputChange('treeAge', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                            placeholder="e.g., 8"
+                            placeholder={t('land.treeAgePlaceholder', 'e.g., 8')}
                           />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Current Yield (per month)
+                            {t('land.currentYield', 'Current Yield per month')}
                           </label>
                           <input
                             type="text"
                             value={registrationForm.currentYield}
                             onChange={(e) => handleInputChange('currentYield', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                            placeholder="e.g., 200 kg"
+                            placeholder={t('land.currentYieldPlaceholder', 'e.g., 200 kg')}
                           />
                         </div>
                       </>
@@ -760,20 +761,20 @@ const LandRegistration = ({ isOpen, onClose }) => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <FileText className="h-5 w-5 mr-2 text-green-500" />
-                    Required Documents
+                    {t('landRegistration.requiredDocuments', 'Required Documents')}
                   </h3>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Upload Documents *
+                        {t('landRegistration.uploadDocuments', 'Upload Documents')} *
                       </label>
                       <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-400 transition-colors">
                         <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                         <p className="text-sm text-gray-600 mb-2">
-                          Click to upload or drag and drop
+                          {t('landRegistration.uploadClickOrDrag', 'Click to upload or drag & drop')}
                         </p>
                         <p className="text-xs text-gray-500 mb-4">
-                          Land Title Deed, Survey Settlement, Revenue Records, etc.
+                          {t('landRegistration.uploadHint', 'Land title deed, survey settlement, revenue documents, etc.')}
                         </p>
                         <input
                           type="file"
@@ -788,7 +789,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
                           className="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 cursor-pointer transition-colors"
                         >
                           <Upload className="h-4 w-4 mr-2" />
-                          Choose Files
+                          {t('landRegistration.chooseFiles', 'Choose Files')}
                         </label>
                       </div>
                     </div>
@@ -841,12 +842,12 @@ const LandRegistration = ({ isOpen, onClose }) => {
                     {loading ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Submitting...
+                        സമർപ്പിക്കുന്നു... (Submitting...)
                       </>
                     ) : (
                       <>
                         <Send className="h-4 w-4 mr-2" />
-                        Register Land
+                        ഭൂമി രജിസ്റ്റർ ചെയ്യുക (Register Land)
                       </>
                     )}
                   </button>
@@ -865,13 +866,13 @@ const LandRegistration = ({ isOpen, onClose }) => {
                 {myLands.length === 0 ? (
                   <div className="text-center py-12">
                     <Map className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Registered Lands</h3>
-                    <p className="text-gray-500 mb-4">You haven't registered any lands yet.</p>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">ഭൂമി രജിസ്റ്റർ ചെയ്യുക</h3>
+                    <p className="text-gray-500 mb-4">ആദ്യം, മുഴുവൻ വിവരങ്ങളും രേഖകളും നൽകി നിങ്ങളുടെ ഭൂമി രജിസ്റ്റർ ചെയ്യുക. സ്ഥിരീകരിച്ച ശേഷം, റബ്ബർ ടാപ്പിംഗ് ടെനൻസിക്ക് വാടകയ്ക്ക് നൽകാം.</p>
                     <button
                       onClick={() => setActiveTab('new-registration')}
                       className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
                     >
-                      Register Your First Land
+                      പുതിയ ഭൂമി രജിസ്റ്റർ ചെയ്യുക
                     </button>
                   </div>
                 ) : (

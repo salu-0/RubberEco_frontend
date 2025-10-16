@@ -8,7 +8,7 @@ import {
   Clock, Users, Award, TrendingUp
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
-import { useLanguage } from '../context/LanguageContext';
+import { useTranslation } from 'react-i18next';
 import RecruitmentBanner from '../components/Recruitment/RecruitmentBanner';
 import RubberAIChatbot from '../components/RubberAIChatbot';
 import plantImage from '../assets/images/img6.jpeg';
@@ -32,7 +32,7 @@ import img7 from '../assets/images/img7.jpeg';
 
 
 const Hero = () => {
-  const { t } = useLanguage();
+  const { t } = useTranslation();
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image */}
@@ -239,7 +239,7 @@ const Hero = () => {
 
 export default function Home() {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t } = useTranslation();
 
   // Initialize navigation guard to redirect admin users
   const { getUserData } = useNavigationGuard({

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '../context/LanguageContext';
+import { useTranslation } from 'react-i18next';
 import LanguageSelector from '../components/LanguageSelector';
 import AssignedWorkersModal from '../components/AssignedWorkers/AssignedWorkersModal';
 import {
@@ -52,7 +52,7 @@ import TreeLotListing from '../components/Farmer/TreeLotListing';
 import NurseryBookings from '../components/Farmer/NurseryBookings';
 
 const Profile = () => {
-  const { t } = useLanguage();
+  const { t } = useTranslation();
   const [user, setUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({});

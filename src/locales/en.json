@@ -1,4 +1,16 @@
 {
+  "landLease": {
+    "modalTitle": "Rubber Tapping Tenancy",
+    "modalSubtitle": "Register your land for rubber tapping tenancy",
+    "tabLandRegistration": "Land Registration",
+    "tabTenancyOffering": "Tenancy Offering",
+    "registerYourLand": "Register Land",
+    "registerYourLandDesc": "First, register your land by providing all details and documents. Once verified, you can offer it for rubber tapping tenancy.",
+    "registerNewLand": "Register New Land",
+  "offerLandTitle": "Offer Land for Tenancy",
+  "offerLandDesc": "Create tenancy offers for your verified lands. Set terms and rates to attract those seeking rubber tapping tenancy.",
+  "createTenancyOffer": "Create Tenancy Offer"
+  },
   "tapperRequest": {
     "title": "Tapper Services",
     "subtitle": "Request and manage rubber tapping services",
@@ -89,7 +101,8 @@
     "bookNurserySaplings": "Book Nursery Saplings",
     "orderPlantsAndSaplings": "Order plants & saplings",
     "myNurseryBookings": "My Nursery Bookings",
-    "viewBookedAndPaidDetails": "View booked & paid details"
+    "viewBookedAndPaidDetails": "View booked & paid details",
+    "noNurseryBookings": "No bookings yet."
   },
   "broker": {
     "dashboard": "Broker Dashboard",
@@ -143,22 +156,51 @@
     "lotCreationFailed": "Lot creation failed. Please try again."
   },
   "serviceRequests": {
-    "title": "Service Requests",
-    "requestService": "Request Service",
+    "title": "Fertilizer & Rain Guard Services",
+    "requestService": "Request Professional Agricultural Services",
     "serviceType": "Service Type",
     "tapping": "Tapping",
-    "fertilization": "Fertilization",
+    "fertilization": "Fertilizer Application",
     "pestControl": "Pest Control",
     "harvesting": "Harvesting",
-    "description": "Description",
-    "preferredDate": "Preferred Date",
-    "urgency": "Urgency",
-    "low": "Low",
-    "medium": "Medium",
-    "high": "High",
-    "submitRequest": "Submit Request",
-    "requestSubmitted": "Service request submitted successfully!",
-    "requestFailed": "Service request failed. Please try again."
+    "description": "Organic, chemical fertilizer services",
+    "rainGuard": "Rain Guard Installation",
+    "rainGuardDesc": "Weather protection for rubber trees",
+    "rainGuardDetails": "Rain Guard Details",
+    "rainGuardType": "Rain Guard Type",
+    "organicFertilizer": "Organic Fertilizer",
+    "chemicalFertilizer": "Chemical Fertilizer",
+    "mixedFertilizer": "Mixed (Organic + Chemical)",
+    "bioFertilizer": "Bio-Fertilizer",
+    "temporary": "Temporary (Seasonal)",
+    "permanent": "Permanent Installation",
+    "semiPermanent": "Semi-Permanent",
+    "scheduleAndBudget": "Schedule & Budget",
+    "lastFertilizerDate": "Last Fertilizer Application Date",
+    "fertilizerType": "Preferred Fertilizer Type",
+    "preferredDatePlaceholder": "dd-mm-yyyy",
+    "urgencyPlaceholder": "Normal - Standard timing",
+    "ratePerTreePlaceholder": "e.g., 3",
+    "farmLocationPlaceholder": "Enter your farm location (e.g., Village, District, State)",
+    "farmSizePlaceholder": "e.g., 5",
+    "numberOfTreesPlaceholder": "Enter number of trees",
+    "contactPhonePlaceholder": "Enter phone number",
+    "contactEmailPlaceholder": "Enter email address",
+    "specialRequirementsPlaceholder": "Any special requirements or instructions...",
+    "urgencyLow": "Low - Can wait",
+    "urgencyNormal": "Normal - Standard timing",
+    "urgencyHigh": "High - Urgent",
+    "additionalInfo": "Additional Information",
+    "supportingDocuments": "Supporting Documents",
+    "uploadDocuments": "Upload supporting documents",
+    "uploadHint": "Farm photos, soil test reports, previous service records",
+    "chooseFiles": "Choose Files",
+    "submitting": "Submitting...",
+    "noRequests": "No requests yet",
+    "noRequestsDesc": "You haven't submitted any service requests.",
+    "createFirstRequest": "Create First Request",
+    "requestId": "Request ID",
+    "contactProvider": "Contact Provider"
   },
   "marketplace": {
     "title": "Marketplace",
@@ -439,6 +481,22 @@
     "save": "Save",
     "cancel": "Cancel"
   },
+  "treeLotManagement": {
+    "modalTitle": "Tree Lot Management",
+    "modalSubtitle": "Manage your rubber tree lots for lease or sale",
+    "myTreeLots": "My Tree Lots",
+    "myTreeLotsSubtitle": "Manage your registered rubber tree lots for lease or sale",
+    "addNewLot": "Add New Lot",
+    "activeLots": "Active Lots",
+    "pendingLots": "Pending",
+    "soldLots": "Sold",
+    "draftLots": "Draft",
+    "viewedLots": "Viewed",
+    "lotStatusActive": "Active",
+    "lotStatusPending": "Pending",
+    "lotStatusSold": "Sold",
+    "lotStatusDraft": "Draft"
+  },
   "nursery": {
     "rubber": "Rubber",
     "nursery": "Nursery",
@@ -448,11 +506,20 @@
     "availableVarietiesStock": "Available Varieties & Stock",
     "units": "units",
     "specialty": "Specialty",
-    "clickToViewVarieties": "Click to view varieties",
-    "paymentSuccess": "Payment successful",
-    "downloadReceiptPrompt": "Would you like to download your receipt now?",
-    "download": "Download",
-    "later": "Later"
-
+    "plant": "Plant",
+    "quantity": "Quantity",
+    "amounts": "Amounts",
+    "total": "Total",
+    "advance": "Advance",
+    "balance": "Balance",
+    "status": "Status",
+    "completed": "Completed",
+    "advancePaid": "Advance Paid",
+    "downloadReceipt": "Download Receipt"
+  },
+  "common": {
+    "loading": "Loading…",
+    "yes": "Yes",
+    "no": "No"
   }
 }

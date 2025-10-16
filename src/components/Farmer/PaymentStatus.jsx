@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLanguage } from '../../context/LanguageContext';
+import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import {
   CreditCard,
@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 
 const PaymentStatus = ({ isOpen, onClose }) => {
-  const { t } = useLanguage();
+  const { t } = useTranslation();
   const [payments, setPayments] = useState([]);
   const [filteredPayments, setFilteredPayments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -195,8 +195,8 @@ const PaymentStatus = ({ isOpen, onClose }) => {
               <CreditCard className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">{t('paymentStatus.title', 'Payment Status')}</h2>
-              <p className="text-green-100">{t('paymentStatus.subtitle', 'Track all your payments and transactions')}</p>
+              <h2 className="text-xl font-bold text-white">എന്റെ നേഴ്സറി ബുക്കിംഗുകൾ</h2>
+              <p className="text-green-100">നിങ്ങളുടെ നേഴ്സറി ബുക്കിംഗുകളും പണമടവുകളും ട്രാക്ക് ചെയ്യുക</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -386,19 +386,23 @@ const PaymentStatus = ({ isOpen, onClose }) => {
 
                     {payment.type === 'nursery_booking' && (
                       <div className="bg-emerald-50 rounded-lg p-3 mb-4">
-                        <h4 className="text-sm font-medium text-emerald-800 mb-2">Nursery Booking</h4>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                           <div>
-                            <p className="text-emerald-600">Plant</p>
+                            <p className="text-emerald-600">ചെടി</p>
                             <p className="text-emerald-800 font-medium">{payment.meta?.plantName || '-'}</p>
+                            <p className="text-emerald-600 mt-2">അളവ്: <span className='text-emerald-800 font-medium'>{payment.quantity}</span></p>
                           </div>
                           <div>
-                            <p className="text-emerald-600">Quantity</p>
-                            <p className="text-emerald-800 font-medium">{payment.quantity}</p>
+                            <p className="text-emerald-600 font-semibold">തുകകൾ</p>
+                            <p className="text-emerald-800">മൊത്തം {payment.amount}</p>
+                            <p className="text-emerald-800">അഡ്വാൻസ് {payment.amount} ({payment.meta?.advancePercent}%)</p>
+                            <p className="text-emerald-800">ബാലൻസ് ₹0</p>
                           </div>
                           <div>
-                            <p className="text-emerald-600">Advance %</p>
-                            <p className="text-emerald-800 font-medium">{payment.meta?.advancePercent}%</p>
+                            <p className="text-emerald-600 font-semibold">സ്ഥിതി</p>
+                            <span className="font-bold text-emerald-900">{payment.status === 'completed' ? 'പൂർത്തിയായി' : payment.status}</span>
+                            <br/>
+                            <span>അഡ്വാൻസ് അടച്ചു: <span className="font-bold">{payment.meta?.advancePercent === 100 ? 'അതെ' : 'ഇല്ല'}</span></span>
                           </div>
                         </div>
                       </div>
@@ -464,7 +468,7 @@ const PaymentStatus = ({ isOpen, onClose }) => {
                             console.error(e);
                           }
                         }}>
-                          <Download className="h-4 w-4 mr-1"/> Download
+                          <Download className="h-4 w-4 mr-1"/> രസീത് ഡൗൺലോഡ് ചെയ്യുക
                         </button>
                         <button className="flex items-center hover:text-gray-900"><Eye className="h-4 w-4 mr-1"/> View Details</button>
                       </div>

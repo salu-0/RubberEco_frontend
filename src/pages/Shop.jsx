@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { useLanguage } from '../context/LanguageContext';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { products as allProducts, categories } from '../data/products';
@@ -11,7 +11,7 @@ const Badge = ({ show, children }) => show ? (
 ) : null;
 
 export default function Shop() {
-  const { t } = useLanguage();
+  const { t } = useTranslation();
   const { addItem } = useCart();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');

@@ -29,10 +29,10 @@ import {
   MoreVertical
 } from 'lucide-react';
 import { isRequired, numericValidator } from '../../utils/validation';
-import { useLanguage } from '../../context/LanguageContext';
+import { useTranslation } from 'react-i18next';
 
 const TapperRequest = ({ isOpen, onClose }) => {
-  const { t } = useLanguage();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('new-request');
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });

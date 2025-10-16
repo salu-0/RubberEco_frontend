@@ -1,6 +1,6 @@
 // src/App.jsx
 import { Routes, Route } from 'react-router-dom';
-import { LanguageProvider } from './context/LanguageContext';
+// import { LanguageProvider } from './context/LanguageContext';
 import Home from './pages/Home';
 import Features from './pages/Features';
 import Training from './pages/Training';
@@ -40,7 +40,7 @@ import Orders from './pages/Orders';
 
 function App() {
   return (
-    <LanguageProvider>
+    <>
       <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/home" element={<Home />} />
@@ -79,7 +79,7 @@ function App() {
       <Route path="/auth/callback" element={<AuthCallback />} />
       </Routes>
       <Toast />
-    </LanguageProvider>
+    </>
   );
 }
 

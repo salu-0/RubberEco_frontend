@@ -27,7 +27,7 @@ import {
   Award
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
-import { useLanguage } from '../context/LanguageContext';
+import { useTranslation } from 'react-i18next';
 import GoogleMapsSetup from '../components/GoogleMapsSetup';
 import { useNavigationGuard } from '../hooks/useNavigationGuard';
 
@@ -44,7 +44,7 @@ const marketImages = {
 
 // Market Finder Component
 const MarketFinder = ({ onMarketClick }) => {
-  const { t } = useLanguage();
+  const { t } = useTranslation();
   const [location, setLocation] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedMarket, setSelectedMarket] = useState(null);
@@ -1293,7 +1293,7 @@ const GoogleMapComponent = ({ markets, selectedMarket }) => {
 };
 
 const Markets = () => {
-  const { t, currentLanguage } = useLanguage();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [selectedTimeframe, setSelectedTimeframe] = useState('1M');
   const [showMarketModal, setShowMarketModal] = useState(false);

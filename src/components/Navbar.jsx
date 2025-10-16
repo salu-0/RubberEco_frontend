@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useCart } from '../context/CartContext';
-import { useLanguage } from '../context/LanguageContext';
+import { useTranslation } from 'react-i18next';
 import LanguageSelector from './LanguageSelector';
 import {
   Menu,
@@ -15,7 +15,7 @@ import {
 import { useNavigationGuard } from '../hooks/useNavigationGuard';
 
 const Navbar = ({ transparent = false, fixed = true }) => {
-  const { t } = useLanguage();
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [user, setUser] = useState(null);

@@ -16,10 +16,10 @@ import { supabase } from "../../supabaseClient";
 import Navbar from '../Navbar';
 import { useNavigationGuard } from '../../hooks/useNavigationGuard';
 import EmailVerificationAlert from './EmailVerificationAlert';
-import { useLanguage } from '../../context/LanguageContext';
+import { useTranslation } from 'react-i18next';
 
 const Login = () => {
-  const { /* t not used to keep form English */ } = useLanguage();
+  // const { t } = useTranslation();
   const [formData, setFormData] = useState({
     email: '',
     password: ''

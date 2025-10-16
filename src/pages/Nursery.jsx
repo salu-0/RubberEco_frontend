@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLanguage } from '../context/LanguageContext';
+import { useTranslation } from 'react-i18next';
 import toastService from '../services/toastService';
 import Navbar from '../components/Navbar';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -57,7 +57,7 @@ const resolveCenterImage = (centerName) => {
 };
 
 const Nursery = () => {
-  const { t } = useLanguage();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [centers, setCenters] = useState([]);
   const [loading, setLoading] = useState(true);

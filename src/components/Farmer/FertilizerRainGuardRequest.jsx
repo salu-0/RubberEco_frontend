@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { notificationService, getCurrentFarmer } from '../../services/notificationService';
 import {
@@ -25,6 +26,7 @@ import {
 import { isRequired, numericValidator, isEmail, phoneValidator } from '../../utils/validation';
 
 const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('new-request');
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
@@ -381,8 +383,8 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
               <Wrench className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Fertilizer & Rain Guard Services</h2>
-              <p className="text-red-100">Request professional agricultural services</p>
+              <h2 className="text-xl font-bold text-white">{t('serviceRequests.title')}</h2>
+              <p className="text-red-100">{t('serviceRequests.requestService')}</p>
             </div>
           </div>
           <button
@@ -405,7 +407,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
               onClick={() => setActiveTab('new-request')}
             >
               <Plus className="h-4 w-4 inline mr-2" />
-              New Request
+              {t('farmer.submitNewRequest')}
             </button>
             <button
               className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
@@ -416,7 +418,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
               onClick={() => setActiveTab('my-requests')}
             >
               <FileText className="h-4 w-4 inline mr-2" />
-              My Requests ({myRequests.length})
+              {t('farmer.applications')} ({myRequests.length})
             </button>
           </div>
         </div>
@@ -434,7 +436,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <Wrench className="h-5 w-5 mr-2 text-red-500" />
-                    Service Type
+                    {t('serviceRequests.serviceType')}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div
@@ -448,8 +450,8 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                       <div className="flex items-center space-x-3">
                         <TreePine className="h-6 w-6 text-green-500" />
                         <div>
-                          <h4 className="font-medium text-gray-900">Fertilizer Application</h4>
-                          <p className="text-sm text-gray-600">Organic and chemical fertilizer services</p>
+                          <h4 className="font-medium text-gray-900">{t('serviceRequests.fertilization')}</h4>
+                          <p className="text-sm text-gray-600">{t('serviceRequests.description')}</p>
                         </div>
                       </div>
                     </div>
@@ -465,8 +467,8 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                       <div className="flex items-center space-x-3">
                         <Droplets className="h-6 w-6 text-blue-500" />
                         <div>
-                          <h4 className="font-medium text-gray-900">Rain Guard Installation</h4>
-                          <p className="text-sm text-gray-600">Weather protection for rubber trees</p>
+                          <h4 className="font-medium text-gray-900">{t('serviceRequests.rainGuard')}</h4>
+                          <p className="text-sm text-gray-600">{t('serviceRequests.rainGuardDesc')}</p>
                         </div>
                       </div>
                     </div>
@@ -477,12 +479,12 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <TreePine className="h-5 w-5 mr-2 text-red-500" />
-                    Farm Details
+                    {t('land.farmInfo')}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Farm Location *
+                        {t('tapperRequest.farmLocation')} *
                       </label>
                       <div className="relative">
                         <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -492,7 +494,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                           value={requestForm.farmLocation}
                           onChange={(e) => handleInputChange('farmLocation', e.target.value)}
                           className={`w-full pl-10 pr-4 py-3 border ${formErrors.farmLocation ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent`}
-                          placeholder="Enter farm location"
+                          placeholder={t('tapperRequest.farmLocationPlaceholder')}
                         />
                         {formErrors.farmLocation && (
                           <p className="mt-1 text-xs text-red-600">{formErrors.farmLocation}</p>
@@ -502,7 +504,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Farm Size (Hectares) <span className="text-red-500">*</span>
+                        {t('tapperRequest.farmSize')} (ഹെക്ടർ) <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
                         <input
@@ -514,7 +516,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                           value={requestForm.farmSize}
                           onChange={(e) => handleInputChange('farmSize', e.target.value)}
                           className={`w-full px-4 py-3 border ${formErrors.farmSize ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent`}
-                          placeholder="Enter farm size in hectares"
+                          placeholder={t('tapperRequest.farmSizePlaceholder')}
                         />
                         <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">
                           ha
@@ -530,7 +532,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Number of Trees *
+                        {t('tapperRequest.numberOfTrees')} *
                       </label>
                       <input
                         type="number"
@@ -542,7 +544,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                         value={requestForm.numberOfTrees}
                         onChange={(e) => handleInputChange('numberOfTrees', e.target.value)}
                         className={`w-full px-4 py-3 border ${formErrors.numberOfTrees ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent`}
-                        placeholder="Enter number of trees"
+                        placeholder={t('tapperRequest.numberOfTreesPlaceholder')}
                       />
                       {formErrors.numberOfTrees && (
                         <p className="mt-1 text-xs text-red-600">{formErrors.numberOfTrees}</p>
@@ -556,12 +558,12 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                       <TreePine className="h-5 w-5 mr-2 text-red-500" />
-                      Fertilizer Details
+                      {t('serviceRequests.fertilization')}
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Last Fertilizer Application
+                          {t('serviceRequests.lastFertilizerDate')}
                         </label>
                         <input
                           type="date"
@@ -573,17 +575,17 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Fertilizer Type Preference
+                          {t('serviceRequests.fertilizerType')}
                         </label>
                         <select
                           value={requestForm.fertilizerType}
                           onChange={(e) => handleInputChange('fertilizerType', e.target.value)}
                           className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                         >
-                          <option value="organic">Organic Fertilizer</option>
-                          <option value="chemical">Chemical Fertilizer</option>
-                          <option value="mixed">Mixed (Organic + Chemical)</option>
-                          <option value="bio">Bio-fertilizer</option>
+                          <option value="organic">{t('serviceRequests.organicFertilizer', 'ഓർഗാനിക് ഫർട്ടിലൈസർ')}</option>
+                          <option value="chemical">{t('serviceRequests.chemicalFertilizer', 'കെമിക്കൽ ഫർട്ടിലൈസർ')}</option>
+                          <option value="mixed">{t('serviceRequests.mixedFertilizer', 'മിശ്രിതം (ഓർഗാനിക് + കെമിക്കൽ)')}</option>
+                          <option value="bio">{t('serviceRequests.bioFertilizer', 'ബയോ-ഫർട്ടിലൈസർ')}</option>
                         </select>
                       </div>
                     </div>
@@ -594,21 +596,21 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                       <Droplets className="h-5 w-5 mr-2 text-red-500" />
-                      Rain Guard Details
+                      {t('serviceRequests.rainGuardDetails', 'റെയിൻ ഗാർഡ് വിശദാംശങ്ങൾ')}
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Rain Guard Type
+                          {t('serviceRequests.rainGuardType', 'റെയിൻ ഗാർഡ് തരം')}
                         </label>
                         <select
                           value={requestForm.rainGuardType}
                           onChange={(e) => handleInputChange('rainGuardType', e.target.value)}
                           className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                         >
-                          <option value="temporary">Temporary (Seasonal)</option>
-                          <option value="permanent">Permanent Installation</option>
-                          <option value="semi_permanent">Semi-Permanent</option>
+                          <option value="temporary">{t('serviceRequests.temporary')}</option>
+                          <option value="permanent">{t('serviceRequests.permanent')}</option>
+                          <option value="semi_permanent">{t('serviceRequests.semiPermanent')}</option>
                         </select>
                       </div>
                     </div>
@@ -619,12 +621,12 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <Calendar className="h-5 w-5 mr-2 text-red-500" />
-                    Schedule & Budget
+                    {t('serviceRequests.scheduleAndBudget')}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Preferred Date *
+                        {(t('serviceRequests.preferredDate') && t('serviceRequests.preferredDate') !== 'serviceRequests.preferredDate' ? t('serviceRequests.preferredDate') : 'Preferred Date')} *
                       </label>
                       <input
                         type="date"
@@ -640,22 +642,22 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Urgency Level
+                        {(t('serviceRequests.urgency') && t('serviceRequests.urgency') !== 'serviceRequests.urgency' ? t('serviceRequests.urgency') : 'Urgency Level')}
                       </label>
                       <select
                         value={requestForm.urgency}
                         onChange={(e) => handleInputChange('urgency', e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                       >
-                        <option value="low">Low - Can wait</option>
-                        <option value="normal">Normal - Standard timing</option>
-                        <option value="high">High - Urgent</option>
+                        <option value="low">{(t('serviceRequests.low') && t('serviceRequests.low') !== 'serviceRequests.low' ? t('serviceRequests.low') : 'Low - Can wait')}</option>
+                        <option value="normal">{(t('serviceRequests.normal') && t('serviceRequests.normal') !== 'serviceRequests.normal' ? t('serviceRequests.normal') : 'Normal - Standard timing')}</option>
+                        <option value="high">{(t('serviceRequests.high') && t('serviceRequests.high') !== 'serviceRequests.high' ? t('serviceRequests.high') : 'High - Urgent')}</option>
                       </select>
                     </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Rate per Tree (₹)
+                        {t('tapperRequest.ratePerTree')} (₹)
                       </label>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -667,7 +669,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                           value={requestForm.ratePerTree}
                           onChange={(e) => handleInputChange('ratePerTree', e.target.value)}
                           className={`w-full pl-10 pr-4 py-3 border ${formErrors.ratePerTree ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent`}
-                          placeholder="Enter rate per tree (max ₹1000)"
+                          placeholder={t('tapperRequest.ratePerTreePlaceholder', 'Enter rate per tree (max ₹1000)')}
                         />
                         {formErrors.ratePerTree && (
                           <p className="mt-1 text-xs text-red-600">{formErrors.ratePerTree}</p>
@@ -684,13 +686,13 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <Phone className="h-5 w-5 mr-2 text-red-500" />
-                    Contact Details
+                    {t('profile.contactInfo', 'Contact Details')}
                   </h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Contact Phone *
+                        {t('profile.phone', 'Contact Phone')} *
                       </label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -700,7 +702,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                           value={requestForm.contactPhone}
                           onChange={(e) => handleInputChange('contactPhone', e.target.value)}
                           className={`w-full pl-10 pr-4 py-3 border ${formErrors.contactPhone ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent`}
-                          placeholder="Enter phone number"
+                          placeholder={t('profile.phone', 'Enter phone number')}
                         />
                         {formErrors.contactPhone && (
                           <p className="mt-1 text-xs text-red-600">{formErrors.contactPhone}</p>
@@ -710,7 +712,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Contact Email *
+                        {t('profile.email', 'Contact Email')} *
                       </label>
                       <input
                         type="email"
@@ -718,7 +720,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                         value={requestForm.contactEmail}
                         onChange={(e) => handleInputChange('contactEmail', e.target.value)}
                         className={`w-full px-4 py-3 border ${formErrors.contactEmail ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent`}
-                        placeholder="Enter email address"
+                        placeholder={t('profile.email', 'Enter email address')}
                       />
                       {formErrors.contactEmail && (
                         <p className="mt-1 text-xs text-red-600">{formErrors.contactEmail}</p>
@@ -731,20 +733,20 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <FileText className="h-5 w-5 mr-2 text-red-500" />
-                    Additional Information
+                    {t('serviceRequests.additionalInfo', 'Additional Information')}
                   </h3>
 
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Special Requirements
+                        {t('tapperRequest.specialRequirements', 'Special Requirements')}
                       </label>
                       <textarea
                         value={requestForm.specialRequirements}
                         onChange={(e) => handleInputChange('specialRequirements', e.target.value)}
                         rows={3}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                        placeholder="Any special requirements or instructions..."
+                        placeholder={t('tapperRequest.specialRequirementsPlaceholder', 'Any special requirements or instructions...')}
                       />
                     </div>
                   </div>
@@ -754,14 +756,14 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <Upload className="h-5 w-5 mr-2 text-red-500" />
-                    Supporting Documents
+                    {t('serviceRequests.supportingDocuments', 'Supporting Documents')}
                   </h3>
                   
                   <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
                     <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 mb-2">Upload supporting documents</p>
+                    <p className="text-gray-600 mb-2">{t('serviceRequests.uploadDocuments', 'Upload supporting documents')}</p>
                     <p className="text-sm text-gray-500 mb-4">
-                      Farm photos, soil test reports, previous service records
+                      {t('serviceRequests.uploadHint', 'Farm photos, soil test reports, previous service records')}
                     </p>
                     <input
                       type="file"
@@ -776,7 +778,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                       className="inline-flex items-center px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 cursor-pointer"
                     >
                       <Upload className="h-4 w-4 mr-2" />
-                      Choose Files
+                      {t('serviceRequests.chooseFiles', 'Choose Files')}
                     </label>
                   </div>
                   
@@ -811,7 +813,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                     onClick={onClose}
                     className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
                   >
-                    Cancel
+                    {t('profile.cancel', 'Cancel')}
                   </button>
                   <button
                     type="submit"
@@ -821,12 +823,12 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                     {loading ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Submitting...</span>
+                        <span>{t('serviceRequests.submitting', 'Submitting...')}</span>
                       </>
                     ) : (
                       <>
                         <Send className="h-4 w-4" />
-                        <span>Submit Request</span>
+                        <span>{t('serviceRequests.submitRequest', 'Submit Request')}</span>
                       </>
                     )}
                   </button>
@@ -845,13 +847,13 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
               {myRequests.length === 0 ? (
                 <div className="text-center py-12">
                   <Wrench className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No requests yet</h3>
-                  <p className="text-gray-600 mb-4">You haven't submitted any service requests.</p>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">{t('serviceRequests.noRequests', 'No requests yet')}</h3>
+                  <p className="text-gray-600 mb-4">{t('serviceRequests.noRequestsDesc', "You haven't submitted any service requests.")}</p>
                   <button
                     onClick={() => setActiveTab('new-request')}
                     className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                   >
-                    Create First Request
+                    {t('serviceRequests.createFirstRequest', 'Create First Request')}
                   </button>
                 </div>
               ) : (
@@ -955,12 +957,12 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                           className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium"
                         >
                           <Eye className="h-4 w-4 inline mr-1" />
-                          View Details
+                          {t('broker.viewDetails', 'View Details')}
                         </button>
                         {request.assignedProvider && (
                           <button className="px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg text-sm font-medium">
                             <Phone className="h-4 w-4 inline mr-1" />
-                            Contact
+                            {t('profile.contactInfo', 'Contact')}
                           </button>
                         )}
                       </div>
@@ -987,7 +989,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold">{selectedRequest.title}</h2>
-                  <p className="text-red-100 text-sm">Request ID: {selectedRequest.id}</p>
+                  <p className="text-red-100 text-sm">{t('serviceRequests.requestId', 'Request ID')}: {selectedRequest.id}</p>
                 </div>
                 <button
                   onClick={() => setShowDetailsModal(false)}
@@ -1165,12 +1167,12 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
                 onClick={() => setShowDetailsModal(false)}
                 className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                Close
+                {t('common.close', 'Close')}
               </button>
               {selectedRequest.assignedProvider && (
                 <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
                   <Phone className="h-4 w-4" />
-                  <span>Contact Provider</span>
+                  <span>{t('serviceRequests.contactProvider', 'Contact Provider')}</span>
                 </button>
               )}
             </div>

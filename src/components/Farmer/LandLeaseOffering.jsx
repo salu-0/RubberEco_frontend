@@ -313,8 +313,8 @@ const LandLeaseOffering = ({ isOpen, onClose }) => {
               <MapPin className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Rubber Tapping Tenancy Offering</h2>
-              <p className="text-blue-100">Offer your verified land for rubber tapping tenancy to potential tenants</p>
+              <h2 className="text-xl font-bold text-white">{t('landLease.offerLandTitle')}</h2>
+              <p className="text-blue-100">{t('landLease.offerLandDesc')}</p>
             </div>
           </div>
           <button
@@ -384,16 +384,15 @@ const LandLeaseOffering = ({ isOpen, onClose }) => {
               {availableLands.length === 0 ? (
                 <div className="text-center py-12">
                   <TreePine className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Available Lands</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">ലഭ്യമായ ഭൂമികൾ ഇല്ല</h3>
                   <p className="text-gray-500 mb-4">
-                    You need to have <strong>admin-verified</strong> lands that are not currently offered for lease.
-                    If you have registered lands, please wait for admin verification.
+                    നിലവിൽ വാടകയ്ക്ക് നൽകാത്ത <strong>അഡ്മിൻ സ്ഥിരീകരിച്ച</strong> ഭൂമികൾ നിങ്ങൾക്ക് ഉണ്ടായിരിക്കണം. നിങ്ങൾ ഭൂമി രജിസ്റ്റർ ചെയ്തിട്ടുണ്ടെങ്കിൽ, അഡ്മിൻ സ്ഥിരീകരണം വരെ കാത്തിരിക്കുക.
                   </p>
                   <button
                     onClick={onClose}
                     className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                   >
-                    Register New Land
+                    {t('landLease.registerNewLand')}
                   </button>
                 </div>
               ) : (
@@ -402,7 +401,7 @@ const LandLeaseOffering = ({ isOpen, onClose }) => {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                       <MapPin className="h-5 w-5 mr-2 text-blue-500" />
-                      Select Land to Offer
+                      {t('landLease.selectLandToOffer', 'Select Land to Offer')}
                     </h3>
                     <div className="grid gap-4">
                       {availableLands.map((land) => (
@@ -465,7 +464,7 @@ const LandLeaseOffering = ({ isOpen, onClose }) => {
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                         <FileText className="h-5 w-5 mr-2 text-blue-500" />
-                        Tenancy Terms & Conditions
+                        {t('landLease.tenancyTerms', 'Tenancy Terms & Conditions')}
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>

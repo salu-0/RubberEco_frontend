@@ -16,10 +16,10 @@ import {
 import { supabase } from "../../supabaseClient"; 
 import Navbar from '../Navbar';
 import { useEffect } from 'react';
-import { useLanguage } from '../../context/LanguageContext';
+import { useTranslation } from 'react-i18next';
 
 const Register = () => {
-  const { /* keep global language unchanged */ } = useLanguage();
+  // const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
