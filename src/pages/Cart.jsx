@@ -10,9 +10,9 @@ export default function Cart() {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex flex-col">
       <Navbar />
-      <div className="pt-20 max-w-5xl mx-auto px-4 py-6">
+      <div className="flex-grow pt-20 max-w-5xl mx-auto px-4 py-6 w-full">
         <div className="mb-8 text-center">
           <h1 className="text-5xl md:text-6xl font-extrabold leading-tight">
             <span className="text-transparent bg-clip-text bg-gradient-to-b from-green-700 to-green-500">Rubber</span>
@@ -24,12 +24,12 @@ export default function Cart() {
           </div>
         </div>
       {items.length === 0 ? (
-        <div className="mt-6">
+        <div className="mt-6 mb-12">
           <p className="text-gray-600">{t('cart.empty')}</p>
           <Link to="/shop" className="text-indigo-700">{t('cart.goToShop')}</Link>
         </div>
       ) : (
-        <div className="grid md:grid-cols-3 gap-6 mt-6">
+        <div className="grid md:grid-cols-3 gap-6 mt-6 mb-12">
           <div className="md:col-span-2">
             <ul className="divide-y border rounded">
               {items.map(item => (
@@ -57,6 +57,17 @@ export default function Cart() {
         </div>
       )}
       </div>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-6 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <p className="text-gray-400 text-sm">
+              © 2024 RubberEco. All rights reserved. Empowering sustainable rubber farming.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

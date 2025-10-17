@@ -1298,14 +1298,14 @@ const Profile = () => {
                           className="flex items-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
                         >
                           <Save className="h-4 w-4" />
-                          <span>{loading ? 'Saving...' : 'Save'}</span>
+                          <span>{loading ? t('profilePage.saving') : t('profilePage.save')}</span>
                         </button>
                         <button
                           onClick={handleCancel}
                           className="flex items-center space-x-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
                         >
                           <X className="h-4 w-4" />
-                          <span>Cancel</span>
+                          <span>{t('profilePage.cancel')}</span>
                         </button>
                       </div>
                     )}
