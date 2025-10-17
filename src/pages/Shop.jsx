@@ -68,7 +68,11 @@ export default function Shop() {
             />
             <select className="border rounded px-3 py-2" value={category} onChange={e => setCategory(e.target.value)}>
               <option value="all">{t('shop.allCategories')}</option>
-              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {categories.map(c => (
+                <option key={c.id} value={c.id}>
+                  {t(`shop.category.${c.id}`, c.name)}
+                </option>
+              ))}
             </select>
           </div>
           <select className="border rounded px-3 py-2" value={sort} onChange={e => setSort(e.target.value)}>
@@ -93,16 +97,16 @@ export default function Shop() {
             <div className="p-4 flex-1 flex flex-col">
               <div className="flex items-center justify-between">
                 <h3 className="font-medium">
-                  <Link to={`/shop/${p.id}`}>{p.name}</Link>
+                  <Link to={`/shop/${p.id}`}>{t(`products.${p.id}.name`, p.name)}</Link>
                 </h3>
                 <span className="font-semibold">₹{p.price.toFixed(2)}</span>
               </div>
               <div className="text-xs text-gray-600 mt-1">{t('shop.inStock')}: <span className="font-medium">{p.stock}</span></div>
               <div className="text-xs text-gray-500 mt-1">
-                <span className="uppercase">{p.brand}</span>
+                <span className="uppercase">{t(`brands.${p.brand}`, p.brand)}</span>
                 <Badge show={p.rpcCertified}>{t('shop.rpcCertified')}</Badge>
               </div>
-              <p className="text-sm text-gray-600 mt-2 line-clamp-2">{p.description}</p>
+              <p className="text-sm text-gray-600 mt-2 line-clamp-2">{t(`products.${p.id}.description`, p.description)}</p>
               <div className="mt-auto pt-4 flex items-center justify-between opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
                 <button
                   className="px-3 py-2 rounded bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"

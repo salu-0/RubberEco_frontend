@@ -461,7 +461,7 @@ const MarketFinder = ({ onMarketClick }) => {
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Enter location (e.g., Kottayam, Thrissur, Changanacherry, Manimala)"
+                  placeholder={t('market.searchPlaceholder')}
                   className="w-full pl-10 pr-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-lg"
                   onKeyDown={(e) => e.key === 'Enter' && handleLocationSearch()}
                 />
@@ -474,7 +474,7 @@ const MarketFinder = ({ onMarketClick }) => {
                 disabled={loading}
               >
                 <Navigation className="h-5 w-5" />
-                <span>Use Current Location</span>
+                <span>{t('market.useCurrentLocation')}</span>
               </button>
               <button
                 onClick={handleLocationSearch}
@@ -486,7 +486,7 @@ const MarketFinder = ({ onMarketClick }) => {
                 ) : (
                   <Search className="h-5 w-5" />
                 )}
-                <span>{loading ? 'Searching...' : 'Find Markets'}</span>
+                <span>{loading ? t('market.searching') : t('market.findMarkets')}</span>
               </button>
             </div>
           </div>
@@ -503,7 +503,7 @@ const MarketFinder = ({ onMarketClick }) => {
               transition={{ duration: 0.6, delay: 0.3 }}
             >
               <h3 className="text-2xl font-bold text-gray-900">
-                Markets Near You ({filteredAndSortedMarkets.length} found)
+                {t('market.marketsNearYou')} ({filteredAndSortedMarkets.length} {t('market.found')})
               </h3>
 
               {/* Enhanced Search and Filter Controls */}
@@ -512,7 +512,7 @@ const MarketFinder = ({ onMarketClick }) => {
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Search markets by name, location, or type..."
+                    placeholder={t('market.searchMarketsPlaceholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -535,10 +535,10 @@ const MarketFinder = ({ onMarketClick }) => {
                     onChange={(e) => setFilterType(e.target.value)}
                     className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
-                    <option value="all">All Types</option>
-                    <option value="government">Government</option>
-                    <option value="private">Private</option>
-                    <option value="cooperative">Cooperative</option>
+                    <option value="all">{t('market.allTypes')}</option>
+                    <option value="government">{t('market.government')}</option>
+                    <option value="private">{t('market.private')}</option>
+                    <option value="cooperative">{t('market.cooperative')}</option>
                   </select>
 
                   <select
@@ -546,9 +546,9 @@ const MarketFinder = ({ onMarketClick }) => {
                     onChange={(e) => setSortBy(e.target.value)}
                     className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
-                    <option value="distance">Sort by Distance</option>
-                    <option value="price">Sort by Price</option>
-                    <option value="rating">Sort by Rating</option>
+                    <option value="distance">{t('market.sortByDistance')}</option>
+                    <option value="price">{t('market.sortByPrice')}</option>
+                    <option value="rating">{t('market.sortByRating')}</option>
                     <option value="name">Sort by Name</option>
                   </select>
 
@@ -562,7 +562,7 @@ const MarketFinder = ({ onMarketClick }) => {
                       className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
                     <label htmlFor="nearbyOnly" className="text-sm text-gray-700">
-                      Nearby only
+                      {t('market.nearbyOnly')}
                     </label>
                   </div>
 
@@ -687,7 +687,7 @@ const MarketFinder = ({ onMarketClick }) => {
                           className="flex-1 px-3 py-1.5 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-xs font-medium flex items-center justify-center space-x-1"
                         >
                           <Route className="h-3 w-3" />
-                          <span>Directions</span>
+                          <span>{t('market.directions')}</span>
                         </button>
                         <button
                           onClick={(e) => {
@@ -697,7 +697,7 @@ const MarketFinder = ({ onMarketClick }) => {
                           className="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-xs font-medium flex items-center space-x-1"
                         >
                           <Phone className="h-3 w-3" />
-                          <span>Call</span>
+                          <span>{t('market.call')}</span>
                         </button>
                       </div>
                     </div>
@@ -715,8 +715,8 @@ const MarketFinder = ({ onMarketClick }) => {
               >
                 <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                   <div className="p-4 border-b border-gray-200">
-                    <h3 className="text-lg font-bold text-gray-900">Market Locations</h3>
-                    <p className="text-sm text-gray-600">Click on markers to view details</p>
+                    <h3 className="text-lg font-bold text-gray-900">{t('market.marketLocations')}</h3>
+                    <p className="text-sm text-gray-600">{t('market.clickMarkersView')}</p>
                   </div>
 
                   <div className="h-80 xl:h-96 bg-gray-100 relative">
@@ -749,7 +749,7 @@ const MarketFinder = ({ onMarketClick }) => {
                     <div className="flex justify-between items-center">
                       <span className="text-2xl font-bold text-primary-600">{selectedMarket.price}</span>
                       <button className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-sm font-medium">
-                        View Details
+                        {t('market.viewDetails')}
                       </button>
                     </div>
                   </div>
@@ -768,8 +768,8 @@ const MarketFinder = ({ onMarketClick }) => {
             animate={{ opacity: 1 }}
           >
             <Building2 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No markets found</h3>
-            <p className="text-gray-600">Try searching for a different location or use your current location.</p>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('market.noMarketsFound')}</h3>
+            <p className="text-gray-600">{t('market.tryDifferentLocation')}</p>
           </motion.div>
         )}
       </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   X,
   User,
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 
 const AssignedWorkersModal = ({ isOpen, onClose, userEmail }) => {
+  const { t } = useTranslation();
   const [assignedWorkers, setAssignedWorkers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedWorker, setSelectedWorker] = useState(null);
@@ -184,7 +186,7 @@ const AssignedWorkersModal = ({ isOpen, onClose, userEmail }) => {
 
   const getRoleLabel = (role) => {
     const labels = {
-      tapper: 'Rubber Tapper',
+      tapper: t('assignedWorkers.rubberTapper'),
       latex_collector: 'Latex Collector',
       field_officer: 'Field Officer',
       supervisor: 'Supervisor',
@@ -226,8 +228,8 @@ const AssignedWorkersModal = ({ isOpen, onClose, userEmail }) => {
           <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold text-white">Assigned Workers</h2>
-                <p className="text-primary-100 text-sm">View and manage your assigned workers</p>
+                <h2 className="text-xl font-bold text-white">{t('assignedWorkers.title')}</h2>
+                <p className="text-primary-100 text-sm">{t('assignedWorkers.subtitle')}</p>
               </div>
               <button
                 onClick={onClose}
@@ -247,8 +249,8 @@ const AssignedWorkersModal = ({ isOpen, onClose, userEmail }) => {
             ) : assignedWorkers.length === 0 ? (
               <div className="text-center py-12">
                 <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Workers Assigned</h3>
-                <p className="text-gray-500">You don't have any workers assigned to your farm yet.</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">{t('assignedWorkers.noWorkersAssigned')}</h3>
+                <p className="text-gray-500">{t('assignedWorkers.noWorkersMessage')}</p>
               </div>
             ) : (
               <div className="grid gap-4">
@@ -294,13 +296,13 @@ const AssignedWorkersModal = ({ isOpen, onClose, userEmail }) => {
                             </div>
                             <div className="flex items-center space-x-2">
                               <CheckCircle className="h-4 w-4 text-green-500" />
-                              <span>{worker.tasksCompleted} tasks completed</span>
+                              <span>{worker.tasksCompleted} {t('assignedWorkers.tasksCompleted')}</span>
                             </div>
                           </div>
 
                           <div className="bg-white rounded-lg p-3 border">
                             <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-medium text-gray-700">Current Assignment:</span>
+                              <span className="text-sm font-medium text-gray-700">{t('assignedWorkers.currentAssignment')}:</span>
                               <span className="text-xs text-gray-500">{worker.lastActive}</span>
                             </div>
                             <p className="text-sm text-gray-900 font-medium">{worker.currentTask}</p>
@@ -319,14 +321,14 @@ const AssignedWorkersModal = ({ isOpen, onClose, userEmail }) => {
                           className="flex items-center space-x-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
                         >
                           <Eye className="h-4 w-4" />
-                          <span>Details</span>
+                          <span>{t('assignedWorkers.details')}</span>
                         </button>
                         <button
                           onClick={() => handleContactWorker(worker)}
                           className="flex items-center space-x-2 px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm"
                         >
                           <MessageCircle className="h-4 w-4" />
-                          <span>Contact</span>
+                          <span>{t('assignedWorkers.contact')}</span>
                         </button>
                       </div>
                     </div>

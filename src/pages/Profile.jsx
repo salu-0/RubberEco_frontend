@@ -1280,16 +1280,16 @@ const Profile = () => {
                   
                   <div className="flex space-x-3 mt-4 md:mt-0">
                     {!isEditing ? (
-                      <button
-                        onClick={() => {
-                          setIsEditing(true);
-                          setValidationErrors({}); // Clear validation errors when starting to edit
-                        }}
-                        className="flex items-center space-x-2 bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors"
-                      >
-                        <Edit3 className="h-4 w-4" />
-                        <span>Edit Profile</span>
-                      </button>
+                        <button
+                          onClick={() => {
+                            setIsEditing(true);
+                            setValidationErrors({}); // Clear validation errors when starting to edit
+                          }}
+                          className="flex items-center space-x-2 bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors"
+                        >
+                          <Edit3 className="h-4 w-4" />
+                          <span>{t('profilePage.editProfile')}</span>
+                        </button>
                     ) : (
                       <div className="flex space-x-2">
                         <button
@@ -1391,9 +1391,9 @@ const Profile = () => {
 
               {/* Upload Instructions */}
               <p className="text-sm text-gray-500 mt-3 text-center">
-                Click the camera icon to upload a new profile image
+                {t('profilePage.uploadProfileImage', 'Click the camera icon to upload a new profile image')}
                 <br />
-                <span className="text-xs">Supported formats: JPEG, PNG, GIF (Max 5MB)</span>
+                <span className="text-xs">{t('profilePage.supportedFormats', 'Supported formats: JPEG, PNG, GIF (Max 5MB)')}</span>
               </p>
             </div>
 
@@ -1414,14 +1414,14 @@ const Profile = () => {
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
                         validationErrors.name ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="Enter your full name"
+                      placeholder={t('profilePage.fullNamePlaceholder', 'Enter your full name')}
                     />
                     {validationErrors.name && (
                       <p className="text-red-500 text-sm mt-1">{validationErrors.name}</p>
                     )}
                   </div>
                 ) : (
-                  <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">{user.name || 'Not provided'}</p>
+                  <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">{user.name || t('profilePage.notProvided', 'Not provided')}</p>
                 )}
               </div>
 
@@ -1432,7 +1432,7 @@ const Profile = () => {
                   {t('profilePage.emailAddress')}
                 </label>
                 <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">{user.email}</p>
-                <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                <p className="text-xs text-gray-500 mt-1">{t('profilePage.emailCannotBeChanged', 'Email cannot be changed')}</p>
               </div>
 
               {/* Phone */}
@@ -1448,7 +1448,7 @@ const Profile = () => {
                       name="phone"
                       value={editForm.phone}
                       onChange={handleInputChange}
-                      placeholder="e.g., +91 9876543210, +1-234-567-8901"
+                      placeholder={t('profilePage.phonePlaceholder', 'e.g., +91 9876543210, +1-234-567-8901')}
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
                         validationErrors.phone ? 'border-red-500' : 'border-gray-300'
                       }`}
@@ -1457,12 +1457,12 @@ const Profile = () => {
                       <p className="text-red-500 text-sm mt-1">{validationErrors.phone}</p>
                     ) : (
                       <p className="text-gray-500 text-xs mt-1">
-                        Supported formats: +91 9876543210, +1-234-567-8901, 9876543210
+                        {t('profilePage.phoneSupportedFormats', 'Supported formats: +91 9876543210, +1-234-567-8901, 9876543210')}
                       </p>
                     )}
                   </div>
                 ) : (
-                  <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">{user.phone || 'Not provided'}</p>
+                  <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">{user.phone || t('profilePage.notProvided', 'Not provided')}</p>
                 )}
               </div>
 
@@ -1479,7 +1479,7 @@ const Profile = () => {
                       name="location"
                       value={editForm.location}
                       onChange={handleInputChange}
-                      placeholder="Enter your location"
+                      placeholder={t('profilePage.locationPlaceholder', 'Enter your location')}
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
                         validationErrors.location ? 'border-red-500' : 'border-gray-300'
                       }`}
@@ -1489,7 +1489,7 @@ const Profile = () => {
                     )}
                   </div>
                 ) : (
-                  <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">{user.location || 'Not provided'}</p>
+                  <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">{user.location || t('profilePage.notProvided', 'Not provided')}</p>
                 )}
               </div>
             </div>
@@ -1504,7 +1504,7 @@ const Profile = () => {
                   name="bio"
                   value={editForm.bio}
                   onChange={handleInputChange}
-                  placeholder="Tell us about yourself..."
+                  placeholder={t('profilePage.bioPlaceholder', 'Tell us about yourself...')}
                   rows={4}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />

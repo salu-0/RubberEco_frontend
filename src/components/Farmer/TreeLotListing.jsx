@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   TreePine,
@@ -20,6 +21,7 @@ import {
 import CreateTreeLotModal from './CreateTreeLotModal';
 
 const TreeLotListing = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
   const [treeLots, setTreeLots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -197,7 +199,7 @@ const TreeLotListing = ({ isOpen, onClose }) => {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
-        <p className="mt-4 text-gray-600">Loading your tree lots...</p>
+        <p className="mt-4 text-gray-600">{t('treeLotManagement.loadingLots', 'Loading your tree lots...')}</p>
       </div>
     );
   }
@@ -226,8 +228,8 @@ const TreeLotListing = ({ isOpen, onClose }) => {
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">ട്രീ ലോട്ട് മാനേജ്മെന്റ്</h2>
-                <p className="text-gray-600 mt-1">നിങ്ങളുടെ റബ്ബർ ട്രീ ലോട്ടുകൾ ലേലത്തിന് മാനേജ് ചെയ്യുക</p>
+                <h2 className="text-2xl font-bold text-gray-900">{t('treeLotManagement.modalTitle', 'Tree Lot Management')}</h2>
+                <p className="text-gray-600 mt-1">{t('treeLotManagement.modalSubtitle', 'Manage your rubber tree lots for lease or sale')}</p>
               </div>
               <button
                 onClick={onClose}
@@ -243,8 +245,8 @@ const TreeLotListing = ({ isOpen, onClose }) => {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900">എന്റെ ട്രീ ലോട്ടുകൾ</h3>
-                    <p className="text-gray-600 mt-1">നിങ്ങളുടെ റബ്ബർ ട്രീ ലോട്ടുകൾ ലേലത്തിന് മാനേജ് ചെയ്യുക</p>
+                    <h3 className="text-xl font-bold text-gray-900">{t('treeLotManagement.myTreeLots', 'My Tree Lots')}</h3>
+                    <p className="text-gray-600 mt-1">{t('treeLotManagement.myTreeLotsSubtitle', 'Manage your registered rubber tree lots for lease or sale')}</p>
                   </div>
         <motion.button
           className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg hover:from-primary-600 hover:to-primary-700 transition-all duration-200"
@@ -253,7 +255,7 @@ const TreeLotListing = ({ isOpen, onClose }) => {
           onClick={() => setIsCreateModalOpen(true)}
         >
           <Plus className="h-5 w-5" />
-          <span>പുതിയ ലോട്ട് ലിസ്റ്റ് ചെയ്യുക</span>
+          <span>{t('treeLotManagement.addNewLot', 'Add New Lot')}</span>
         </motion.button>
       </div>
 
@@ -265,7 +267,7 @@ const TreeLotListing = ({ isOpen, onClose }) => {
               <TreePine className="h-6 w-6 text-green-600" />
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">മൊത്തം ലോട്ടുകൾ</p>
+              <p className="text-sm font-medium text-gray-600">{t('treeLotManagement.totalLots', 'Total Lots')}</p>
               <p className="text-2xl font-bold text-gray-900">{treeLots.length}</p>
             </div>
           </div>
@@ -276,7 +278,7 @@ const TreeLotListing = ({ isOpen, onClose }) => {
               <TrendingUp className="h-6 w-6 text-blue-600" />
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">സജീവം</p>
+              <p className="text-sm font-medium text-gray-600">{t('treeLotManagement.lotStatusActive', 'Active')}</p>
               <p className="text-2xl font-bold text-gray-900">
                 {treeLots.filter(lot => lot.status === 'active').length}
               </p>
@@ -289,7 +291,7 @@ const TreeLotListing = ({ isOpen, onClose }) => {
               <Clock className="h-6 w-6 text-yellow-600" />
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">ഡ്രാഫ്റ്റ്</p>
+              <p className="text-sm font-medium text-gray-600">{t('treeLotManagement.lotStatusDraft', 'Draft')}</p>
               <p className="text-2xl font-bold text-gray-900">
                 {treeLots.filter(lot => lot.status === 'draft').length}
               </p>
@@ -302,7 +304,7 @@ const TreeLotListing = ({ isOpen, onClose }) => {
               <CheckCircle className="h-6 w-6 text-blue-600" />
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">വിൽപ്പനയായി</p>
+              <p className="text-sm font-medium text-gray-600">{t('treeLotManagement.lotStatusSold', 'Sold')}</p>
               <p className="text-2xl font-bold text-gray-900">
                 {treeLots.filter(lot => lot.status === 'sold').length}
               </p>
@@ -323,8 +325,8 @@ const TreeLotListing = ({ isOpen, onClose }) => {
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
               <TreePine className="h-8 w-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">ഇതുവരെ ട്രീ ലോട്ടുകൾ ഇല്ല</h3>
-            <p className="text-gray-600 mb-4">ലേലത്തിന് നിങ്ങളുടെ ആദ്യ റബ്ബർ ട്രീ ലോട്ട് ലിസ്റ്റ് ചെയ്ത് ആരംഭിക്കുക</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('treeLotManagement.noLotsTitle', 'No tree lots yet')}</h3>
+            <p className="text-gray-600 mb-4">{t('treeLotManagement.noLotsSubtitle', 'List your first rubber tree lot for bidding to get started')}</p>
             <motion.button
               className="flex items-center space-x-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
               whileHover={{ scale: 1.05 }}
@@ -332,7 +334,7 @@ const TreeLotListing = ({ isOpen, onClose }) => {
               onClick={() => setIsCreateModalOpen(true)}
             >
               <Plus className="h-5 w-5" />
-              <span>നിങ്ങളുടെ ആദ്യ ലോട്ട് ലിസ്റ്റ് ചെയ്യുക</span>
+              <span>{t('treeLotManagement.listFirstLot', 'List your first lot')}</span>
             </motion.button>
           </motion.div>
         ) : (
@@ -361,7 +363,7 @@ const TreeLotListing = ({ isOpen, onClose }) => {
                         {isUrgent && (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                             <Clock className="h-3 w-3 mr-1" />
-                            {daysRemaining} days left
+                            {t('treeLotManagement.daysLeft', '{{count}} days left', { count: daysRemaining })}
                           </span>
                         )}
                       </div>
@@ -373,7 +375,7 @@ const TreeLotListing = ({ isOpen, onClose }) => {
                         </div>
                         <div className="flex items-center space-x-2">
                           <TreePine className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm text-gray-600">{lot.numberOfTrees} മരങ്ങൾ</span>
+                          <span className="text-sm text-gray-600">{lot.numberOfTrees} {t('treeLotManagement.trees','trees')}</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <DollarSign className="h-4 w-4 text-gray-400" />
@@ -388,15 +390,15 @@ const TreeLotListing = ({ isOpen, onClose }) => {
                       <div className="flex items-center space-x-4 text-sm text-gray-500">
                         <div className="flex items-center space-x-1">
                           <Eye className="h-4 w-4" />
-                          <span>{lot.viewCount || 0} കാഴ്ചകൾ</span>
+                          <span>{lot.viewCount || 0} {t('treeLotManagement.views','views')}</span>
                         </div>
                         <div className="flex items-center space-x-1">
                           <Users className="h-4 w-4" />
-                          <span>{lot.bidCount || 0} ബിഡുകൾ</span>
+                          <span>{lot.bidCount || 0} {t('treeLotManagement.bids','bids')}</span>
                         </div>
                         <div className="flex items-center space-x-1">
                           <Calendar className="h-4 w-4" />
-                          <span>അവസാനിക്കുന്നു {new Date(lot.biddingEndDate).toLocaleDateString()}</span>
+                          <span>{t('treeLotManagement.ends','Ends')}: {new Date(lot.biddingEndDate).toLocaleDateString()}</span>
                         </div>
                       </div>
                     </div>

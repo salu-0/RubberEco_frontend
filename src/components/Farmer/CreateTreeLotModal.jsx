@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -14,6 +15,7 @@ import {
 import { isRequired, numericValidator } from '../../utils/validation';
 
 const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isEdit = false }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     location: '',
     numberOfTrees: '',
@@ -219,10 +221,10 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">
-                  {isEdit ? 'ട്രീ ലോട്ട് എഡിറ്റ് ചെയ്യുക' : 'പുതിയ ട്രീ ലോട്ട് ലിസ്റ്റ് ചെയ്യുക'}
+                  {isEdit ? t('treeLotManagement.editTitle') : t('treeLotManagement.createTitle')}
                 </h2>
                 <p className="text-gray-600 mt-1">
-                  {isEdit ? 'നിങ്ങളുടെ ട്രീ ലോട്ട് വിവരങ്ങൾ അപ്ഡേറ്റ് ചെയ്യുക' : 'ലേലത്തിന് പുതിയ ട്രീ ലോട്ട് സൃഷ്ടിക്കുക'}
+                  {isEdit ? t('treeLotManagement.editDescription') : t('treeLotManagement.createDescription')}
                 </p>
               </div>
               <button
@@ -240,13 +242,13 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-900 flex items-center">
                     <TreePine className="h-5 w-5 mr-2 text-green-600" />
-                    അടിസ്ഥാന വിവരങ്ങൾ
+                    {t('treeLotManagement.basicInfo')}
                   </h3>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       <MapPin className="h-4 w-4 inline mr-1" />
-                      സ്ഥലം *
+                      {t('treeLotManagement.location')} *
                     </label>
                     <input
                       type="text"
@@ -256,7 +258,7 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
                         errors.location ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="സ്ഥലം നൽകുക (ഉദാ: കോട്ടയം, കേരളം)"
+                      placeholder={t('treeLotManagement.locationPlaceholder')}
                     />
                     {errors.location && (
                       <p className="text-red-500 text-sm mt-1 flex items-center">
@@ -269,7 +271,7 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       <TreePine className="h-4 w-4 inline mr-1" />
-                      മരങ്ങളുടെ എണ്ണം *
+                      {t('treeLotManagement.numberOfTrees')} *
                     </label>
                     <input
                       type="number"
@@ -279,7 +281,7 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
                         errors.numberOfTrees ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="മരങ്ങളുടെ എണ്ണം നൽകുക"
+                      placeholder={t('treeLotManagement.numberOfTreesPlaceholder')}
                       min="1"
                     />
                     {errors.numberOfTrees && (
@@ -292,7 +294,7 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ഏകദേശ ഉത്പാദനം *
+                      {t('treeLotManagement.approximateYield')} *
                     </label>
                     <input
                       type="text"
@@ -302,7 +304,7 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
                         errors.approximateYield ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="ഉദാ: ഓരോ മരത്തിനും 2-3 കിലോ പ്രതിദിനം"
+                      placeholder={t('treeLotManagement.approximateYieldPlaceholder')}
                     />
                     {errors.approximateYield && (
                       <p className="text-red-500 text-sm mt-1 flex items-center">
@@ -315,7 +317,7 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       <DollarSign className="h-4 w-4 inline mr-1" />
-                      കുറഞ്ഞ വില (₹) *
+                      {t('treeLotManagement.minimumPrice')} (₹) *
                     </label>
                     <input
                       type="number"
@@ -325,7 +327,7 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
                         errors.minimumPrice ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="കുറഞ്ഞ വില നൽകുക"
+                      placeholder={t('treeLotManagement.minimumPricePlaceholder')}
                       min="0"
                     />
                     {errors.minimumPrice && (
@@ -339,7 +341,7 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       <Calendar className="h-4 w-4 inline mr-1" />
-                      ലേലത്തിന്റെ അവസാന തീയതി *
+                      {t('treeLotManagement.biddingEndDate')} *
                     </label>
                     <input
                       type="date"
@@ -362,14 +364,14 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
 
                 {/* Additional Information */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                    <CheckCircle className="h-5 w-5 mr-2 text-blue-600" />
-                    അധിക വിവരങ്ങൾ
-                  </h3>
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                      <CheckCircle className="h-5 w-5 mr-2 text-blue-600" />
+                      {t('treeLotManagement.additionalInfo')}
+                    </h3>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      മരങ്ങളുടെ പ്രായം (വർഷം)
+                      {t('treeLotManagement.treeAge')}
                     </label>
                     <input
                       type="number"
@@ -377,14 +379,14 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
                       value={formData.treeAge}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      placeholder="മരങ്ങളുടെ പ്രായം നൽകുക"
+                      placeholder={t('treeLotManagement.treeAgePlaceholder')}
                       min="0"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ടാപ്പിംഗ് ഷെഡ്യൂൾ
+                      {t('treeLotManagement.tappingSchedule')}
                     </label>
                     <input
                       type="text"
@@ -392,14 +394,14 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
                       value={formData.tappingSchedule}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      placeholder="ഉദാ: പ്രതിദിനം, മാറ്റി മാറ്റി ദിവസങ്ങൾ"
+                      placeholder={t('treeLotManagement.tappingSchedulePlaceholder')}
                     />
                   </div>
 
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      വിവരണം
+                      {t('treeLotManagement.description')}
                     </label>
                     <textarea
                       name="description"
@@ -407,7 +409,7 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
                       onChange={handleInputChange}
                       rows="3"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      placeholder="നിങ്ങളുടെ ട്രീ ലോട്ട് വിശദീകരിക്കുക..."
+                      placeholder={t('treeLotManagement.descriptionPlaceholder')}
                     />
                   </div>
                 </div>
@@ -415,7 +417,7 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
 
               {/* Accessibility */}
               <div className="mt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">പ്രവേശന സൗകര്യം</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('treeLotManagement.accessibility')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-center space-x-3">
                     <input
@@ -425,7 +427,7 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
                       onChange={handleInputChange}
                       className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                     />
-                    <label className="text-sm font-medium text-gray-700">റോഡ് പ്രവേശനം ലഭ്യമാണ്</label>
+                    <label className="text-sm font-medium text-gray-700">{t('treeLotManagement.roadAccess')}</label>
                   </div>
                   <div className="flex items-center space-x-3">
                     <input
@@ -435,12 +437,12 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
                       onChange={handleInputChange}
                       className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                     />
-                    <label className="text-sm font-medium text-gray-700">ട്രക്ക് പ്രവേശനം ലഭ്യമാണ്</label>
+                    <label className="text-sm font-medium text-gray-700">{t('treeLotManagement.truckAccess')}</label>
                   </div>
                 </div>
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    പ്രവേശന വിവരണം
+                    {t('treeLotManagement.accessibilityDescription')}
                   </label>
                   <textarea
                     name="accessibilityDescription"
@@ -448,7 +450,7 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
                     onChange={handleInputChange}
                     rows="2"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    placeholder="പ്രവേശന സാഹചര്യങ്ങൾ വിശദീകരിക്കുക..."
+                    placeholder={t('treeLotManagement.accessibilityDescriptionPlaceholder')}
                   />
                 </div>
               </div>
@@ -457,7 +459,7 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
               <div className="mt-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <ImageIcon className="h-5 w-5 mr-2 text-purple-600" />
-                  ചിത്രങ്ങൾ
+                  {t('treeLotManagement.images')}
                 </h3>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
                   <input
@@ -473,8 +475,8 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
                     className="cursor-pointer flex flex-col items-center justify-center space-y-2"
                   >
                     <Upload className="h-8 w-8 text-gray-400" />
-                    <span className="text-sm text-gray-600">ചിത്രങ്ങൾ അപ്‌ലോഡ് ചെയ്യാൻ ക്ലിക്ക് ചെയ്യുക</span>
-                    <span className="text-xs text-gray-500">PNG, JPG, JPEG ഓരോന്നും 5MB വരെ</span>
+                    <span className="text-sm text-gray-600">{t('treeLotManagement.uploadImages')}</span>
+                    <span className="text-xs text-gray-500">{t('treeLotManagement.imageFormats')}</span>
                   </label>
                 </div>
                 {Array.isArray(images) && images.length > 0 && (
@@ -502,7 +504,7 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
               {/* Additional Info */}
               <div className="mt-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  അധിക വിവരങ്ങൾ
+                  {t('treeLotManagement.additionalInfo')}
                 </label>
                 <textarea
                   name="additionalInfo"
@@ -510,7 +512,7 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
                   onChange={handleInputChange}
                   rows="3"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="നിങ്ങളുടെ ട്രീ ലോട്ടിനെക്കുറിച്ചുള്ള അധിക വിവരങ്ങൾ..."
+                  placeholder={t('treeLotManagement.additionalInfoPlaceholder')}
                 />
               </div>
 
@@ -521,7 +523,7 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
                   onClick={onClose}
                   className="px-6 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                 >
-                  റദ്ദാക്കുക
+                  {t('treeLotManagement.cancel')}
                 </button>
                 <motion.button
                   type="submit"
@@ -530,7 +532,7 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
                   whileHover={{ scale: loading ? 1 : 1.05 }}
                   whileTap={{ scale: loading ? 1 : 0.95 }}
                 >
-                  {loading ? 'സംരക്ഷിക്കുന്നു...' : (isEdit ? 'ലോട്ട് അപ്ഡേറ്റ് ചെയ്യുക' : 'ലോട്ട് സൃഷ്ടിക്കുക')}
+                  {loading ? t('treeLotManagement.saving') : (isEdit ? t('treeLotManagement.updateLot') : t('treeLotManagement.createLot'))}
                 </motion.button>
               </div>
             </form>

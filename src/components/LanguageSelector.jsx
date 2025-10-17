@@ -26,6 +26,7 @@ const LanguageSelector = ({
   };
 
   const handleLanguageChange = (languageCode) => {
+    try { localStorage.setItem('app_language', languageCode); } catch {}
     i18n.changeLanguage(languageCode);
     setIsOpen(false);
   };

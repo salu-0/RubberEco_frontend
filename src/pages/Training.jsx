@@ -127,10 +127,10 @@ const Training = () => {
   const trainingModules = [
     {
       id: 1,
-      title: "Rubber Tapping Fundamentals",
-      description: "Learn the basics of proper rubber tapping techniques and best practices.",
-      duration: "2 hours",
-      level: "Beginner",
+      title: t('training.rubberTappingFundamentals'),
+      description: t('training.rubberTappingFundamentalsDesc'),
+      duration: `2 ${t('training.hours')}`,
+      level: t('training.beginner'),
       icon: <BookOpen className="h-6 w-6" />,
       lessons: 8,
       rating: 4.8,
@@ -139,10 +139,10 @@ const Training = () => {
     },
     {
       id: 2,
-      title: "Plantation Management",
-      description: "Comprehensive guide to managing rubber plantations efficiently.",
-      duration: "3 hours",
-      level: "Intermediate",
+      title: t('training.plantationManagementModule'),
+      description: t('training.plantationManagementModuleDesc'),
+      duration: `3 ${t('training.hours')}`,
+      level: t('training.intermediate'),
       icon: <Users className="h-6 w-6" />,
       lessons: 12,
       rating: 4.9,
@@ -151,10 +151,10 @@ const Training = () => {
     },
     {
       id: 3,
-      title: "Disease Prevention & Treatment",
-      description: "Identify and treat common rubber tree diseases and pests.",
-      duration: "1.5 hours",
-      level: "Advanced",
+      title: t('training.diseasePreventionTreatment'),
+      description: t('training.diseasePreventionTreatmentDesc'),
+      duration: `1.5 ${t('training.hours')}`,
+      level: t('training.advanced'),
       icon: <Award className="h-6 w-6" />,
       lessons: 6,
       rating: 4.7,
@@ -163,38 +163,36 @@ const Training = () => {
     },
     {
       id: 4,
-      title: "Market Analysis & Pricing",
-      description: "Understanding rubber market trends and optimal selling strategies.",
-      duration: "2.5 hours",
-      level: "Intermediate",
+      title: t('training.marketAnalysisPricing'),
+      description: t('training.marketAnalysisPricingDesc'),
+      duration: `2.5 ${t('training.hours')}`,
+      level: t('training.intermediate'),
       icon: <Video className="h-6 w-6" />,
       lessons: 10,
       rating: 4.6,
       price: 0,
       isFree: true
     }
-  ];
-
-  const features = [
+  ];  const features = [
     {
       icon: <Video className="h-8 w-8" />,
-      title: "Video Tutorials",
-      description: "High-quality video content with expert demonstrations"
+      title: t('training.videoTutorials'),
+      description: t('training.videoTutorialsDesc')
     },
     {
       icon: <Download className="h-8 w-8" />,
-      title: "Downloadable Resources",
-      description: "PDF guides, checklists, and reference materials"
+      title: t('training.downloadableResources'),
+      description: t('training.downloadableResourcesDesc')
     },
     {
       icon: <Award className="h-8 w-8" />,
-      title: "Certification",
-      description: "Earn certificates upon completion of training modules"
+      title: t('training.certification'),
+      description: t('training.certificationDesc')
     },
     {
       icon: <Users className="h-8 w-8" />,
-      title: "Expert Support",
-      description: "Get help from experienced rubber plantation professionals"
+      title: t('training.expertSupport'),
+      description: t('training.expertSupportDesc')
     }
   ];
 
@@ -440,8 +438,8 @@ const Training = () => {
               <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center text-white mb-4">
                 <Users className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Rubber Tapping</h3>
-              <p className="text-gray-600 mb-4">5-day intensive hands-on training</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{t('training.rubberTapping')}</h3>
+              <p className="text-gray-600 mb-4">{t('training.rubberTappingDesc')}</p>
               <div className="flex items-center text-sm text-gray-500">
                 <Clock className="w-4 h-4 mr-1" />
                 <span>Dec 15-20, 2024</span>
@@ -459,8 +457,8 @@ const Training = () => {
               <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center text-white mb-4">
                 <Award className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Plantation Management</h3>
-              <p className="text-gray-600 mb-4">3-day comprehensive field training</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{t('training.plantationManagement')}</h3>
+              <p className="text-gray-600 mb-4">{t('training.plantationManagementDesc')}</p>
               <div className="flex items-center text-sm text-gray-500">
                 <Clock className="w-4 h-4 mr-1" />
                 <span>Dec 22-24, 2024</span>
@@ -478,8 +476,8 @@ const Training = () => {
               <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center text-white mb-4">
                 <BookOpen className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Disease Control</h3>
-              <p className="text-gray-600 mb-4">2-day practical workshop</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{t('training.diseaseControl')}</h3>
+              <p className="text-gray-600 mb-4">{t('training.diseaseControlDesc')}</p>
               <div className="flex items-center text-sm text-gray-500">
                 <Clock className="w-4 h-4 mr-1" />
                 <span>Jan 5-6, 2025</span>
@@ -497,8 +495,8 @@ const Training = () => {
               <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center text-white mb-4">
                 <Download className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Harvesting</h3>
-              <p className="text-gray-600 mb-4">4-day latex collection training</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{t('training.harvesting')}</h3>
+              <p className="text-gray-600 mb-4">{t('training.harvestingDesc')}</p>
               <div className="flex items-center text-sm text-gray-500">
                 <Clock className="w-4 h-4 mr-1" />
                 <span>Jan 8-11, 2025</span>
@@ -516,8 +514,8 @@ const Training = () => {
               <div className="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center text-white mb-4">
                 <Star className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Equipment Maintenance</h3>
-              <p className="text-gray-600 mb-4">3-day machinery & tools workshop</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{t('training.equipmentMaintenance')}</h3>
+              <p className="text-gray-600 mb-4">{t('training.equipmentMaintenanceDesc')}</p>
               <div className="flex items-center text-sm text-gray-500">
                 <Clock className="w-4 h-4 mr-1" />
                 <span>Jan 15-17, 2025</span>
@@ -535,8 +533,8 @@ const Training = () => {
               <div className="w-12 h-12 bg-yellow-500 rounded-xl flex items-center justify-center text-white mb-4">
                 <CheckCircle className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Safety Protocols</h3>
-              <p className="text-gray-600 mb-4">2-day safety & emergency training</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{t('training.safetyProtocols')}</h3>
+              <p className="text-gray-600 mb-4">{t('training.safetyProtocolsDesc')}</p>
               <div className="flex items-center text-sm text-gray-500">
                 <Clock className="w-4 h-4 mr-1" />
                 <span>Jan 20-21, 2025</span>

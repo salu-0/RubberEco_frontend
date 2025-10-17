@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -380,17 +381,19 @@ const NurseryCenter = () => {
     }
   };
 
+  const { t } = useTranslation();
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
       <div className="pt-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <button className="mb-6 text-emerald-700 hover:text-emerald-800 font-medium" onClick={() => navigate(-1)}>
-          ← Back to Nursery Centers
+          ← {t('nurseryCenter.backToCenters', 'Back to Nursery Centers')}
         </button>
         {loading ? (
-          <div>Loading...</div>
+          <div>{t('common.loading', 'Loading...')}</div>
         ) : !center ? (
-          <div className="text-red-600">Center not found.</div>
+          <div className="text-red-600">{t('nurseryCenter.centerNotFound', 'Center not found.')}</div>
         ) : (
           <div className="space-y-6">
             <div className="bg-gradient-to-br from-emerald-50 to-green-50 p-6 rounded-2xl border border-emerald-100">
@@ -398,11 +401,11 @@ const NurseryCenter = () => {
               <p className="text-emerald-700 font-medium mt-1">{center.location}</p>
               <div className="mt-3 grid sm:grid-cols-2 gap-4">
                 <div className="bg-white rounded-xl p-4 border border-emerald-200">
-                  <div className="text-gray-700 font-semibold mb-1">Phone</div>
+                  <div className="text-gray-700 font-semibold mb-1">{t('nurseryCenter.phone', 'Phone')}</div>
                   <div className="text-gray-900">{center.contact || '-'}</div>
                 </div>
                 <div className="bg-white rounded-xl p-4 border border-emerald-200">
-                  <div className="text-gray-700 font-semibold mb-1">Email</div>
+                  <div className="text-gray-700 font-semibold mb-1">{t('nurseryCenter.email', 'Email')}</div>
                   <div className="text-gray-900">{center.email || '-'}</div>
                 </div>
               </div>
@@ -410,8 +413,8 @@ const NurseryCenter = () => {
 
             <div className="bg-white border border-emerald-200 rounded-2xl shadow-sm overflow-hidden">
               <div className="bg-gradient-to-r from-emerald-600 to-green-600 px-6 py-4">
-                <h4 className="text-xl font-bold text-white">Book Saplings</h4>
-                <p className="text-emerald-100 text-sm mt-1">Select your preferred variety and quantity</p>
+                <h4 className="text-xl font-bold text-white">{t('nurseryCenter.bookSaplings', 'Book Saplings')}</h4>
+                <p className="text-emerald-100 text-sm mt-1">{t('nurseryCenter.bookSaplingsSub', 'Select your preferred variety and quantity')}</p>
               </div>
 
               <div className="p-6 space-y-6">
@@ -424,7 +427,7 @@ const NurseryCenter = () => {
                       checked={booking.paymentMode === 'advance'}
                       onChange={() => setBooking({ ...booking, paymentMode: 'advance' })}
                     />
-                    <span className="ml-2 text-sm font-medium text-gray-800">Book with Advance</span>
+                    <span className="ml-2 text-sm font-medium text-gray-800">{t('nurseryCenter.bookWithAdvance', 'Book with Advance')}</span>
                   </label>
                   <label className="inline-flex items-center">
                     <input
@@ -433,18 +436,18 @@ const NurseryCenter = () => {
                       checked={booking.paymentMode === 'full'}
                       onChange={() => setBooking({ ...booking, paymentMode: 'full' })}
                     />
-                    <span className="ml-2 text-sm font-medium text-gray-800">Buy Now (Pay Full)</span>
+                    <span className="ml-2 text-sm font-medium text-gray-800">{t('nurseryCenter.buyNowPayFull', 'Buy Now (Pay Full)')}</span>
                   </label>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-3">Choose Variety *</label>
+                  <label className="block text-sm font-semibold text-gray-800 mb-3">{t('nurseryCenter.chooseVariety', 'Choose Variety')} *</label>
                   <div className="relative">
                     <select
                       className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 bg-white hover:border-gray-300"
                       value={booking.variety}
                       onChange={(e) => setBooking({ ...booking, variety: e.target.value, plantId: '' })}
                     >
-                      <option value="">Select a variety</option>
+                      <option value="">{t('nurseryCenter.selectVariety', 'Select a variety')}</option>
                       {centerVarieties.map(v => (
                         <option key={v.id || v.name} value={v.name}>{v.name} {v.description ? `- ${v.description}` : ''}</option>
                       ))}
@@ -459,14 +462,14 @@ const NurseryCenter = () => {
                           ? 'bg-yellow-100 text-yellow-800'
                           : 'bg-green-100 text-green-800'
                       }`}>
-                        Stock: {selectedPlant.stockAvailable || 0}
+                        {t('nurseryCenter.stock', 'Stock')}: {selectedPlant.stockAvailable || 0}
                       </span>
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
-                        Unit Price: ₹{Number(selectedPlant.unitPrice || 0).toLocaleString('en-IN')}
+                        {t('nurseryCenter.unitPrice', 'Unit Price')}: ₹{Number(selectedPlant.unitPrice || 0).toLocaleString('en-IN')}
                       </span>
                       {selectedPlant.minOrderQty ? (
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                          Min Order: {selectedPlant.minOrderQty}
+                          {t('nurseryCenter.minOrder', 'Min Order')}: {selectedPlant.minOrderQty}
                         </span>
                       ) : null}
                     </div>
@@ -475,18 +478,18 @@ const NurseryCenter = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-3">Quantity *</label>
+                    <label className="block text-sm font-semibold text-gray-800 mb-3">{t('nurseryCenter.quantity', 'Quantity')} *</label>
                     <input
                       type="number"
                       min={(selectedPlant?.minOrderQty) || 1}
                       className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 bg-white hover:border-gray-300"
                       value={booking.quantity}
                       onChange={(e) => setBooking({ ...booking, quantity: parseInt(e.target.value || '0') })}
-                      placeholder="Enter quantity"
+                      placeholder={t('nurseryCenter.enterQuantity', 'Enter quantity')}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-3">Advance Payment *</label>
+                    <label className="block text-sm font-semibold text-gray-800 mb-3">{t('nurseryCenter.advancePayment', 'Advance Payment')} *</label>
                     <select
                       className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 bg-white hover:border-gray-300"
                       value={booking.advancePercent}
@@ -494,7 +497,7 @@ const NurseryCenter = () => {
                       disabled={booking.paymentMode === 'full'}
                     >
                       {[10,15,20,25,30].map(v => (
-                        <option key={v} value={v}>{v}% {v===10?'- Minimum':v===20?'- Recommended':v===30?'- Higher':''}</option>
+                        <option key={v} value={v}>{v}% {v===10?`- ${t('nurseryCenter.percentLabelMinimum','Minimum')}`:v===20?`- ${t('nurseryCenter.percentLabelRecommended','Recommended')}`:v===30?`- ${t('nurseryCenter.percentLabelHigher','Higher')}`:''}</option>
                       ))}
                     </select>
                   </div>
@@ -510,10 +513,10 @@ const NurseryCenter = () => {
                       checked={booking.shipmentRequired}
                       onChange={(e) => setBooking({ ...booking, shipmentRequired: e.target.checked })}
                     />
-                    <label htmlFor="shipRequired" className="ml-2 text-sm text-gray-800">Shipment required</label>
+                    <label htmlFor="shipRequired" className="ml-2 text-sm text-gray-800">{t('nurseryCenter.shipmentRequired', 'Shipment required')}</label>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-3">Shipping Fee</label>
+                    <label className="block text-sm font-semibold text-gray-800 mb-3">{t('nurseryCenter.shippingFee', 'Shipping Fee')}</label>
                     <div className="flex">
                       <span className="inline-flex items-center px-3 rounded-l-xl border border-r-0 border-gray-200 bg-gray-50 text-gray-500">₹</span>
                       <input
@@ -531,13 +534,13 @@ const NurseryCenter = () => {
                 {booking.shipmentRequired && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-3">Transport (Drop-off) Location</label>
+                      <label className="block text-sm font-semibold text-gray-800 mb-3">{t('nurseryCenter.transportLocation', 'Transport (Drop-off) Location')}</label>
                       <input
                         type="text"
                         className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white hover:border-gray-300"
                         value={dropoffAddress}
                         onChange={(e) => setDropoffAddress(e.target.value)}
-                        placeholder="Enter delivery/pickup address"
+                        placeholder={t('nurseryCenter.enterDeliveryAddress', 'Enter delivery/pickup address')}
                         onBlur={geocodeDropoffAddress}
                         disabled={geoLoading}
                       />
@@ -547,7 +550,7 @@ const NurseryCenter = () => {
                         className="mt-2 inline-flex items-center px-3 py-2 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700"
                         disabled={geoLoading || !dropoffAddress}
                       >
-                        {geoLoading ? 'Locating…' : 'Estimate from Address'}
+                        {geoLoading ? t('common.loading','Locating…') : t('nurseryCenter.estimateFromAddress','Estimate from Address')}
                       </button>
                       <button
                         type="button"
@@ -555,49 +558,49 @@ const NurseryCenter = () => {
                         className="mt-2 ml-3 inline-flex items-center px-3 py-2 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700"
                         disabled={geoLoading}
                       >
-                        {geoLoading ? 'Detecting…' : 'Use My Location'}
+                        {geoLoading ? t('common.loading','Detecting…') : t('nurseryCenter.useMyLocation','Use My Location')}
                       </button>
                     </div>
                     <div className="flex flex-col justify-end">
                       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                        <div className="text-sm text-amber-800 font-semibold">Estimated Shipping</div>
-                        <div className="mt-1 text-sm text-amber-800">Distance: {distanceKm ? `${distanceKm.toFixed(1)} km` : '-'}
+                        <div className="text-sm text-amber-800 font-semibold">{t('nurseryCenter.estimatedShipping','Estimated Shipping')}</div>
+                        <div className="mt-1 text-sm text-amber-800">{t('nurseryCenter.distance','Distance')}: {distanceKm ? `${distanceKm.toFixed(1)} km` : '-'}
                         </div>
                         <div className="mt-1 text-lg font-bold text-amber-900">₹{Number(shippingEstimate || 0).toLocaleString('en-IN')}</div>
-                        <div className="mt-1 text-[11px] text-amber-700">Estimate = ₹150 base + ₹12/km</div>
+                        <div className="mt-1 text-[11px] text-amber-700">{t('nurseryCenter.estimateFormula','Estimate = ₹150 base + ₹12/km')}</div>
                       </div>
                     </div>
                   </div>
                 )}
 
                 {selectedPlant?.minOrderQty ? (
-                  <div className="flex items-center text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">Min order: {selectedPlant.minOrderQty} plants</div>
+                  <div className="flex items-center text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">{t('nurseryCenter.minOrder','Min order')}: {selectedPlant.minOrderQty} {t('nurseryCenter.plants','plants')}</div>
                 ) : null}
 
                 {selectedPlant && booking.variety && booking.quantity > 0 && (
                   <div className="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl p-4">
-                    <h5 className="text-sm font-semibold text-emerald-800 mb-3">Order Summary</h5>
+                    <h5 className="text-sm font-semibold text-emerald-800 mb-3">{t('nurseryCenter.orderSummary','Order Summary')}</h5>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-emerald-600 font-medium">Variety:</span>
+                        <span className="text-emerald-600 font-medium">{t('nurseryCenter.variety','Variety')}:</span>
                         <p className="font-semibold text-emerald-800">{booking.variety}</p>
                       </div>
                       <div>
-                        <span className="text-emerald-600 font-medium">Quantity:</span>
+                        <span className="text-emerald-600 font-medium">{t('nurseryCenter.quantity','Quantity')}:</span>
                         <p className="font-semibold text-emerald-800">{booking.quantity} plants</p>
                       </div>
                       <div>
-                        <span className="text-emerald-600 font-medium">Unit Price:</span>
+                        <span className="text-emerald-600 font-medium">{t('nurseryCenter.unitPrice','Unit Price')}:</span>
                         <p className="font-semibold text-emerald-800">₹{Number(selectedPlant?.unitPrice || 0).toLocaleString('en-IN')}</p>
                       </div>
                       {booking.shipmentRequired && (
                         <div>
-                          <span className="text-emerald-600 font-medium">Shipping Fee:</span>
+                          <span className="text-emerald-600 font-medium">{t('nurseryCenter.shippingFee','Shipping Fee')}:</span>
                           <p className="font-semibold text-emerald-800">₹{Number(shippingEstimate || booking.shippingFee || 0).toLocaleString('en-IN')}</p>
                         </div>
                       )}
                       <div>
-                        <span className="text-emerald-600 font-medium">Totals:</span>
+                        <span className="text-emerald-600 font-medium">{t('nurseryCenter.totals','Totals')}:</span>
                         <p className="font-semibold text-emerald-800">
                           {(() => {
                             const unit = Number(selectedPlant?.unitPrice || 0);
@@ -607,12 +610,12 @@ const NurseryCenter = () => {
                             const total = subtotal + shippingFee;
                             
                             if (booking.paymentMode === 'full') {
-                              return `Total ₹${total.toLocaleString('en-IN')}${shippingFee > 0 ? ` (includes ₹${shippingFee.toLocaleString('en-IN')} shipping)` : ''}`;
+                              return `${t('nursery.total','Total')} ₹${total.toLocaleString('en-IN')}${shippingFee > 0 ? ` • ${t('cart.shipping','Shipping')} ₹${shippingFee.toLocaleString('en-IN')}` : ''}`;
                             } else {
                               const advPct = Number(booking.advancePercent || 10);
                               const adv = Math.round((subtotal * advPct) / 100);
                               const bal = subtotal - adv;
-                              return `Total ₹${subtotal.toLocaleString('en-IN')} • Advance ₹${adv.toLocaleString('en-IN')} • Balance ₹${bal.toLocaleString('en-IN')}${shippingFee > 0 ? ` • Shipping ₹${shippingFee.toLocaleString('en-IN')}` : ''}`;
+                              return `${t('nursery.total','Total')} ₹${subtotal.toLocaleString('en-IN')} • ${t('nursery.advance','Advance')} ₹${adv.toLocaleString('en-IN')} • ${t('nursery.balance','Balance')} ₹${bal.toLocaleString('en-IN')}${shippingFee > 0 ? ` • ${t('cart.shipping','Shipping')} ₹${shippingFee.toLocaleString('en-IN')}` : ''}`;
                             }
                           })()}
                         </p>
@@ -623,12 +626,12 @@ const NurseryCenter = () => {
 
                 <div className={`rounded-lg p-3 border ${booking.paymentMode === 'full' ? 'bg-amber-50 border-amber-200' : 'bg-blue-50 border-blue-200'}`}>
                   <div className={`text-sm ${booking.paymentMode === 'full' ? 'text-amber-800' : 'text-blue-700'}`}>
-                    {booking.paymentMode === 'full' ? 'Pay full amount now (shipping fee added if selected).' : 'Pay advance online, balance at pickup.'}
+                    {booking.paymentMode === 'full' ? t('nurseryCenter.payBannerFull','Pay full amount now (shipping fee added if selected).') : t('nurseryCenter.payBannerAdvance','Pay advance online, balance at pickup.')}
                   </div>
                 </div>
 
                 {selectedPlant && booking.quantity > (selectedPlant.stockAvailable || 0) && (
-                  <div className="flex items-center text-xs text-red-700 bg-red-50 px-3 py-2 rounded-lg">Requested quantity exceeds available stock.</div>
+                  <div className="flex items-center text-xs text-red-700 bg-red-50 px-3 py-2 rounded-lg">{t('nurseryCenter.exceedsStock','Requested quantity exceeds available stock.')}</div>
                 )}
 
                 <button
@@ -636,7 +639,7 @@ const NurseryCenter = () => {
                   className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 disabled:from-gray-400 disabled:to-gray-400 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl"
                   onClick={placeBooking}
                 >
-                  {placing ? 'Processing Booking...' : 'Book Saplings Now'}
+                  {placing ? t('nurseryCenter.processingBooking','Processing Booking...') : t('nurseryCenter.bookSaplingsNow','Book Saplings Now')}
                 </button>
               </div>
             </div>
@@ -645,10 +648,10 @@ const NurseryCenter = () => {
       </div>
       <ConfirmDialog
         open={receiptPromptOpen}
-        title="Payment successful"
-        message="Would you like to download your receipt now?"
-        confirmText="Download"
-        cancelText="Later"
+        title={t('nursery.paymentSuccess','Payment successful')}
+        message={t('nursery.downloadReceiptPrompt','Would you like to download your receipt now?')}
+        confirmText={t('nursery.download','Download')}
+        cancelText={t('nursery.later','Later')}
         onCancel={() => setReceiptPromptOpen(false)}
         onConfirm={async () => {
           setReceiptPromptOpen(false);
@@ -668,9 +671,9 @@ const NurseryCenter = () => {
             a.click();
             a.remove();
             window.URL.revokeObjectURL(url);
-            toastService.success('Receipt downloaded successfully!', { duration: 3000 });
+            toastService.success(t('nursery.receiptDownloaded','Receipt downloaded successfully!'), { duration: 3000 });
           } catch (e) {
-            toastService.error('Failed to download receipt. You can download it later from Payment Status.');
+            toastService.error(t('nursery.receiptDownloadFailed','Failed to download receipt. You can download it later from Payment Status.'));
           }
           setPendingReceiptBookingId('');
         }}

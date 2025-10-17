@@ -195,8 +195,8 @@ const PaymentStatus = ({ isOpen, onClose }) => {
               <CreditCard className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">എന്റെ നേഴ്സറി ബുക്കിംഗുകൾ</h2>
-              <p className="text-green-100">നിങ്ങളുടെ നേഴ്സറി ബുക്കിംഗുകളും പണമടവുകളും ട്രാക്ക് ചെയ്യുക</p>
+              <h2 className="text-xl font-bold text-white">{t('paymentStatus.title')}</h2>
+              <p className="text-green-100">{t('paymentStatus.subtitle')}</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -226,7 +226,7 @@ const PaymentStatus = ({ isOpen, onClose }) => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search payments..."
+                  placeholder={t('paymentModal.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
@@ -240,11 +240,11 @@ const PaymentStatus = ({ isOpen, onClose }) => {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               >
-                <option value="all">All Status</option>
-                <option value="completed">Completed</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="overdue">Overdue</option>
+                <option value="all">{t('paymentModal.allStatus')}</option>
+                <option value="completed">{t('paymentModal.paid')}</option>
+                <option value="pending">{t('paymentModal.pending') || 'Pending'}</option>
+                <option value="approved">{t('paymentModal.approved')}</option>
+                <option value="overdue">{t('paymentModal.overdue') || 'Overdue'}</option>
               </select>
               
               <select
@@ -252,13 +252,13 @@ const PaymentStatus = ({ isOpen, onClose }) => {
                 onChange={(e) => setTypeFilter(e.target.value)}
                 className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               >
-                <option value="all">All Types</option>
-                <option value="rubber_sale">Rubber Sale</option>
-                <option value="service_payment">Service Payment</option>
-                <option value="subsidy">Government Subsidy</option>
-                <option value="training_fee">Training Fee</option>
-                <option value="equipment_purchase">Equipment Purchase</option>
-                <option value="nursery_booking">Nursery Booking</option>
+                <option value="all">{t('paymentModal.allTypes')}</option>
+                <option value="rubber_sale">{t('paymentModal.rubberSale') || 'Rubber Sale'}</option>
+                <option value="service_payment">{t('paymentModal.servicePayment') || 'Service Payment'}</option>
+                <option value="subsidy">{t('paymentModal.subsidy') || 'Government Subsidy'}</option>
+                <option value="training_fee">{t('paymentModal.trainingFee') || 'Training Fee'}</option>
+                <option value="equipment_purchase">{t('paymentModal.equipmentPurchase') || 'Equipment Purchase'}</option>
+                <option value="nursery_booking">{t('paymentModal.nurseryBooking')}</option>
               </select>
             </div>
           </div>
@@ -274,8 +274,8 @@ const PaymentStatus = ({ isOpen, onClose }) => {
           ) : filteredPayments.length === 0 ? (
             <div className="text-center py-12">
               <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No payments found</h3>
-              <p className="text-gray-600">No payments match your current filters.</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">{t('paymentModal.noPaymentsFound', 'No payments found')}</h3>
+              <p className="text-gray-600">{t('paymentModal.noPaymentsMatch', 'No payments match your current filters.')}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -301,17 +301,17 @@ const PaymentStatus = ({ isOpen, onClose }) => {
                             {getStatusBadge(payment.status)}
                           </div>
                           <div className="flex items-center space-x-4 text-sm text-gray-600">
-                            <span>ID: {payment.id}</span>
+                            <span>{t('paymentModal.id')}: {payment.id}</span>
                             <span>•</span>
-                            <span>Type: {getTypeLabel(payment.type)}</span>
+                            <span>{t('paymentModal.type')}: {getTypeLabel(payment.type)}</span>
                             <span>•</span>
-                            <span>Date: {payment.date}</span>
+                            <span>{t('paymentModal.date')}: {payment.date}</span>
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold text-gray-900">{payment.amount}</p>
-                        <p className="text-sm text-gray-500">Due: {payment.dueDate}</p>
+                        <p className="text-sm text-gray-500">{t('paymentModal.due')}: {payment.dueDate}</p>
                       </div>
                     </div>
 
@@ -319,12 +319,12 @@ const PaymentStatus = ({ isOpen, onClose }) => {
                     <div className="bg-white rounded-lg p-4 mb-4">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div>
-                          <p className="text-xs text-gray-500">Payment Method</p>
+                          <p className="text-xs text-gray-500">{t('paymentModal.paymentMethod')}</p>
                           <p className="text-sm font-medium text-gray-900">{payment.paymentMethod}</p>
                         </div>
                         {payment.transactionId && (
                           <div>
-                            <p className="text-xs text-gray-500">Transaction ID</p>
+                            <p className="text-xs text-gray-500">{t('paymentModal.transactionId')}</p>
                             <p className="text-sm font-medium text-gray-900">{payment.transactionId}</p>
                           </div>
                         )}
@@ -336,7 +336,7 @@ const PaymentStatus = ({ isOpen, onClose }) => {
                         )}
                         {payment.quantity && (
                           <div>
-                            <p className="text-xs text-gray-500">Quantity</p>
+                            <p className="text-xs text-gray-500">{t('paymentModal.quantity')}</p>
                             <p className="text-sm font-medium text-gray-900">{payment.quantity}</p>
                           </div>
                         )}
@@ -388,21 +388,21 @@ const PaymentStatus = ({ isOpen, onClose }) => {
                       <div className="bg-emerald-50 rounded-lg p-3 mb-4">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                           <div>
-                            <p className="text-emerald-600">ചെടി</p>
+                            <p className="text-emerald-600">{t('paymentModal.plant')}</p>
                             <p className="text-emerald-800 font-medium">{payment.meta?.plantName || '-'}</p>
-                            <p className="text-emerald-600 mt-2">അളവ്: <span className='text-emerald-800 font-medium'>{payment.quantity}</span></p>
+                            <p className="text-emerald-600 mt-2">{t('paymentModal.quantity')}: <span className='text-emerald-800 font-medium'>{payment.quantity}</span></p>
                           </div>
                           <div>
-                            <p className="text-emerald-600 font-semibold">തുകകൾ</p>
-                            <p className="text-emerald-800">മൊത്തം {payment.amount}</p>
-                            <p className="text-emerald-800">അഡ്വാൻസ് {payment.amount} ({payment.meta?.advancePercent}%)</p>
-                            <p className="text-emerald-800">ബാലൻസ് ₹0</p>
+                            <p className="text-emerald-600 font-semibold">{t('paymentModal.amount')}</p>
+                            <p className="text-emerald-800">{t('paymentModal.amount')}: {payment.amount}</p>
+                            <p className="text-emerald-800">{t('paymentModal.advance')}: {payment.amount} ({payment.meta?.advancePercent}%)</p>
+                            <p className="text-emerald-800">{t('paymentModal.balance')}: ₹0</p>
                           </div>
                           <div>
-                            <p className="text-emerald-600 font-semibold">സ്ഥിതി</p>
-                            <span className="font-bold text-emerald-900">{payment.status === 'completed' ? 'പൂർത്തിയായി' : payment.status}</span>
+                            <p className="text-emerald-600 font-semibold">{t('paymentModal.details')}</p>
+                            <span className="font-bold text-emerald-900">{payment.status === 'completed' ? t('paymentModal.approved') : payment.status}</span>
                             <br/>
-                            <span>അഡ്വാൻസ് അടച്ചു: <span className="font-bold">{payment.meta?.advancePercent === 100 ? 'അതെ' : 'ഇല്ല'}</span></span>
+                            <span>{t('paymentModal.approvedStatus')}: <span className="font-bold">{payment.meta?.advancePercent === 100 ? t('common.yes') : t('common.no')}</span></span>
                           </div>
                         </div>
                       </div>
@@ -442,7 +442,7 @@ const PaymentStatus = ({ isOpen, onClose }) => {
                     {/* Footer actions */}
                     <div className="flex items-center justify-between text-sm text-gray-600">
                       <div className="flex items-center space-x-2">
-                        <span className="flex items-center"><Calendar className="h-4 w-4 mr-1"/> Due: {payment.dueDate}</span>
+                        <span className="flex items-center"><Calendar className="h-4 w-4 mr-1"/> {t('paymentModal.due')}: {payment.dueDate}</span>
                       </div>
                       <div className="flex items-center space-x-6">
                         <button className="flex items-center hover:text-gray-900" onClick={async () => {
@@ -468,9 +468,9 @@ const PaymentStatus = ({ isOpen, onClose }) => {
                             console.error(e);
                           }
                         }}>
-                          <Download className="h-4 w-4 mr-1"/> രസീത് ഡൗൺലോഡ് ചെയ്യുക
+                          <Download className="h-4 w-4 mr-1"/> {t('paymentModal.downloadReceipt')}
                         </button>
-                        <button className="flex items-center hover:text-gray-900"><Eye className="h-4 w-4 mr-1"/> View Details</button>
+                        <button className="flex items-center hover:text-gray-900"><Eye className="h-4 w-4 mr-1"/> {t('paymentModal.viewDetails')}</button>
                       </div>
                     </div>
                   </motion.div>

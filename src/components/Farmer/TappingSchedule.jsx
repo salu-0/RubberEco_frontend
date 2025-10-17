@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   Clock,
   Calendar,
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 
 const TappingSchedule = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
   const [schedules, setSchedules] = useState([]);
   const [filteredSchedules, setFilteredSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -141,8 +143,8 @@ const TappingSchedule = ({ isOpen, onClose }) => {
               <Clock className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Tapping Schedule</h2>
-              <p className="text-blue-100">View and manage your tapping schedules</p>
+              <h2 className="text-xl font-bold text-white">{t('tappingSchedule.title')}</h2>
+              <p className="text-blue-100">{t('tappingSchedule.subtitle')}</p>
             </div>
           </div>
           <button
@@ -161,7 +163,7 @@ const TappingSchedule = ({ isOpen, onClose }) => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search by tapper name, location, or schedule ID..."
+                  placeholder={t('tappingSchedule.search')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -175,16 +177,16 @@ const TappingSchedule = ({ isOpen, onClose }) => {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="completed">Completed</option>
-                <option value="upcoming">Upcoming</option>
-                <option value="paused">Paused</option>
+                <option value="all">{t('tappingSchedule.allStatus')}</option>
+                <option value="active">{t('tappingSchedule.active')}</option>
+                <option value="completed">{t('tappingSchedule.completed')}</option>
+                <option value="upcoming">{t('tappingSchedule.upcoming')}</option>
+                <option value="paused">{t('tappingSchedule.paused')}</option>
               </select>
               
               <button className="px-4 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors flex items-center space-x-2">
                 <Download className="h-4 w-4" />
-                <span>Export</span>
+                <span>{t('tappingSchedule.export')}</span>
               </button>
             </div>
           </div>
@@ -195,13 +197,13 @@ const TappingSchedule = ({ isOpen, onClose }) => {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-              <p className="mt-4 text-gray-600">Loading schedules...</p>
+              <p className="mt-4 text-gray-600">{t('tappingSchedule.loadingSchedules')}</p>
             </div>
           ) : filteredSchedules.length === 0 ? (
             <div className="text-center py-12">
               <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No schedules found</h3>
-              <p className="text-gray-600">No tapping schedules match your current filters.</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">{t('tappingSchedule.noSchedules')}</h3>
+              <p className="text-gray-600">{t('tappingSchedule.noSchedulesMessage')}</p>
             </div>
           ) : (
             <div className="space-y-6">

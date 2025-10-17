@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   CheckCircle,
   Clock,
@@ -22,6 +23,7 @@ import {
 } from 'lucide-react';
 
 const ApplicationStatus = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
   const [applications, setApplications] = useState([]);
   const [filteredApplications, setFilteredApplications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -355,8 +357,8 @@ const ApplicationStatus = ({ isOpen, onClose }) => {
               <CheckCircle className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Application Status</h2>
-              <p className="text-blue-100">Monitor progress of all your applications</p>
+              <h2 className="text-xl font-bold text-white">{t('applicationStatus.title')}</h2>
+              <p className="text-blue-100">{t('applicationStatus.subtitle')}</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -384,7 +386,7 @@ const ApplicationStatus = ({ isOpen, onClose }) => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search applications..."
+                  placeholder={t('applicationStatus.search')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -398,12 +400,12 @@ const ApplicationStatus = ({ isOpen, onClose }) => {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="all">All Status</option>
-                <option value="submitted">Submitted</option>
-                <option value="under_review">Under Review</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-                <option value="pending_documents">Pending Documents</option>
+                <option value="all">{t('applicationStatus.allStatus')}</option>
+                <option value="submitted">{t('applicationStatus.submitted')}</option>
+                <option value="under_review">{t('applicationStatus.underReview')}</option>
+                <option value="approved">{t('applicationStatus.approved')}</option>
+                <option value="rejected">{t('applicationStatus.rejected')}</option>
+                <option value="pending_documents">{t('applicationStatus.pendingDocuments')}</option>
               </select>
               
               <select
@@ -411,13 +413,13 @@ const ApplicationStatus = ({ isOpen, onClose }) => {
                 onChange={(e) => setTypeFilter(e.target.value)}
                 className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="all">All Types</option>
-                <option value="land_registration">Land Registration</option>
-                <option value="tenancy_offering">Land Lease</option>
-                <option value="tapper_request">Tapper Request</option>
-                <option value="fertilizer_service">Fertilizer Service</option>
-                <option value="rain_guard_service">Rain Guard Service</option>
-                <option value="training_registration">Training</option>
+                <option value="all">{t('applicationStatus.allTypes')}</option>
+                <option value="land_registration">{t('applicationStatus.landRegistration')}</option>
+                <option value="tenancy_offering">{t('applicationStatus.landLease')}</option>
+                <option value="tapper_request">{t('applicationStatus.tapperRequest')}</option>
+                <option value="fertilizer_service">{t('applicationStatus.fertilizerService')}</option>
+                <option value="rain_guard_service">{t('applicationStatus.rainGuardService')}</option>
+                <option value="training_registration">{t('applicationStatus.training')}</option>
               </select>
             </div>
           </div>
@@ -428,13 +430,13 @@ const ApplicationStatus = ({ isOpen, onClose }) => {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-              <p className="mt-4 text-gray-600">Loading applications...</p>
+              <p className="mt-4 text-gray-600">{t('applicationStatus.loadingApplications')}</p>
             </div>
           ) : filteredApplications.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No applications found</h3>
-              <p className="text-gray-600">No applications match your current filters.</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">{t('applicationStatus.noApplications')}</h3>
+              <p className="text-gray-600">{t('applicationStatus.noApplicationsMessage')}</p>
             </div>
           ) : (
             <div className="space-y-6">
