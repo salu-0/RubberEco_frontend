@@ -41,7 +41,7 @@ const LeaveManagement = ({ darkMode }) => {
     try {
       setLoading(true);
       const token = getAuthToken();
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
 
       const response = await fetch(`${backendUrl}/api/leave-requests`, {
         headers: {
@@ -79,7 +79,7 @@ const LeaveManagement = ({ darkMode }) => {
   const handleStatusUpdate = async (requestId, newStatus, adminComments = '') => {
     try {
       const token = getAuthToken();
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       
       const response = await fetch(`${backendUrl}/api/leave-requests/${requestId}/status`, {
         method: 'PUT',

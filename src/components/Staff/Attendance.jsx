@@ -56,7 +56,7 @@ const Attendance = ({ darkMode = false }) => {
   const loadLeaveRequests = async () => {
     try {
       setLoading(true);
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const token = getAuthToken();
 
 
@@ -91,7 +91,7 @@ const Attendance = ({ darkMode = false }) => {
     try {
       setLoading(true);
 
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const token = getAuthToken();
 
       console.log('🚀 Submitting leave request...');

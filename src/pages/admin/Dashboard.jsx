@@ -65,7 +65,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (activeTab === 'payments') {
       setPaymentsLoading(true);
-      fetch('http://localhost:5000/api/admin/payments')
+      fetch('https://rubbereco-backend.onrender.com/api/admin/payments')
         .then(res => res.json())
         .then(data => {
           setPayments(data?.data?.payments || []);
@@ -110,7 +110,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   // API base URL
-  const API_BASE_URL = 'http://localhost:5000/api';
+  const API_BASE_URL = 'https://rubbereco-backend.onrender.com/api';
 
   // Get auth token
   const getAuthToken = () => {
@@ -236,7 +236,7 @@ const Dashboard = () => {
   // Fetch pending tapping requests count
   const fetchPendingTappingRequests = async () => {
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/farmer-requests/pending`);
 
       if (response.ok) {
@@ -257,7 +257,7 @@ const Dashboard = () => {
   // Fetch pending staff requests count
   const fetchPendingStaffRequests = async () => {
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/staff-requests/pending/count`);
 
       if (response.ok) {
@@ -277,7 +277,7 @@ const Dashboard = () => {
   const fetchPendingLandRegistrations = async () => {
     try {
       const token = localStorage.getItem('token');
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/land-registration`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -304,7 +304,7 @@ const Dashboard = () => {
   const fetchPendingBrokerRegistrations = async () => {
     try {
       const token = getAuthToken();
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/users/role/broker`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -335,7 +335,7 @@ const Dashboard = () => {
   const fetchPendingLeaveRequests = async () => {
     try {
       const token = localStorage.getItem('token');
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/leave-requests`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -362,7 +362,7 @@ const Dashboard = () => {
   const loadRecentActivities = async () => {
     try {
       setActivitiesLoading(true);
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const activities = [];
 
       console.log('📅 Fetching recent activities from Register collection...');

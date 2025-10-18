@@ -316,7 +316,7 @@ const Profile = () => {
       setActivitiesLoading(true);
       const activities = [];
       const token = localStorage.getItem('token');
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
 
       // Fetch user's tapping requests
       try {

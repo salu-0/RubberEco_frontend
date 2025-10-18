@@ -238,7 +238,7 @@ const Register = () => {
       }
 
       // Then, insert user data into MongoDB via backend API
-      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
       console.log('🔄 Registering user in MongoDB via:', `${backendUrl}/auth/register`);
       console.log('🔄 Request payload:', {
         name: formData.name,

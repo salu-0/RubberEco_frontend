@@ -51,7 +51,7 @@ const TappingRequestManagement = ({ darkMode }) => {
   const loadRequests = async () => {
     try {
       setLoading(true);
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/tapping-requests`);
       
       if (response.ok) {
@@ -70,7 +70,7 @@ const TappingRequestManagement = ({ darkMode }) => {
 
   const loadStats = async () => {
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/tapping-requests/stats/summary`);
       
       if (response.ok) {
@@ -84,7 +84,7 @@ const TappingRequestManagement = ({ darkMode }) => {
 
   const updateRequestStatus = async (requestId, newStatus, note = '') => {
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/tapping-requests/${requestId}/status`, {
         method: 'PUT',
         headers: {
@@ -158,7 +158,7 @@ const TappingRequestManagement = ({ darkMode }) => {
   // Load available tappers
   const loadAvailableTappers = async () => {
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/available-tappers`);
       if (response.ok) {
         const data = await response.json();
@@ -172,7 +172,7 @@ const TappingRequestManagement = ({ darkMode }) => {
   // Handle tapper assignment
   const handleAssignTapper = async (requestId, tapperId, tapperName, tapperPhone, tapperEmail) => {
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/farmer-requests/${requestId}/assign`, {
         method: 'PUT',
         headers: {

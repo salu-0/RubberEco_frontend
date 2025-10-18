@@ -87,7 +87,7 @@ const JoinAsStaff = () => {
     setUserLookup(prev => ({ ...prev, loading: true }));
 
     try {
-      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
       const response = await fetch(`${backendUrl}/auth/check-user?email=${encodeURIComponent(email)}`);
       const data = await response.json();
 
@@ -305,7 +305,7 @@ const JoinAsStaff = () => {
         }
       });
       
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
       console.log('🌐 API URL:', `${API_BASE_URL}/staff-requests`);
       console.log('📤 Sending form data...');
 

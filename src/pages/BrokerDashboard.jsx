@@ -55,7 +55,7 @@ const BrokerDashboard = () => {
       }
 
       // Fetch broker's bids data
-      const bidsResponse = await fetch('http://localhost:5000/api/bids/my-bids', {
+      const bidsResponse = await fetch('https://rubbereco-backend.onrender.com/api/bids/my-bids', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -64,7 +64,7 @@ const BrokerDashboard = () => {
       });
 
       // Fetch available lots data
-      const lotsResponse = await fetch('http://localhost:5000/api/tree-lots', {
+      const lotsResponse = await fetch('https://rubbereco-backend.onrender.com/api/tree-lots', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'

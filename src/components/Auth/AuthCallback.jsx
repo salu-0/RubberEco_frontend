@@ -72,7 +72,7 @@ export default function AuthCallback() {
 
           // Also register in MongoDB via backend API
           try {
-            const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+            const backendUrl = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
             console.log('🔄 Registering Google OAuth user in MongoDB via:', `${backendUrl}/auth/register`);
 
             const mongoResponse = await fetch(`${backendUrl}/auth/register`, {

@@ -64,7 +64,7 @@ const BidPage = () => {
       }
 
       // Call real API to get bid history for this lot
-      const response = await fetch(`http://localhost:5000/api/bids/history?lotId=${lot.id}`, {
+      const response = await fetch(`https://rubbereco-backend.onrender.com/api/bids/history?lotId=${lot.id}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -97,7 +97,7 @@ const BidPage = () => {
   // Fetch public lot details to know if any bidders exist (any broker)
   const loadLotBidSummary = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/tree-lots/${lot.id}`);
+      const res = await fetch(`https://rubbereco-backend.onrender.com/api/tree-lots/${lot.id}`);
       if (!res.ok) return setHasBidders(false);
       const json = await res.json();
       const bidsArr = json?.data?.bids || [];
@@ -149,7 +149,7 @@ const BidPage = () => {
       }
 
       // Call real API
-      const response = await fetch('http://localhost:5000/api/bids', {
+      const response = await fetch('https://rubbereco-backend.onrender.com/api/bids', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

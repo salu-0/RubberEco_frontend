@@ -172,7 +172,7 @@ class EnrollmentManager {
       try {
         // Try multiple real API endpoints
         let synced = false;
-        const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+        const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
 
         // Method 1: Direct demo enrollment
         try {
@@ -318,7 +318,7 @@ class EnrollmentManager {
         try {
           // Try multiple sync endpoints
           let synced = false;
-          const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+          const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
 
           // Method 1: Try direct demo enrollment endpoint
           try {

@@ -37,7 +37,7 @@ const AttendanceRecords = ({ darkMode = false }) => {
   const loadAttendanceRecords = async () => {
     try {
       setLoading(true);
-      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
       const token = getAuthToken();
 
       let url = `${backendUrl}/attendance/records`;
@@ -73,7 +73,7 @@ const AttendanceRecords = ({ darkMode = false }) => {
 
   const loadAttendanceSummary = async () => {
     try {
-      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
       const token = getAuthToken();
 
       let url = `${backendUrl}/attendance/summary`;

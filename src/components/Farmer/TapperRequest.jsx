@@ -115,7 +115,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
   const loadApplications = async (requestId) => {
     setLoadingApplications(true);
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const token = localStorage.getItem('token');
       
       const response = await fetch(`${backendUrl}/api/service-applications/farmer/request/${requestId}/applications`, {
@@ -172,7 +172,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
   // Quick view proposal directly from request card
   const handleQuickViewProposal = async (request) => {
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const token = localStorage.getItem('token');
       const res = await fetch(`${backendUrl}/api/service-applications/farmer/request/${request._id}/applications`, {
         headers: {
@@ -207,7 +207,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
   // Farmer approves/accepts an application (fills one tapper slot)
   const handleApproveApplication = async (application) => {
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const token = localStorage.getItem('token');
 
       // Prevent approving when all slots are filled
@@ -261,7 +261,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
   // Farmer rejects an application
   const handleRejectApplication = async (application) => {
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const token = localStorage.getItem('token');
       const idParam = application.applicationId || application._id;
 
@@ -293,7 +293,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
   const loadExistingRequests = async () => {
     try {
       const farmerData = getCurrentFarmer();
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/farmer-requests/farmer/${farmerData.id || '507f1f77bcf86cd799439011'}`);
 
       if (response.ok) {
@@ -349,7 +349,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
   // Handle delete request
   const handleDeleteRequest = async (requestId) => {
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/farmer-requests/${requestId}`, {
         method: 'DELETE'
       });
@@ -465,7 +465,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
         contactPreference: requestForm.contactPreference
       };
 
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/farmer-requests/${editingRequest._id}`, {
         method: 'PUT',
         headers: {
@@ -574,7 +574,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
       };
 
       // Submit to backend API
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/farmer-requests`, {
         method: 'POST',
         headers: {
@@ -685,7 +685,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
   const handleTreeCountNegotiation = async () => {
     try {
       setLoading(true);
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
 
       let endpoint, body;
 

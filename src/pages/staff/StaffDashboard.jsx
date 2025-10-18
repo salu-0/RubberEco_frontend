@@ -92,7 +92,7 @@ const StaffDashboard = ({ darkMode }) => {
   };
 
   // API base URL
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
   const API_BASE_URL = `${BACKEND_URL}/api`;
 
   // Fetch available service requests count for badge
@@ -546,7 +546,7 @@ const StaffDashboard = ({ darkMode }) => {
   // Fetch assigned tasks data
   const fetchAssignedTasks = async () => {
     try {
-      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
       const response = await fetch(`${backendUrl}/service-applications/assigned-tasks`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

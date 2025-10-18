@@ -108,7 +108,7 @@ const TrainerManagement = ({ darkMode }) => {
   const createSampleEnrollments = async (trainers) => {
     console.log('📚 Creating sample enrollments for trainers...');
     const token = getAuthToken();
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
 
     const sampleEnrollments = [
       {
@@ -206,7 +206,7 @@ const TrainerManagement = ({ darkMode }) => {
   const createSampleTrainers = async () => {
     console.log('🎯 Creating sample trainers...');
     const token = getAuthToken();
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
 
     const sampleTrainers = [
       {
@@ -267,7 +267,7 @@ const TrainerManagement = ({ darkMode }) => {
     setLoading(true);
     try {
       const token = getAuthToken();
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
 
       console.log('🔗 API Base URL:', API_BASE_URL);
       console.log('🔑 Auth Token:', token ? 'Present' : 'Missing');
@@ -484,7 +484,7 @@ const TrainerManagement = ({ darkMode }) => {
         console.log('✅ Sample trainers created, retrying fetch...');
 
         // Retry fetching after creating sample data
-        const retryResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/staff`, {
+        const retryResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api'}/staff`, {
           headers: {
             'Authorization': `Bearer ${getAuthToken()}`,
             'Content-Type': 'application/json'
@@ -696,7 +696,7 @@ const TrainerManagement = ({ darkMode }) => {
 
     try {
       const token = getAuthToken();
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
 
       // Validate required fields
       // Already validated via validateTrainerForm

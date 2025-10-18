@@ -84,7 +84,7 @@ const EnhancedNegotiationModal = ({
 
   const loadNegotiationDetails = async () => {
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/service-applications/${application._id}/negotiation`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -121,7 +121,7 @@ const EnhancedNegotiationModal = ({
 
     setLoading(true);
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/service-applications/${application._id}/counter-propose`, {
         method: 'POST',
         headers: {
@@ -167,7 +167,7 @@ const EnhancedNegotiationModal = ({
   const handleAcceptProposal = async () => {
     setLoading(true);
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/service-applications/${application._id}/accept`, {
         method: 'POST',
         headers: {
@@ -197,7 +197,7 @@ const EnhancedNegotiationModal = ({
   const handleRejectProposal = async () => {
     setLoading(true);
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/service-applications/${application._id}/reject`, {
         method: 'POST',
         headers: {

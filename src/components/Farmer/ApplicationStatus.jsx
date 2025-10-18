@@ -54,7 +54,7 @@ const ApplicationStatus = ({ isOpen, onClose }) => {
         return;
       }
 
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const applications = [];
 
       // Load different types of applications

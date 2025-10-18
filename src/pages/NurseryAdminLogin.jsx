@@ -25,7 +25,7 @@ const NurseryAdminLogin = () => {
     setError('');
 
     try {
-      const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
       const response = await fetch(`${API_BASE}/nursery-admin/login`, {
         method: 'POST',
         headers: {

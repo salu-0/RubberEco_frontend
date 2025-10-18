@@ -70,7 +70,7 @@ const AvailableServiceRequests = ({ darkMode = false }) => {
   // Function to check for farmer responses and show notifications
   const checkForFarmerResponses = useCallback(async () => {
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       
       const response = await fetch(`${backendUrl}/api/service-applications/my-applications`, {
         headers: {
@@ -159,7 +159,7 @@ const AvailableServiceRequests = ({ darkMode = false }) => {
 
   const loadUserApplications = useCallback(async () => {
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       
       const response = await fetch(`${backendUrl}/api/service-applications/my-applications`, {
         headers: {
@@ -238,7 +238,7 @@ const AvailableServiceRequests = ({ darkMode = false }) => {
   // Function to clean up corrupted applications
   const cleanupCorruptedApplications = useCallback(async () => {
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       
       // Get all applications again to check for corrupted ones
       const response = await fetch(`${backendUrl}/api/service-applications/my-applications`, {
@@ -280,7 +280,7 @@ const AvailableServiceRequests = ({ darkMode = false }) => {
   const loadAvailableRequests = useCallback(async () => {
     setLoading(true);
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const queryParams = new URLSearchParams({
         location: filters.location,
         maxDistance: filters.maxDistance
@@ -339,7 +339,7 @@ const AvailableServiceRequests = ({ darkMode = false }) => {
     
     try {
       setLoading(true);
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/service-applications/apply/${request.requestId}`, {
         method: 'POST',
         headers: {

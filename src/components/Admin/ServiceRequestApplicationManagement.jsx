@@ -41,7 +41,7 @@ const ServiceRequestApplicationManagement = ({ darkMode = false }) => {
   const loadRequestsWithApplications = async () => {
     setLoading(true);
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       
       // Load tapping requests that have applications
       const response = await fetch(`${backendUrl}/api/farmer-requests`, {
@@ -76,7 +76,7 @@ const ServiceRequestApplicationManagement = ({ darkMode = false }) => {
   const loadApplicationsForRequest = async (requestId) => {
     setLoading(true);
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/service-applications/request/${requestId}/applications`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -102,7 +102,7 @@ const ServiceRequestApplicationManagement = ({ darkMode = false }) => {
   const handleSelectStaff = async (applicationId) => {
     try {
       setLoading(true);
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       
       const response = await fetch(`${backendUrl}/api/service-applications/select/${applicationId}`, {
         method: 'POST',

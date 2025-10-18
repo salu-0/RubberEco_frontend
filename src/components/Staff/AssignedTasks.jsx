@@ -63,7 +63,7 @@ const AssignedTasks = ({ darkMode = false }) => {
   const loadAssignedTasks = useCallback(async () => {
     setLoading(true);
     try {
-      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
       const response = await fetch(`${backendUrl}/service-applications/assigned-tasks`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -90,7 +90,7 @@ const AssignedTasks = ({ darkMode = false }) => {
 
   const startTask = async (task) => {
     try {
-      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
       const response = await fetch(`${backendUrl}/service-applications/update-status/${task.applicationId}`, {
         method: 'PUT',
         headers: {
@@ -120,7 +120,7 @@ const AssignedTasks = ({ darkMode = false }) => {
 
   const completeTask = async (task) => {
     try {
-      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
       const response = await fetch(`${backendUrl}/service-applications/update-status/${task.applicationId}`, {
         method: 'PUT',
         headers: {

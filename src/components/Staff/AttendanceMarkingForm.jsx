@@ -72,7 +72,7 @@ const AttendanceMarkingForm = ({
 
     try {
       setLoading(true);
-      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
       const token = localStorage.getItem('token');
 
       // Create timestamp from date and time

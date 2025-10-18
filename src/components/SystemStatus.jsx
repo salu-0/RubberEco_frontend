@@ -62,7 +62,7 @@ const SystemStatus = () => {
 
     // 3. Check Backend API
     try {
-      const response = await fetch('http://localhost:5000/api/health-check', {
+      const response = await fetch('https://rubbereco-backend.onrender.com/api/health', {
         method: 'GET',
         timeout: 5000
       });
@@ -81,7 +81,7 @@ const SystemStatus = () => {
 
     // 4. Check Database (via API)
     try {
-      const response = await fetch('http://localhost:5000/api/training/direct-test', {
+      const response = await fetch('https://rubbereco-backend.onrender.com/api/health', {
         method: 'GET',
         timeout: 5000
       });

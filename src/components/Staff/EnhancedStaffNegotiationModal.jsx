@@ -52,7 +52,7 @@ const EnhancedStaffNegotiationModal = React.memo(({
         return;
       }
       
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       console.log('🔍 Loading negotiation details for application:', application.applicationId);
       
       const response = await fetch(`${backendUrl}/api/service-applications/${application.applicationId}/negotiation`, {
@@ -155,7 +155,7 @@ const EnhancedStaffNegotiationModal = React.memo(({
 
     setLoading(true);
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const endpoint = (application.status === 'submitted' || application.status === 'under_review') ? 'propose' : 'counter-propose';
       
       const body = (application.status === 'submitted' || application.status === 'under_review')
@@ -218,7 +218,7 @@ const EnhancedStaffNegotiationModal = React.memo(({
   const handleAcceptProposal = async () => {
     setLoading(true);
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/service-applications/${application.applicationId}/accept`, {
         method: 'POST',
         headers: {
@@ -253,7 +253,7 @@ const EnhancedStaffNegotiationModal = React.memo(({
   const handleRejectProposal = async () => {
     setLoading(true);
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/service-applications/${application.applicationId}/reject`, {
         method: 'POST',
         headers: {

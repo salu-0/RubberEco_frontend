@@ -37,7 +37,7 @@ const TreeLotListing = ({ isOpen, onClose }) => {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      const response = await fetch('http://localhost:5000/api/tree-lots/farmer', {
+      const response = await fetch('https://rubbereco-backend.onrender.com/api/tree-lots/farmer', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -65,7 +65,7 @@ const TreeLotListing = ({ isOpen, onClose }) => {
     try {
       const token = localStorage.getItem('token');
       
-      const response = await fetch('http://localhost:5000/api/tree-lots', {
+      const response = await fetch('https://rubbereco-backend.onrender.com/api/tree-lots', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -93,7 +93,7 @@ const TreeLotListing = ({ isOpen, onClose }) => {
     try {
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`http://localhost:5000/api/tree-lots/${lotId}`, {
+      const response = await fetch(`https://rubbereco-backend.onrender.com/api/tree-lots/${lotId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -128,7 +128,7 @@ const TreeLotListing = ({ isOpen, onClose }) => {
     try {
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`http://localhost:5000/api/tree-lots/${lotId}`, {
+      const response = await fetch(`https://rubbereco-backend.onrender.com/api/tree-lots/${lotId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -253,7 +253,7 @@ class NotificationService {
   async sendEmailNotification(notification) {
     try {
       // Check if backend is available
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/admin/notifications/email`, {
         method: 'POST',
         headers: {

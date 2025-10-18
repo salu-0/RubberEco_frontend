@@ -52,7 +52,7 @@ const PracticalTraining = () => {
   const loadTrainings = async () => {
     try {
       setLoading(true);
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       // Ensure we request all available without artificial limits
       const response = await fetch(`${backendUrl}/api/practical-training/available`);
       
@@ -85,7 +85,7 @@ const PracticalTraining = () => {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/practical-training/user/${JSON.parse(atob(token.split('.')[1])).id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -573,7 +573,7 @@ const PracticalTraining = () => {
         }
 
         // Make actual API call to enroll
-        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
         const response = await fetch(`${backendUrl}/api/practical-training/${trainingId}/enroll`, {
           method: 'POST',
           headers: {
@@ -587,7 +587,7 @@ const PracticalTraining = () => {
 
         if (response.ok && result.success) {
           // If payment required, create order and open Razorpay
-          const backendUrl2 = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+          const backendUrl2 = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
           if (result.data?.paymentRequired) {
             // Load Razorpay SDK if not present
             if (!window.Razorpay) {

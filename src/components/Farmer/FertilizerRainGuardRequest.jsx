@@ -85,7 +85,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
         return;
       }
 
-      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
 
       // Determine role to choose endpoint: staff/admin see all, others see only their own
       let role = '';
@@ -244,7 +244,7 @@ const FertilizerRainGuardRequest = ({ isOpen, onClose }) => {
     setLoading(true);
 
     try {
-      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
       const token = localStorage.getItem('token');
       if (!token) {
         showNotification('Please login to submit a request', 'error');

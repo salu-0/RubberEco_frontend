@@ -66,7 +66,7 @@ const MyBids = () => {
       }
 
       // Call real API
-      const response = await fetch('http://localhost:5000/api/bids/my-bids', {
+      const response = await fetch('https://rubbereco-backend.onrender.com/api/bids/my-bids', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -583,7 +583,7 @@ const BidCard = ({ bid, getStatusInfo, formatCurrency, formatDateTime, getDaysRe
                 try {
                   const token = localStorage.getItem('token');
                   if (!token) return;
-                  const res = await fetch(`http://localhost:5000/api/bids/${bid.lotId}/alerts`, {
+                  const res = await fetch(`https://rubbereco-backend.onrender.com/api/bids/${bid.lotId}/alerts`, {
                     method: 'POST',
                     headers: {
                       'Authorization': `Bearer ${token}`,

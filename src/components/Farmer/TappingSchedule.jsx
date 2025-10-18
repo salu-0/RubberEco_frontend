@@ -56,7 +56,7 @@ const TappingSchedule = ({ isOpen, onClose }) => {
       console.log('🗓️ Loading tapping schedules for farmer:', farmerId);
 
       // Fetch real tapping schedules from API
-      const response = await fetch(`http://localhost:5000/api/farmer-requests/farmer/${farmerId}/schedules`, {
+      const response = await fetch(`https://rubbereco-backend.onrender.com/api/farmer-requests/farmer/${farmerId}/schedules`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

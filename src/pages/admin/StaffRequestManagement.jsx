@@ -64,7 +64,7 @@ const StaffRequestManagement = ({ darkMode }) => {
   const downloadFile = async (requestId, fileType, fileName) => {
     try {
       const token = getAuthToken();
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
 
       const response = await fetch(`${API_BASE_URL}/staff-requests/${requestId}/download/${fileType}`, {
         method: 'GET',
@@ -111,7 +111,7 @@ const StaffRequestManagement = ({ darkMode }) => {
     setLoading(true);
     try {
       const token = getAuthToken();
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
       
       const queryParams = new URLSearchParams({
         status: filters.status,
@@ -179,7 +179,7 @@ const StaffRequestManagement = ({ darkMode }) => {
     setActionLoading(true);
     try {
       const token = getAuthToken();
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
 
       const response = await fetch(`${API_BASE_URL}/staff-requests/${requestId}/${action}`, {
         method: 'POST',
@@ -211,7 +211,7 @@ const StaffRequestManagement = ({ darkMode }) => {
   const handleDownloadFile = async (requestId, fileType) => {
     try {
       const token = getAuthToken();
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
 
       const response = await fetch(`${API_BASE_URL}/staff-requests/${requestId}/download/${fileType}`, {
         headers: {

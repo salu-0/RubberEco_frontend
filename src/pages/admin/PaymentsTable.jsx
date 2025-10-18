@@ -11,7 +11,7 @@ export default function PaymentsTable({ darkMode = true }) {
       setError(null);
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch('http://localhost:5000/api/admin/payments', {
+        const res = await fetch('https://rubbereco-backend.onrender.com/api/admin/payments', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'

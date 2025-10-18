@@ -179,7 +179,7 @@ const Login = () => {
     setLoading(true);
     try {
       // First, try MongoDB backend authentication
-      const loginUrl = 'http://localhost:5000/api/auth/login';
+      const loginUrl = 'https://rubbereco-backend.onrender.com/api/auth/login';
       const response = await fetch(loginUrl, {
         method: 'POST',
         headers: {

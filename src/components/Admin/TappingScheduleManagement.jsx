@@ -54,7 +54,7 @@ const TappingScheduleManagement = ({ darkMode }) => {
       };
 
       // Get schedules from the tapping_schedules collection
-      const response = await fetch('http://localhost:5000/api/tapping-schedules', {
+      const response = await fetch('https://rubbereco-backend.onrender.com/api/tapping-schedules', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${getAuthToken()}`,
@@ -176,7 +176,7 @@ const TappingScheduleManagement = ({ darkMode }) => {
       };
 
       // Get stats from the tapping schedules
-      const response = await fetch('http://localhost:5000/api/tapping-schedules', {
+      const response = await fetch('https://rubbereco-backend.onrender.com/api/tapping-schedules', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${getAuthToken()}`,
@@ -230,7 +230,7 @@ const TappingScheduleManagement = ({ darkMode }) => {
         return localStorage.getItem('token') || 'dummy-token-for-testing';
       };
 
-      const response = await fetch('http://localhost:5000/api/farmer-requests?status=accepted', {
+      const response = await fetch('https://rubbereco-backend.onrender.com/api/farmer-requests?status=accepted', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${getAuthToken()}`,
@@ -275,7 +275,7 @@ const TappingScheduleManagement = ({ darkMode }) => {
       };
 
       // Update the tapping request status to 'in_progress' to activate the schedule
-      const response = await fetch(`http://localhost:5000/api/farmer-requests/${requestId}/status`, {
+      const response = await fetch(`https://rubbereco-backend.onrender.com/api/farmer-requests/${requestId}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${getAuthToken()}`,
@@ -327,7 +327,7 @@ const TappingScheduleManagement = ({ darkMode }) => {
 
       const requestStatus = statusMap[newStatus] || newStatus;
 
-      const response = await fetch(`http://localhost:5000/api/farmer-requests/${schedule._id}/status`, {
+      const response = await fetch(`https://rubbereco-backend.onrender.com/api/farmer-requests/${schedule._id}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${getAuthToken()}`,

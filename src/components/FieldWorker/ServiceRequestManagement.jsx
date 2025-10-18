@@ -50,7 +50,7 @@ const ServiceRequestManagement = () => {
       if (filters.status !== 'all') queryParams.append('status', filters.status);
       if (filters.serviceType !== 'all') queryParams.append('serviceType', filters.serviceType);
       
-      const response = await fetch(`http://localhost:5000/api/service-requests/all?${queryParams}`, {
+      const response = await fetch(`https://rubbereco-backend.onrender.com/api/service-requests/all?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -84,7 +84,7 @@ const ServiceRequestManagement = () => {
     try {
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`http://localhost:5000/api/service-requests/${selectedRequest._id}/status`, {
+      const response = await fetch(`https://rubbereco-backend.onrender.com/api/service-requests/${selectedRequest._id}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

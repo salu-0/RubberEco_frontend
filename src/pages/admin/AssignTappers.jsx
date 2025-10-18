@@ -74,7 +74,7 @@ const AssignTasks = ({ darkMode }) => {
   // Load available tappers from API
   const loadAvailableTappers = async () => {
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/available-tappers`);
 
       if (response.ok) {
@@ -95,7 +95,7 @@ const AssignTasks = ({ darkMode }) => {
   const loadAllRequestData = async () => {
     try {
       setLoading(true);
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
 
       // Load all requests
       const allResponse = await fetch(`${backendUrl}/api/farmer-requests`);
@@ -301,7 +301,7 @@ const AssignTasks = ({ darkMode }) => {
   const loadFertilizerRainGuardRequests = async () => {
     try {
       setServiceLoading(true);
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/service-requests/all?status=all`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -361,7 +361,7 @@ const AssignTasks = ({ darkMode }) => {
   // Handle request assignment
   const handleAssignTapper = async (requestId, tapperId, tapperName) => {
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
 
       // First, assign the tapper and change status to 'accepted'
       const response = await fetch(`${backendUrl}/api/farmer-requests/${requestId}/assign`, {

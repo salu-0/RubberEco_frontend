@@ -1,7 +1,7 @@
 // Land Registration and Tenancy Service
 class LandService {
   constructor() {
-    this.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+    this.baseURL = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
   }
 
   // Get authorization headers

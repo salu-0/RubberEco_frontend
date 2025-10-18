@@ -44,7 +44,7 @@ const TapperTreeVerification = ({ isOpen, onClose }) => {
   const loadTappingRequests = async () => {
     try {
       setLoading(true);
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       
       const response = await fetch(`${backendUrl}/api/farmer-requests/all`, {
         headers: {
@@ -74,7 +74,7 @@ const TapperTreeVerification = ({ isOpen, onClose }) => {
   const handleTreeCountAction = async () => {
     try {
       setLoading(true);
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
 
       let endpoint, body;
 

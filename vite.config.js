@@ -7,9 +7,9 @@ export default defineConfig({
     port: 5174,
     proxy: {
       '/api': {
-        target: process.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com',
+        target: 'https://rubbereco-backend.onrender.com',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
     },
   },
@@ -18,4 +18,8 @@ export default defineConfig({
     sourcemap: false,
   },
   base: '/',
+  define: {
+    'import.meta.env.VITE_API_BASE_URL': JSON.stringify('https://rubbereco-backend.onrender.com/api'),
+    'import.meta.env.VITE_BACKEND_URL': JSON.stringify('https://rubbereco-backend.onrender.com'),
+  },
 })

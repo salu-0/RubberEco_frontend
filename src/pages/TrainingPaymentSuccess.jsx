@@ -66,7 +66,7 @@ const TrainingPaymentSuccess = () => {
         console.log('User authenticated:', !!token);
         console.log('User data:', user);
         console.log('Enrollment data being sent:', apiEnrollmentData);
-        console.log('API Base URL:', 'http://localhost:5000/api');
+        console.log('API Base URL:', 'https://rubbereco-backend.onrender.com/api');
 
         if (!token) {
           throw new Error('User not authenticated. Please log in and try again.');

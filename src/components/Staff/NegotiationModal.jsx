@@ -24,7 +24,7 @@ const NegotiationModal = React.memo(({
         return;
       }
       
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       console.log('🔍 Loading negotiation details for application:', application._id);
       
       const response = await fetch(`${backendUrl}/api/service-applications/${application._id}/negotiation`, {
@@ -105,7 +105,7 @@ const NegotiationModal = React.memo(({
 
     setLoading(true);
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const endpoint = (application.status === 'submitted' || application.status === 'under_review') ? 'propose' : 'counter-propose';
       
       const body = (application.status === 'submitted' || application.status === 'under_review')
@@ -146,7 +146,7 @@ const NegotiationModal = React.memo(({
 
     setLoading(true);
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/service-applications/${application._id}/accept`, {
         method: 'POST',
         headers: {
@@ -178,7 +178,7 @@ const NegotiationModal = React.memo(({
 
     setLoading(true);
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/service-applications/${application._id}/reject`, {
         method: 'POST',
         headers: {

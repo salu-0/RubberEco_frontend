@@ -47,7 +47,7 @@ const BrokerManagement = ({ darkMode = true, onBrokerStatusChange }) => {
       };
 
       // Fetch brokers from Register collection
-      const response = await fetch('http://localhost:5000/api/users/role/broker', {
+      const response = await fetch('https://rubbereco-backend.onrender.com/api/users/role/broker', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${getAuthToken()}`,

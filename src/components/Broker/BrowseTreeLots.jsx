@@ -189,7 +189,7 @@ const BrowseTreeLots = () => {
 
   const loadTreeLots = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/tree-lots');
+      const response = await fetch('https://rubbereco-backend.onrender.com/api/tree-lots');
       if (!response.ok) throw new Error('Failed to load tree lots');
       const data = await response.json();
       // Map of lots from main list
@@ -217,7 +217,7 @@ const BrowseTreeLots = () => {
         const token = localStorage.getItem('token');
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         if (token) {
-          const myBidsRes = await fetch('http://localhost:5000/api/bids/my-bids', {
+          const myBidsRes = await fetch('https://rubbereco-backend.onrender.com/api/bids/my-bids', {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -325,7 +325,7 @@ const BrowseTreeLots = () => {
 
     // Fetch detailed bids for this lot (public endpoint)
     try {
-      const lotRes = await fetch(`http://localhost:5000/api/tree-lots/${lotId}`);
+      const lotRes = await fetch(`https://rubbereco-backend.onrender.com/api/tree-lots/${lotId}`);
       if (lotRes.ok) {
         const lotJson = await lotRes.json();
         const detailed = lotJson?.data || {};
@@ -346,7 +346,7 @@ const BrowseTreeLots = () => {
     try {
       const token = localStorage.getItem('token');
       if (token) {
-        const myBidsRes = await fetch('http://localhost:5000/api/bids/my-bids?limit=100', {
+        const myBidsRes = await fetch('https://rubbereco-backend.onrender.com/api/bids/my-bids?limit=100', {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,

@@ -4,7 +4,7 @@
  */
 
 // Razorpay configuration
-const RAZORPAY_BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+const RAZORPAY_BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
 
 class RazorpayService {
   constructor() {

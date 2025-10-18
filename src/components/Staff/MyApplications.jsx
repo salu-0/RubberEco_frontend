@@ -40,7 +40,7 @@ const MyApplications = ({ darkMode = false }) => {
   const loadApplications = useCallback(async () => {
     setLoading(true);
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/service-applications/my-applications`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
