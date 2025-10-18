@@ -1,13 +1,16 @@
-# Backend URL Configuration - Render Deployment
+# Backend & Frontend Deployment Configuration
 
-## ✅ Updated Backend URL
+## ✅ Production Deployment Complete!
 
-Your backend is now hosted on Render and the frontend is configured to use it.
+Your application is now fully deployed and configured:
 
-### Backend URL
+### Backend (Render)
 **Production URL**: https://rubbereco-backend.onrender.com
 
 **API Base URL**: https://rubbereco-backend.onrender.com/api
+
+### Frontend (Vercel)
+**Production URL**: https://rubber-eco-frontend.vercel.app
 
 ---
 
@@ -40,7 +43,20 @@ VITE_API_BASE_URL=https://rubbereco-backend.onrender.com/api
 VITE_BACKEND_URL=https://rubbereco-backend.onrender.com
 ```
 
-### 2. Updated .env.example
+### 2. Backend CORS Configuration
+**File**: `d:\RubberEco\backend\server.js`
+
+**Added Vercel frontend to allowed origins**:
+```javascript
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  // ... other localhost origins
+  'https://rubber-eco-frontend.vercel.app'  // ✅ Vercel production frontend
+];
+```
+
+### 3. Updated .env.example
 **File**: `d:\RubberEco\RubberEco\.env.example`
 
 Added comments showing both local and production configurations.
