@@ -52,6 +52,10 @@ const TapperRequest = ({ isOpen, onClose }) => {
   const [showApplicationsModal, setShowApplicationsModal] = useState(false);
   const [applications, setApplications] = useState([]);
   const [loadingApplications, setLoadingApplications] = useState(false);
+  // Confirm modal for accepting an application
+  const [confirmApprove, setConfirmApprove] = useState({ show: false, application: null });
+  // Confirm modal for rejecting an application
+  const [confirmReject, setConfirmReject] = useState({ show: false, application: null });
 
   // Enhanced negotiation modal state
   const [showEnhancedNegotiation, setShowEnhancedNegotiation] = useState(false);
@@ -78,6 +82,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
     farmLocation: '',
     farmSize: '',
     numberOfTrees: '',
+    requiredTappers: 1,
     tappingType: 'daily',
     startDate: '',
     urgency: 'normal',
@@ -199,6 +204,92 @@ const TapperRequest = ({ isOpen, onClose }) => {
     setShowEnhancedNegotiation(true);
   };
 
+  // Farmer approves/accepts an application (fills one tapper slot)
+  const handleApproveApplication = async (application) => {
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('token');
+
+      // Prevent approving when all slots are filled
+      const accepted = selectedRequest?.acceptedTappers || 0;
+      const required = selectedRequest?.requiredTappers || 1;
+      if (accepted >= required) {
+        showNotification('All required tapper slots are already filled for this request.', 'error');
+        return;
+      }
+
+      const idParam = application.applicationId || application._id;
+      const res = await fetch(`${backendUrl}/api/new-service-applications/applications/${idParam}/approve`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to approve application');
+      }
+
+      const result = await res.json();
+      showNotification(result.message || 'Application approved', 'success');
+
+      // Refresh applications and requests so counts update
+      await handleNegotiationUpdate();
+
+      // Try to refresh selectedRequest with updated data from myRequests
+      setSelectedRequest((prev) => {
+        const updatedFromList = myRequests.find(r => r._id === prev?._id);
+        const merged = updatedFromList || prev || {};
+        const counts = result?.data || {};
+        return {
+          ...merged,
+          acceptedTappers: typeof counts.acceptedTappers !== 'undefined' ? counts.acceptedTappers : merged.acceptedTappers,
+          requiredTappers: typeof counts.requiredTappers !== 'undefined' ? counts.requiredTappers : merged.requiredTappers,
+        };
+      });
+
+      // Close confirm modal if open
+      setConfirmApprove({ show: false, application: null });
+    } catch (e) {
+      console.error('Approve application error:', e);
+      showNotification(e.message || 'Error approving application', 'error');
+    }
+  };
+
+  // Farmer rejects an application
+  const handleRejectApplication = async (application) => {
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('token');
+      const idParam = application.applicationId || application._id;
+
+      const res = await fetch(`${backendUrl}/api/new-service-applications/applications/${idParam}/reject`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to reject application');
+      }
+
+      const result = await res.json();
+      showNotification(result.message || 'Application rejected', 'success');
+
+      // Refresh lists
+      await handleNegotiationUpdate();
+      setConfirmReject({ show: false, application: null });
+    } catch (e) {
+      console.error('Reject application error:', e);
+      showNotification(e.message || 'Error rejecting application', 'error');
+    }
+  };
+
   const loadExistingRequests = async () => {
     try {
       const farmerData = getCurrentFarmer();
@@ -293,6 +384,12 @@ const TapperRequest = ({ isOpen, onClose }) => {
         const err = numericValidator(value, { min: 1, max: 1000 });
         return err ? (err === 'This field is required' ? 'Number of trees is required' : `Number of trees: ${err}`) : '';
       }
+      case 'requiredTappers': {
+        if (value === '' || value === null || value === undefined) return 'Required tappers is required';
+        if (!/^\d+$/.test(String(value))) return 'Required tappers must be a whole number';
+        const err = numericValidator(value, { min: 1, max: 20 });
+        return err ? (err === 'This field is required' ? 'Required tappers is required' : `Required tappers: ${err}`) : '';
+      }
       case 'budgetPerTree': {
         const err = numericValidator(value, { min: 1, max: 100 });
         return err ? (err === 'This field is required' ? 'Rate per tree is required' : `Rate per tree: ${err}`) : '';
@@ -308,6 +405,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
       { key: 'farmLocation', label: 'Farm location' },
       { key: 'farmSize', label: 'Farm size' },
       { key: 'numberOfTrees', label: 'Number of trees' },
+      { key: 'requiredTappers', label: 'Required tappers' },
       { key: 'tappingType', label: 'Tapping type' },
       { key: 'startDate', label: 'Start date' },
       { key: 'budgetPerTree', label: 'Rate per tree' }
@@ -460,6 +558,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
         farmLocation: requestForm.farmLocation,
         farmSize: requestForm.farmSize,
         numberOfTrees: parseInt(requestForm.numberOfTrees),
+        requiredTappers: parseInt(requestForm.requiredTappers),
         tappingType: requestForm.tappingType,
         startDate: requestForm.startDate,
         preferredTime: requestForm.preferredTime,
@@ -516,6 +615,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
         farmLocation: '',
         farmSize: '',
         numberOfTrees: '',
+        requiredTappers: 1,
         tappingType: 'daily',
         startDate: '',
         urgency: 'normal',
@@ -793,6 +893,28 @@ const TapperRequest = ({ isOpen, onClose }) => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {t('tapperRequest.requiredTappers', 'Required Tappers')} *
+                      </label>
+                      <input
+                        type="number"
+                        required
+                        value={requestForm.requiredTappers}
+                        onChange={(e) => handleInputChange('requiredTappers', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        placeholder={t('tapperRequest.requiredTappersPlaceholder', 'How many tappers do you need?')}
+                        min="1"
+                        max="20"
+                      />
+                      {formErrors.requiredTappers && (
+                        <p className="text-xs text-red-600 mt-1">{formErrors.requiredTappers}</p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        💡 {t('tapperRequest.requiredTappersHint', 'Specify how many tappers you need for your plantation size')}
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
                         {t('tapperRequest.tappingType', 'Tapping Type')} *
                       </label>
                       <select
@@ -968,9 +1090,9 @@ const TapperRequest = ({ isOpen, onClose }) => {
                           <h3 className="text-lg font-semibold text-gray-900">Request #{request.id}</h3>
                           {getStatusBadge(request.status)}
                           {getUrgencyBadge(request.urgency)}
-                          {request.applicationCount > 0 && (
+                          {((request.applicationsCount ?? request.applicationCount ?? 0) > 0) && (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              {request.applicationCount} application{request.applicationCount !== 1 ? 's' : ''}
+                              {(request.applicationsCount ?? request.applicationCount)} application{(request.applicationsCount ?? request.applicationCount) !== 1 ? 's' : ''}
                             </span>
                           )}
                         </div>
@@ -1190,7 +1312,7 @@ const TapperRequest = ({ isOpen, onClose }) => {
                             <Trash2 className="h-4 w-4" />
                           </button>
                         )}
-                        {request.applicationCount > 0 && (
+                        {((request.applicationsCount ?? request.applicationCount ?? 0) > 0) && (
                           <button
                             onClick={() => handleViewApplications(request)}
                             className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
@@ -1282,6 +1404,16 @@ const TapperRequest = ({ isOpen, onClose }) => {
                       <p className="font-medium">{selectedRequest.farmerEstimatedTrees || selectedRequest.numberOfTrees || 'Not specified'}</p>
                     </div>
                     <div>
+                      <p className="text-gray-500">Required Tappers</p>
+                      <p className="font-medium">
+                        {selectedRequest.acceptedTappers || 0} / {selectedRequest.requiredTappers || 1}
+                        <span className="ml-2 text-xs text-gray-500">tappers accepted</span>
+                        {typeof selectedRequest.applicationsCount !== 'undefined' && (
+                          <span className="ml-2 text-xs text-gray-500">(applied: {selectedRequest.applicationsCount})</span>
+                        )}
+                      </p>
+                    </div>
+                    <div>
                       <p className="text-gray-500">Soil Type</p>
                       <p className="font-medium">{selectedRequest.soilType || 'Not specified'}</p>
                     </div>
@@ -1351,6 +1483,17 @@ const TapperRequest = ({ isOpen, onClose }) => {
               >
                 Close
               </button>
+              {(selectedRequest.applicationsCount || selectedRequest.applicationCount) > 0 && (
+                <button
+                  onClick={() => {
+                    setShowRequestDetails(false);
+                    handleViewApplications(selectedRequest);
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  View Applications ({selectedRequest.applicationsCount ?? selectedRequest.applicationCount})
+                </button>
+              )}
               {(selectedRequest.status === 'pending' || selectedRequest.status === 'submitted') && (
                 <button
                   onClick={() => {
@@ -1557,9 +1700,13 @@ const TapperRequest = ({ isOpen, onClose }) => {
                   <p className="text-gray-600 mt-1">
                     {selectedRequest.requestId} - {selectedRequest.farmerName}
                   </p>
-                  <p className="text-sm text-gray-500">
-                    {applications.length} staff members have applied for this request
-                  </p>
+                  <div className="text-sm text-gray-500">
+                    <p>{applications.length} staff members have applied for this request</p>
+                    <p className="mt-1">
+                      Slots: {(selectedRequest.acceptedTappers || 0)} / {(selectedRequest.requiredTappers || 1)}
+                      <span className="ml-2">Remaining: {Math.max((selectedRequest.requiredTappers || 1) - (selectedRequest.acceptedTappers || 0), 0)}</span>
+                    </p>
+                  </div>
                 </div>
                 <button
                   onClick={() => setShowApplicationsModal(false)}
@@ -1683,12 +1830,160 @@ const TapperRequest = ({ isOpen, onClose }) => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3, delay: index * 0.1 }}
                       >
-                        {/* ...existing code for each application... */}
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start space-x-4">
+                            <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-semibold">
+                              {(application.staffName || 'S')[0]}
+                            </div>
+                            <div>
+                              <div className="flex items-center space-x-2">
+                                <h4 className="text-lg font-semibold text-gray-900">{application.staffName || 'Staff Applicant'}</h4>
+                                <span className="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-700 capitalize">{application.status || 'submitted'}</span>
+                              </div>
+                              <div className="mt-1 text-sm text-gray-600">
+                                {application.staffPhone && (
+                                  <div className="flex items-center space-x-2">
+                                    <Phone className="h-3 w-3" />
+                                    <span>{application.staffPhone}</span>
+                                  </div>
+                                )}
+                                {application.staffEmail && (
+                                  <div className="flex items-center space-x-2">
+                                    <Mail className="h-3 w-3" />
+                                    <span>{application.staffEmail}</span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="mt-2 text-sm text-gray-700">
+                                {typeof application.proposedRate !== 'undefined' && (
+                                  <div>
+                                    <span className="font-medium">Proposed Rate: </span>
+                                    <span>
+                                      {typeof application.proposedRate === 'object'
+                                        ? (application.proposedRate.amount || application.proposedRate.rate)
+                                        : application.proposedRate}
+                                    </span>
+                                  </div>
+                                )}
+                                {application.notes && (
+                                  <div className="mt-1 text-xs text-gray-600 italic">"{application.notes}"</div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {(() => {
+                              const nonApprovable = new Set(['accepted', 'selected', 'rejected', 'withdrawn']);
+                              const accepted = selectedRequest?.acceptedTappers || 0;
+                              const required = selectedRequest?.requiredTappers || 1;
+                              const slotsFilled = accepted >= required;
+                              const canApprove = !nonApprovable.has(application.status) && !slotsFilled;
+                              return (
+                                <div className="flex items-center space-x-2">
+                                  <button
+                                    onClick={() => setConfirmApprove({ show: true, application })}
+                                    disabled={!canApprove}
+                                    className={`px-4 py-2 rounded-lg text-white text-sm ${canApprove ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-300 cursor-not-allowed'}`}
+                                    title={slotsFilled ? 'All required tappers already selected' : 'Accept this application'}
+                                  >
+                                    Accept
+                                  </button>
+                                  <button
+                                    onClick={() => setConfirmReject({ show: true, application })}
+                                    disabled={new Set(['accepted', 'selected', 'rejected', 'withdrawn']).has(application.status)}
+                                    className={`px-4 py-2 rounded-lg text-sm border ${new Set(['accepted', 'selected', 'rejected', 'withdrawn']).has(application.status) ? 'text-gray-500 border-gray-300 cursor-not-allowed' : 'text-red-600 border-red-300 hover:bg-red-50'}`}
+                                    title={'Reject this application'}
+                                  >
+                                    Reject
+                                  </button>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        </div>
                       </motion.div>
                     ))}
                   </div>
                 )}
               </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Confirm Accept Modal */}
+      {confirmApprove.show && confirmApprove.application && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <motion.div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-[101]"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+          >
+            <div className="p-6">
+              <div className="flex items-center space-x-3 mb-3">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Confirm Acceptance</h3>
+              </div>
+              <p className="text-sm text-gray-700 mb-4">
+                Accept <span className="font-medium">{confirmApprove.application.staffName || 'this staff member'}</span>'s application?
+                This will reserve one of your required tapper slots.
+              </p>
+              <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700 mb-4">
+                Slots: {(selectedRequest?.acceptedTappers || 0)} / {(selectedRequest?.requiredTappers || 1)}
+                <span className="ml-2">Remaining: {Math.max((selectedRequest?.requiredTappers || 1) - (selectedRequest?.acceptedTappers || 0), 0)}</span>
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setConfirmApprove({ show: false, application: null })}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleApproveApplication(confirmApprove.application)}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  Confirm Accept
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Confirm Reject Modal */}
+      {confirmReject.show && confirmReject.application && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <motion.div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-[101]"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+          >
+            <div className="p-6">
+              <div className="flex items-center space-x-3 mb-3">
+                <X className="h-6 w-6 text-red-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Confirm Rejection</h3>
+              </div>
+              <p className="text-sm text-gray-700 mb-4">
+                Reject <span className="font-medium">{confirmReject.application.staffName || 'this staff member'}</span>'s application?
+                They will no longer appear in your candidates for this request.
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setConfirmReject({ show: false, application: null })}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleRejectApplication(confirmReject.application)}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  Confirm Reject
+                </button>
+              </div>
+            </div>
           </motion.div>
         </div>
       )}

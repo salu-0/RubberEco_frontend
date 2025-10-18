@@ -847,7 +847,7 @@ const LandRegistration = ({ isOpen, onClose }) => {
                     ) : (
                       <>
                         <Send className="h-4 w-4 mr-2" />
-                        ഭൂമി രജിസ്റ്റർ ചെയ്യുക (Register Land)
+                        {t('landRegistration.registerLand', 'Register Land')}
                       </>
                     )}
                   </button>
@@ -922,7 +922,14 @@ const LandRegistration = ({ isOpen, onClose }) => {
                             View Details
                           </button>
                           {land.status === 'verified' && (
-                            <button className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">
+                            <button
+                              className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
+                              onClick={() => {
+                                if (window.openLandLeaseOffering) {
+                                  window.openLandLeaseOffering(land);
+                                }
+                              }}
+                            >
                               Offer for Tenancy
                             </button>
                           )}

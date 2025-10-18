@@ -37,10 +37,12 @@ import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
+import AuthRouteGuard from './components/Auth/AuthRouteGuard';
 
 function App() {
   return (
     <>
+      <AuthRouteGuard />
       <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/home" element={<Home />} />
