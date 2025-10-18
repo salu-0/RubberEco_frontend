@@ -7,14 +7,15 @@ export default defineConfig({
     port: 5174,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: process.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com',
         changeOrigin: true,
         secure: false,
       },
     },
   },
   build: {
-    outDir: 'dist'
+    outDir: 'dist',
+    sourcemap: false,
   },
   base: '/',
 })

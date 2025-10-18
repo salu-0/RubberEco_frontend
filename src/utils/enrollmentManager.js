@@ -172,10 +172,11 @@ class EnrollmentManager {
       try {
         // Try multiple real API endpoints
         let synced = false;
+        const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
         // Method 1: Direct demo enrollment
         try {
-          const response = await fetch('http://localhost:5000/api/training/direct-demo-enroll', {
+          const response = await fetch(`${API_BASE}/training/direct-demo-enroll`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(enrollment)
@@ -202,7 +203,7 @@ class EnrollmentManager {
         // Method 2: Regular demo enrollment
         if (!synced) {
           try {
-            const response = await fetch('http://localhost:5000/api/training/demo-enroll', {
+            const response = await fetch(`${API_BASE}/training/demo-enroll`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(enrollment)
@@ -317,10 +318,11 @@ class EnrollmentManager {
         try {
           // Try multiple sync endpoints
           let synced = false;
+          const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
           // Method 1: Try direct demo enrollment endpoint
           try {
-            const response = await fetch('http://localhost:5000/api/training/direct-demo-enroll', {
+            const response = await fetch(`${API_BASE}/training/direct-demo-enroll`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(enrollment)
@@ -339,7 +341,7 @@ class EnrollmentManager {
           // Method 2: Try regular demo enrollment endpoint
           if (!synced) {
             try {
-              const response = await fetch('http://localhost:5000/api/training/demo-enroll', {
+              const response = await fetch(`${API_BASE}/training/demo-enroll`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(enrollment)

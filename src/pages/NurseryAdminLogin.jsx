@@ -25,7 +25,8 @@ const NurseryAdminLogin = () => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/nursery-admin/login', {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${API_BASE}/nursery-admin/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

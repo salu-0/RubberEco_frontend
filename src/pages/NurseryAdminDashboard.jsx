@@ -15,6 +15,8 @@ import {
   EyeIcon
 } from '@heroicons/react/24/outline';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
 const NurseryAdminDashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -64,7 +66,7 @@ const NurseryAdminDashboard = () => {
   const fetchUserProfile = async () => {
     try {
       const token = localStorage.getItem('nurseryAdminToken');
-      const response = await fetch('http://localhost:5000/api/nursery-admin/profile', {
+      const response = await fetch(`${API_BASE_URL}/nursery-admin/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -89,7 +91,7 @@ const NurseryAdminDashboard = () => {
   const fetchDashboardStats = async () => {
     try {
       const token = localStorage.getItem('nurseryAdminToken');
-      const response = await fetch('http://localhost:5000/api/nursery-admin/dashboard/stats', {
+      const response = await fetch(`${API_BASE_URL}/nursery-admin/dashboard/stats`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -112,7 +114,7 @@ const NurseryAdminDashboard = () => {
       const token = localStorage.getItem('nurseryAdminToken');
       console.log('🌱 Fetching plants with token:', token ? 'Token exists' : 'No token');
       
-      const response = await fetch('http://localhost:5000/api/nursery-admin/plants', {
+      const response = await fetch(`${API_BASE_URL}/nursery-admin/plants`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -137,7 +139,7 @@ const NurseryAdminDashboard = () => {
   const fetchBookings = async () => {
     try {
       const token = localStorage.getItem('nurseryAdminToken');
-      const response = await fetch('http://localhost:5000/api/nursery-admin/bookings', {
+      const response = await fetch(`${API_BASE_URL}/nursery-admin/bookings`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -156,7 +158,7 @@ const NurseryAdminDashboard = () => {
   const fetchShipments = async () => {
     try {
       const token = localStorage.getItem('nurseryAdminToken');
-      const response = await fetch('http://localhost:5000/api/nursery-admin/shipments', {
+      const response = await fetch(`${API_BASE_URL}/nursery-admin/shipments`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -175,7 +177,7 @@ const NurseryAdminDashboard = () => {
   const fetchPayments = async () => {
     try {
       const token = localStorage.getItem('nurseryAdminToken');
-      const response = await fetch('http://localhost:5000/api/nursery-admin/payments', {
+      const response = await fetch(`${API_BASE_URL}/nursery-admin/payments`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -204,7 +206,7 @@ const NurseryAdminDashboard = () => {
   const updatePlant = async (plantId, updateData) => {
     try {
       const token = localStorage.getItem('nurseryAdminToken');
-      const response = await fetch(`http://localhost:5000/api/nursery-admin/plants/${plantId}`, {
+      const response = await fetch(`${API_BASE_URL}/nursery-admin/plants/${plantId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -242,7 +244,7 @@ const NurseryAdminDashboard = () => {
   const updateBookingStatus = async (bookingId, status) => {
     try {
       const token = localStorage.getItem('nurseryAdminToken');
-      const response = await fetch(`http://localhost:5000/api/nursery-admin/bookings/${bookingId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/nursery-admin/bookings/${bookingId}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -812,7 +814,7 @@ const ShipmentManagement = ({ shipments, bookings, onRefresh }) => {
   const updateShipmentStatus = async (shipmentId, status) => {
     try {
       const token = localStorage.getItem('nurseryAdminToken');
-      const response = await fetch(`http://localhost:5000/api/nursery-admin/shipments/${shipmentId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/nursery-admin/shipments/${shipmentId}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -945,7 +947,7 @@ const PaymentManagement = ({ payments, onRefresh }) => {
   const updatePaymentStatus = async (paymentId, status) => {
     try {
       const token = localStorage.getItem('nurseryAdminToken');
-      const response = await fetch(`http://localhost:5000/api/nursery-admin/payments/${paymentId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/nursery-admin/payments/${paymentId}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -1065,7 +1067,7 @@ const Settings = ({ user, onUpdateProfile }) => {
   const handleSave = async () => {
     try {
       const token = localStorage.getItem('nurseryAdminToken');
-      const response = await fetch('http://localhost:5000/api/nursery-admin/profile', {
+      const response = await fetch(`${API_BASE_URL}/nursery-admin/profile`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
