@@ -279,6 +279,81 @@ class MessagingService {
       throw error;
     }
   }
+
+  // Get conversations for farmers (where farmer is the recipient)
+  async getFarmerConversations() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/messages/farmer-conversations`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch farmer conversations');
+      }
+
+      const data = await response.json();
+      return data.conversations || [];
+    } catch (error) {
+      console.error('Error fetching farmer conversations:', error);
+      throw error;
+    }
+  }
+
+  // Create conversation from farmer side
+  async createFarmerConversation(brokerId, lotId, bidId, initialMessage = null) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/messages/farmer-conversations`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          brokerId,
+          lotId,
+          bidId,
+          initialMessage
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create farmer conversation');
+      }
+
+      const data = await response.json();
+      return data.conversation;
+    } catch (error) {
+      console.error('Error creating farmer conversation:', error);
+      throw error;
+    }
+  }
+
+  // Get broker profile for a conversation
+  async getBrokerProfile(brokerId) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/brokers/${brokerId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch broker profile');
+      }
+
+      const data = await response.json();
+      return data.broker;
+    } catch (error) {
+      console.error('Error fetching broker profile:', error);
+      throw error;
+    }
+  }
 }
 
 // Create and export a singleton instance

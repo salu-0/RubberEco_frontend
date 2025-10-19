@@ -117,7 +117,7 @@ class WebSocketService {
 
   // Handle WebSocket connection close
   handleClose(event) {
-    console.log('WebSocket disconnected:', event.code, event.reason);
+    console.log('WebSocket disconnected (expected - backend WebSocket server not implemented):', event.code);
     this.isConnected = false;
     
     // Clear connection timeout
@@ -139,7 +139,7 @@ class WebSocketService {
 
   // Handle WebSocket errors
   handleError(error) {
-    console.error('WebSocket error:', error);
+    console.log('WebSocket error (expected - backend WebSocket server not implemented):', error.type);
     this.emit('error', error);
     
     // If this is a connection error, don't attempt to reconnect immediately

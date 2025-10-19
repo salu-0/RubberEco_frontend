@@ -851,6 +851,28 @@
     "selectConversation": "Select a conversation",
     "chooseConversation": "Choose a conversation from the sidebar to start messaging"
   },
+  "farmerMessages": {
+    "title": "Messages & Communications",
+    "subtitle": "Communicate with brokers about your lot bids and negotiations",
+    "loadingConversations": "Loading conversations...",
+    "searchConversations": "Search conversations...",
+    "lot": "Lot",
+    "trees": "trees",
+    "call": "Call",
+    "videoCall": "Video Call",
+    "info": "Info",
+    "online": "Online",
+    "offline": "Offline",
+    "you": "You",
+    "reply": "Reply",
+    "forward": "Forward",
+    "replyingTo": "Replying to",
+    "attachFile": "Attach File",
+    "attachImage": "Attach Image",
+    "typeMessage": "Type your message...",
+    "selectConversation": "Select a conversation",
+    "chooseConversation": "Choose a conversation from the sidebar to start messaging"
+  },
 
   "nursery": {
     "rubber": "Rubber",
