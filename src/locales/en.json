@@ -575,61 +575,17 @@
   },
 
   "recruitment": {
+  "title": "Staff Recruitment",
+  "subtitle": "Good jobs available - join us today!",
+  "urgentOpenings": "Urgent Openings",
+  "nowHiring": "Now Hiring",
   "jobsAvailableNowSub": "Find the right job for you. Good pay, steady work, and opportunities to learn and grow.",
-    "positions": [
-      {
-        "title": "Field Tapping Specialist",
-        "description": "Expert rubber tappers with 2+ years experience",
-        "requirements": [
-          "Professional tapping skills",
-          "Early morning availability",
-          "Physical fitness"
-        ],
-        "salary": "₹25,000 - ₹35,000/month",
-        "location": "Kerala Districts",
-        "type": "Full-time",
-        "urgent": true
-      },
-      {
-        "title": "Quality Control Inspector",
-        "description": "Ensure latex quality and collection standards",
-        "requirements": [
-          "Quality assessment skills",
-          "Attention to detail",
-          "Basic education"
-        ],
-        "salary": "₹20,000 - ₹28,000/month",
-        "location": "Processing Centers",
-        "type": "Full-time",
-        "urgent": true
-      },
-      {
-        "title": "Trainer",
-        "description": "Train staff and farmers on best practices and techniques",
-        "requirements": [
-          "Teaching skills",
-          "Technical expertise",
-          "Communication skills"
-        ],
-        "salary": "₹35,000 - ₹45,000/month",
-        "location": "Training Centers",
-        "type": "Full-time",
-        "urgent": true
-      },
-      {
-        "title": "Collection Supervisor",
-        "description": "Supervise latex collection and transportation",
-        "requirements": [
-          "Leadership skills",
-          "Logistics experience",
-          "Team management"
-        ],
-        "salary": "₹30,000 - ₹40,000/month",
-        "location": "Multiple Locations",
-        "type": "Full-time",
-        "urgent": true
-      }
-    ],
+    "positions": {
+      "fieldTappingSpecialists": "Field Tapping Specialists",
+      "qualityControlInspectors": "Quality Control Inspectors", 
+      "trainers": "Trainers",
+      "collectionSupervisors": "Collection Supervisors"
+    },
     "workWithUs": "Work With Us",
     "greatOpportunities": "Great opportunities in rubber plantation",
     "applyNow": "Apply Now",
@@ -647,7 +603,9 @@
     "catchy5": "⭐ Join RubberEco Family - We Care For You!",
     "stats": {
       "happyEmployees": "500+ Happy Employees",
-      "industryLeader": "Industry Leader"
+      "industryLeader": "Industry Leader",
+      "competitivePay": "₹35,000+",
+      "employeeRating": "4.8/5"
     },
     "cards": [
       {
@@ -870,6 +828,28 @@
       "5to10Years": "5-10 years",
       "moreThan10Years": "10+ years"
     }
+  },
+  "messages": {
+    "title": "Messages & Communications",
+    "subtitle": "Communicate with farmers about lot details and negotiations",
+    "loadingConversations": "Loading conversations...",
+    "searchConversations": "Search conversations...",
+    "lot": "Lot",
+    "trees": "trees",
+    "call": "Call",
+    "videoCall": "Video Call",
+    "info": "Info",
+    "online": "Online",
+    "offline": "Offline",
+    "you": "You",
+    "reply": "Reply",
+    "forward": "Forward",
+    "replyingTo": "Replying to",
+    "attachFile": "Attach File",
+    "attachImage": "Attach Image",
+    "typeMessage": "Type your message...",
+    "selectConversation": "Select a conversation",
+    "chooseConversation": "Choose a conversation from the sidebar to start messaging"
   },
 
   "nursery": {
