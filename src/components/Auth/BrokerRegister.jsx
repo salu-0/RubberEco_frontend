@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   User,
   Mail,
@@ -23,6 +24,7 @@ import { nameValidator, isEmail, passwordStrength, phoneValidator, isRequired, v
 
 const BrokerRegister = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -66,11 +68,11 @@ const BrokerRegister = () => {
   };
 
   const experienceOptions = [
-    'Less than 1 year',
-    '1-3 years',
-    '3-5 years',
-    '5-10 years',
-    '10+ years'
+    { value: 'Less than 1 year', label: t('brokerRegistration.experienceOptions.lessThan1Year') },
+    { value: '1-3 years', label: t('brokerRegistration.experienceOptions.1to3Years') },
+    { value: '3-5 years', label: t('brokerRegistration.experienceOptions.3to5Years') },
+    { value: '5-10 years', label: t('brokerRegistration.experienceOptions.5to10Years') },
+    { value: '10+ years', label: t('brokerRegistration.experienceOptions.moreThan10Years') }
   ];
 
   const showNotification = (message, type = 'success') => {
@@ -348,9 +350,9 @@ const BrokerRegister = () => {
                 <UserCheck className="h-8 w-8 text-white" />
               </motion.div>
               <h2 className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent mb-2">
-                Become a Rubber Broker
+                {t('brokerRegistration.title')}
               </h2>
-              <p className="text-gray-600">Join our platform and connect with rubber farmers across Kerala</p>
+              <p className="text-gray-600">{t('brokerRegistration.subtitle')}</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -358,7 +360,7 @@ const BrokerRegister = () => {
               <div className="space-y-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                   <User className="h-5 w-5 mr-2 text-primary-600" />
-                  Basic Information
+                  {t('brokerRegistration.basicInformation')}
                 </h3>
 
 
@@ -367,7 +369,7 @@ const BrokerRegister = () => {
                   {/* Full Name Field */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Full Name *
+                      {t('brokerRegistration.fullName')} *
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -379,7 +381,7 @@ const BrokerRegister = () => {
                         value={formData.name}
                         onChange={handleChange}
                         onBlur={handleBlur}
-                        placeholder="Enter your full name"
+                        placeholder={t('brokerRegistration.enterFullName')}
                         className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 transition-all duration-200 bg-white/50 backdrop-blur-sm ${
                           errors.name
                             ? 'border-red-500 focus:ring-red-500 focus:border-red-500 bg-red-50/50'
@@ -400,7 +402,7 @@ const BrokerRegister = () => {
                         ) : (
                           <p className="text-sm text-green-600 flex items-center">
                             <CheckCircle className="h-4 w-4 mr-1 flex-shrink-0" />
-                            Name looks good
+                            {t('brokerRegistration.nameLooksGood')}
                           </p>
                         )}
                       </div>
@@ -410,7 +412,7 @@ const BrokerRegister = () => {
                   {/* Email Field */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email Address *
+                      {t('brokerRegistration.emailAddress')} *
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -422,7 +424,7 @@ const BrokerRegister = () => {
                         value={formData.email}
                         onChange={handleChange}
                         onBlur={handleBlur}
-                        placeholder="Enter your email address"
+                        placeholder={t('brokerRegistration.enterEmailAddress')}
                         className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 transition-all duration-200 bg-white/50 backdrop-blur-sm ${
                           errors.email
                             ? 'border-red-500 focus:ring-red-500 focus:border-red-500 bg-red-50/50'
@@ -443,7 +445,7 @@ const BrokerRegister = () => {
                         ) : (
                           <p className="text-sm text-green-600 flex items-center">
                             <CheckCircle className="h-4 w-4 mr-1 flex-shrink-0" />
-                            Email format is valid
+                            {t('brokerRegistration.emailFormatValid')}
                           </p>
                         )}
                       </div>
@@ -453,7 +455,7 @@ const BrokerRegister = () => {
                   {/* Date of Birth Field */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Date of Birth *
+                      {t('brokerRegistration.dateOfBirth')} *
                     </label>
                     <div className="relative">
                       <input
@@ -484,7 +486,7 @@ const BrokerRegister = () => {
                         ) : (
                           <p className="text-sm text-green-600 flex items-center">
                             <CheckCircle className="h-4 w-4 mr-1 flex-shrink-0" />
-                            DOB looks good
+                            {t('brokerRegistration.dobLooksGood')}
                           </p>
                         )}
                       </div>
@@ -497,7 +499,7 @@ const BrokerRegister = () => {
                   {/* Password Field */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Password *
+                      {t('brokerRegistration.password')} *
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -509,7 +511,7 @@ const BrokerRegister = () => {
                         value={formData.password}
                         onChange={handleChange}
                         onBlur={handleBlur}
-                        placeholder="Create a strong password"
+                        placeholder={t('brokerRegistration.createStrongPassword')}
                         className={`w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 transition-all duration-200 bg-white/50 backdrop-blur-sm ${
                           errors.password
                             ? 'border-red-500 focus:ring-red-500 focus:border-red-500 bg-red-50/50'
@@ -541,7 +543,7 @@ const BrokerRegister = () => {
                         ) : (
                           <p className="text-sm text-green-600 flex items-center">
                             <CheckCircle className="h-4 w-4 mr-1 flex-shrink-0" />
-                            Password strength is good
+                            {t('brokerRegistration.passwordStrengthGood')}
                           </p>
                         )}
                       </div>
@@ -551,7 +553,7 @@ const BrokerRegister = () => {
                   {/* Confirm Password Field */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Confirm Password *
+                      {t('brokerRegistration.confirmPassword')} *
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -563,7 +565,7 @@ const BrokerRegister = () => {
                         value={formData.confirmPassword}
                         onChange={handleChange}
                         onBlur={handleBlur}
-                        placeholder="Confirm your password"
+                        placeholder={t('brokerRegistration.confirmYourPassword')}
                         className={`w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 transition-all duration-200 bg-white/50 backdrop-blur-sm ${
                           errors.confirmPassword
                             ? 'border-red-500 focus:ring-red-500 focus:border-red-500 bg-red-50/50'
@@ -595,7 +597,7 @@ const BrokerRegister = () => {
                         ) : (
                           <p className="text-sm text-green-600 flex items-center">
                             <CheckCircle className="h-4 w-4 mr-1 flex-shrink-0" />
-                            Passwords match
+                            {t('brokerRegistration.passwordsMatch')}
                           </p>
                         )}
                       </div>
@@ -608,7 +610,7 @@ const BrokerRegister = () => {
                   {/* Phone Field */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Phone Number *
+                      {t('brokerRegistration.phoneNumber')} *
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -620,7 +622,7 @@ const BrokerRegister = () => {
                         value={formData.phone}
                         onChange={handleChange}
                         onBlur={handleBlur}
-                        placeholder="Enter your phone number"
+                        placeholder={t('brokerRegistration.enterPhoneNumber')}
                         className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 transition-all duration-200 bg-white/50 backdrop-blur-sm ${
                           errors.phone
                             ? 'border-red-500 focus:ring-red-500 focus:border-red-500 bg-red-50/50'
@@ -641,7 +643,7 @@ const BrokerRegister = () => {
                         ) : (
                           <p className="text-sm text-green-600 flex items-center">
                             <CheckCircle className="h-4 w-4 mr-1 flex-shrink-0" />
-                            Phone number is valid
+                            {t('brokerRegistration.phoneNumberValid')}
                           </p>
                         )}
                       </div>
@@ -651,7 +653,7 @@ const BrokerRegister = () => {
                   {/* Location Field */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Location *
+                      {t('brokerRegistration.location')} *
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -663,7 +665,7 @@ const BrokerRegister = () => {
                         value={formData.location}
                         onChange={handleChange}
                         onBlur={handleBlur}
-                        placeholder="City, State"
+                        placeholder={t('brokerRegistration.cityState')}
                         className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 transition-all duration-200 bg-white/50 backdrop-blur-sm ${
                           errors.location
                             ? 'border-red-500 focus:ring-red-500 focus:border-red-500 bg-red-50/50'
@@ -684,7 +686,7 @@ const BrokerRegister = () => {
                         ) : (
                           <p className="text-sm text-green-600 flex items-center">
                             <CheckCircle className="h-4 w-4 mr-1 flex-shrink-0" />
-                            Location is valid
+                            {t('brokerRegistration.locationValid')}
                           </p>
                         )}
                       </div>
@@ -697,14 +699,14 @@ const BrokerRegister = () => {
               <div className="space-y-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                   <Briefcase className="h-5 w-5 mr-2 text-primary-600" />
-                  Professional Information
+                  {t('brokerRegistration.professionalInformation')}
                 </h3>
 
                 {/* Experience Field */}
                 <div className="grid grid-cols-1 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Experience Level *
+                      {t('brokerRegistration.experienceLevel')} *
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -724,9 +726,9 @@ const BrokerRegister = () => {
                         }`}
                         disabled={loading}
                       >
-                        <option value="">Select experience level</option>
+                        <option value="">{t('brokerRegistration.selectExperienceLevel')}</option>
                         {experienceOptions.map(option => (
-                          <option key={option} value={option}>{option}</option>
+                          <option key={option.value} value={option.value}>{option.label}</option>
                         ))}
                       </select>
                     </div>
@@ -740,7 +742,7 @@ const BrokerRegister = () => {
                         ) : (
                           <p className="text-sm text-green-600 flex items-center">
                             <CheckCircle className="h-4 w-4 mr-1 flex-shrink-0" />
-                            Experience level selected
+                            {t('brokerRegistration.experienceLevelSelected')}
                           </p>
                         )}
                       </div>
@@ -753,7 +755,7 @@ const BrokerRegister = () => {
                   {/* Company Name Field */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Company Name
+                      {t('brokerRegistration.companyName')}
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -765,7 +767,7 @@ const BrokerRegister = () => {
                         value={formData.companyName}
                         onChange={handleChange}
                         onBlur={handleBlur}
-                        placeholder="Enter your company name"
+                        placeholder={t('brokerRegistration.enterCompanyName')}
                         className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 transition-all duration-200 bg-white/50 backdrop-blur-sm ${
                           errors.companyName
                             ? 'border-red-500 focus:ring-red-500 focus:border-red-500 bg-red-50/50'
@@ -786,7 +788,7 @@ const BrokerRegister = () => {
                         ) : (
                           <p className="text-sm text-green-600 flex items-center">
                             <CheckCircle className="h-4 w-4 mr-1 flex-shrink-0" />
-                            Company name is valid
+                            {t('brokerRegistration.companyNameValid')}
                           </p>
                         )}
                       </div>
@@ -796,14 +798,14 @@ const BrokerRegister = () => {
                   {/* Professional Bio Field */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Professional Bio
+                      {t('brokerRegistration.professionalBio')}
                     </label>
                     <textarea
                       name="bio"
                       value={formData.bio}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      placeholder="Tell us about yourself and your expertise in the rubber industry"
+                      placeholder={t('brokerRegistration.tellAboutYourself')}
                       rows="4"
                       className={`w-full px-4 py-3 border rounded-xl focus:ring-2 transition-all duration-200 bg-white/50 backdrop-blur-sm resize-none ${
                         errors.bio
@@ -824,7 +826,7 @@ const BrokerRegister = () => {
                         ) : (
                           <p className="text-sm text-green-600 flex items-center">
                             <CheckCircle className="h-4 w-4 mr-1 flex-shrink-0" />
-                            Bio looks good
+                            {t('brokerRegistration.bioLooksGood')}
                           </p>
                         )}
                       </div>
@@ -834,7 +836,7 @@ const BrokerRegister = () => {
                   {/* ID Proof Upload */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ID Proof * <span className="text-xs text-gray-500">(JPG, PNG - Max 5MB)</span>
+                      {t('brokerRegistration.idProof')} * <span className="text-xs text-gray-500">(JPG, PNG - Max 5MB)</span>
                     </label>
                     <div className="relative">
                       <input
@@ -853,7 +855,7 @@ const BrokerRegister = () => {
                       >
                         <CreditCard className="w-8 h-8 text-gray-400 mb-2" />
                         <span className="text-sm text-gray-600">
-                          {formData.idProof ? formData.idProof.name : 'Upload ID Proof'}
+                          {formData.idProof ? formData.idProof.name : t('brokerRegistration.uploadIdProof')}
                         </span>
                       </label>
                     </div>
@@ -879,12 +881,12 @@ const BrokerRegister = () => {
                 {loading ? (
                   <>
                     <Loader2 className="animate-spin h-6 w-6 mr-3" />
-                    Creating Account...
+                    {t('brokerRegistration.creatingAccount')}
                   </>
                 ) : (
                   <>
                     <UserCheck className="h-6 w-6 mr-3" />
-                    Register as Broker
+                    {t('brokerRegistration.registerAsBroker')}
                   </>
                 )}
               </motion.button>
@@ -903,21 +905,21 @@ const BrokerRegister = () => {
             <div className="text-center pt-6 border-t border-gray-200 mt-8">
               <div className="space-y-2">
                 <p className="text-gray-600">
-                  Already have an account?{' '}
+                  {t('brokerRegistration.alreadyHaveAccount')}{' '}
                   <Link
                     to="/login"
                     className="text-primary-600 hover:text-primary-500 font-medium transition-colors"
                   >
-                    Sign in here
+                    {t('brokerRegistration.signInHere')}
                   </Link>
                 </p>
                 <p className="text-gray-600">
-                  Want to register as a farmer?{' '}
+                  {t('brokerRegistration.registerAsFarmer')}{' '}
                   <Link
                     to="/register"
                     className="text-primary-600 hover:text-primary-500 font-medium transition-colors"
                   >
-                    Farmer Registration
+                    {t('brokerRegistration.farmerRegistration')}
                   </Link>
                 </p>
               </div>
