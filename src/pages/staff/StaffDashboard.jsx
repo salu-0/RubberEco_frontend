@@ -91,9 +91,95 @@ const StaffDashboard = ({ darkMode }) => {
     }
   };
 
-  // API base URL
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
+  // Handle profile save
+  const handleProfileSave = async () => {
+    try {
+      setLoading(true);
+      const userData = getUserData();
+      
+      if (!userData || !userData.id) {
+        showNotification('User data not found', 'error');
+        return;
+      }
+
+      // Validate form data
+      if (profileErrors.fullName) {
+        showNotification('Please fix validation errors', 'error');
+        return;
+      }
+
+      const updateData = {
+        name: profileForm.fullName.trim(),
+        phone: profileForm.phone.trim(),
+        location: profileForm.assignedRegion.trim()
+      };
+
+      console.log('🔄 Updating staff profile:', updateData);
+
+      const response = await fetch(`${API_BASE_URL}/staff/${userData.id}/profile`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${getAuthToken()}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log('✅ Profile updated successfully');
+        
+        // Update local state
+        setStaffData(prevData => ({
+          ...prevData,
+          name: updateData.name,
+          phone: updateData.phone,
+          location: updateData.location
+        }));
+
+        // Update user data in localStorage
+        const currentUserData = getUserData();
+        if (currentUserData) {
+          const updatedUserData = { 
+            ...currentUserData, 
+            name: updateData.name,
+            phone: updateData.phone,
+            location: updateData.location
+          };
+          localStorage.setItem('userData', JSON.stringify(updatedUserData));
+          setUser(updatedUserData);
+        }
+
+        showNotification('Profile updated successfully!', 'success');
+        setIsEditingProfile(false);
+        
+        // Refresh staff data to ensure consistency
+        await fetchStaffData();
+      } else {
+        console.error('❌ Profile update failed:', data);
+        showNotification(data.message || 'Failed to update profile', 'error');
+      }
+    } catch (error) {
+      console.error('Profile update error:', error);
+      showNotification('Failed to update profile', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // API base URL - use local server for development
+  const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const BACKEND_URL = isDevelopment ? 'http://localhost:5000' : (import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com');
   const API_BASE_URL = `${BACKEND_URL}/api`;
+  
+  console.log('🔍 Environment detection:', {
+    hostname: window.location.hostname,
+    isDevelopment,
+    VITE_BACKEND_URL: import.meta.env.VITE_BACKEND_URL,
+    BACKEND_URL,
+    API_BASE_URL
+  });
 
   // Fetch available service requests count for badge
   useEffect(() => {
@@ -546,7 +632,7 @@ const StaffDashboard = ({ darkMode }) => {
   // Fetch assigned tasks data
   const fetchAssignedTasks = async () => {
     try {
-      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
+      const backendUrl = isDevelopment ? 'http://localhost:5000/api' : (import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api');
       const response = await fetch(`${backendUrl}/service-applications/assigned-tasks`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -1581,16 +1667,15 @@ const StaffDashboard = ({ darkMode }) => {
                         {isEditingProfile && (
                           <div className="mt-3">
                             <button
-                              disabled={!!profileErrors.fullName}
+                              disabled={!!profileErrors.fullName || loading}
                               onClick={(e) => {
                                 e.preventDefault();
-                                if (profileErrors.fullName) return;
-                                // TODO: hook up to save endpoint if available
-                                setIsEditingProfile(false);
+                                if (profileErrors.fullName || loading) return;
+                                handleProfileSave();
                               }}
-                              className={`px-4 py-2 rounded-lg text-white ${profileErrors.fullName ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
+                              className={`px-4 py-2 rounded-lg text-white ${profileErrors.fullName || loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
                             >
-                              Save Changes
+                              {loading ? 'Saving...' : 'Save Changes'}
                             </button>
                           </div>
                         )}
