@@ -1314,7 +1314,7 @@ const Dashboard = () => {
                       </span>
                       <div className="flex items-center space-x-2">
                         <span className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                          $11,200
+                          ₹11,200
                         </span>
                         <div className="flex items-center text-green-500 text-sm">
                           <ArrowUpRight className="h-4 w-4" />
@@ -1507,7 +1507,7 @@ const Dashboard = () => {
                         Total Earnings
                       </p>
                       <p className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                        $8,000
+                        ₹8,000
                       </p>
                       <p className="text-sm text-purple-500 font-medium">
                         This month

@@ -1429,7 +1429,7 @@ const Markets = () => {
   const marketData = [
     {
       market: "Singapore Exchange",
-      price: "$1,845",
+      price: "₹1,54,000",
       change: "+2.3%",
       trend: "up",
       volume: "12,450 MT",
@@ -1437,7 +1437,7 @@ const Markets = () => {
     },
     {
       market: "Tokyo Commodity Exchange",
-      price: "$1,832",
+      price: "₹1,53,000",
       change: "-0.8%",
       trend: "down",
       volume: "8,920 MT",
@@ -1445,7 +1445,7 @@ const Markets = () => {
     },
     {
       market: "Shanghai Futures Exchange",
-      price: "$1,856",
+      price: "₹1,55,000",
       change: "+1.7%",
       trend: "up",
       volume: "15,680 MT",
@@ -1453,7 +1453,7 @@ const Markets = () => {
     },
     {
       market: "Kuala Lumpur Exchange",
-      price: "$1,840",
+      price: "₹1,54,000",
       change: "+0.5%",
       trend: "up",
       volume: "9,340 MT",
@@ -1464,7 +1464,7 @@ const Markets = () => {
   const priceAlerts = [
     {
       type: "Target Reached",
-      message: "RSS3 price reached your target of $1,850/MT",
+      message: "RSS3 price reached your target of ₹1,55,000/MT",
       time: "2 hours ago",
       icon: <Target className="h-5 w-5 text-green-500" />
     },

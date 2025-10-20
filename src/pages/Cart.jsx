@@ -37,10 +37,10 @@ export default function Cart() {
                   <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded border" />
                   <div className="flex-1">
                     <div className="font-medium">{item.name}</div>
-                    <div className="text-sm text-gray-500">${item.price.toFixed(2)} {t('cart.each')}</div>
+                    <div className="text-sm text-gray-500">₹{item.price.toFixed(2)} {t('cart.each')}</div>
                   </div>
                   <input type="number" min="1" className="w-20 border rounded px-2 py-1" value={item.qty} onChange={e => updateQty(item.id, Math.max(1, Number(e.target.value)||1))} />
-                  <div className="w-24 text-right font-semibold">${(item.price * item.qty).toFixed(2)}</div>
+                  <div className="w-24 text-right font-semibold">₹{(item.price * item.qty).toFixed(2)}</div>
                   <button className="ml-2 text-red-600" onClick={() => removeItem(item.id)}>{t('cart.remove')}</button>
                 </li>
               ))}
