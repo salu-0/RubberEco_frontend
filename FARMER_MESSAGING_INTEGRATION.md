@@ -222,3 +222,4 @@ The farmer messaging interface is fully responsive and works on:
 - **Extensible**: Easy to add more languages
 
 This implementation provides farmers with a professional messaging interface to communicate with brokers about their lot bids and negotiations.
+

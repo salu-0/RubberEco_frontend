@@ -11,7 +11,19 @@ const MessagesDebug = () => {
 
   useEffect(() => {
     const checkSystem = async () => {
-      const brokerId = localStorage.getItem('userId');
+      // Get broker ID from user data
+      const userData = localStorage.getItem('user');
+      let brokerId = null;
+      
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          brokerId = user.id || user._id;
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+        }
+      }
+      
       const token = localStorage.getItem('token');
       
       setDebugInfo(prev => ({
@@ -22,8 +34,8 @@ const MessagesDebug = () => {
 
       // Test backend connection
       try {
-        const apiUrl = 'https://rubbereco-backend.onrender.com'; // Use production backend
-        const response = await fetch(`${apiUrl}/api/bids`, {
+        const apiUrl = 'http://localhost:5000'; // Use local backend
+        const response = await fetch(`${apiUrl}/api/health`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
         });
@@ -139,7 +151,7 @@ const MessagesDebug = () => {
         borderTop: '1px solid #eee',
         paddingTop: '8px'
       }}>
-        <strong>API URL:</strong> https://rubbereco-backend.onrender.com
+        <strong>API URL:</strong> http://localhost:5000
       </div>
     </div>
   );

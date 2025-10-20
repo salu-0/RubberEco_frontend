@@ -208,3 +208,4 @@ JWT_SECRET=your_jwt_secret
 - User engagement
 
 This integration provides a complete, production-ready messaging system that connects real brokers with real farmers based on actual bid data from your database.
+

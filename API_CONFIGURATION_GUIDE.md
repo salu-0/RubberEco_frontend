@@ -78,3 +78,4 @@ curl http://localhost:5000/api/bids
 4. **Test API endpoints** directly with curl or Postman
 
 This should resolve the API endpoint issues you're experiencing!
+

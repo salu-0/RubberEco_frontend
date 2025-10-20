@@ -26,7 +26,6 @@ import messagingService from '../../services/messagingService';
 import websocketService from '../../services/websocketService';
 import pollingService from '../../services/pollingService';
 import { testBackendConnection, testBrokerBids } from '../../utils/apiTest';
-import MessagesDebug from './MessagesDebug';
 import './Messages.css';
 
 const Messages = () => {
@@ -66,6 +65,14 @@ const Messages = () => {
     }
   }, [selectedConversation]);
 
+  // Initialize polling when conversations are loaded and WebSocket has failed
+  useEffect(() => {
+    if (conversations.length > 0 && connectionStatus === 'failed' && !pollingInitialized) {
+      console.log('Conversations loaded, initializing polling for all conversations');
+      initializePolling();
+    }
+  }, [conversations, connectionStatus, pollingInitialized]);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -78,14 +85,14 @@ const Messages = () => {
     // Try to connect to WebSocket
     websocketService.connect();
 
-    // Set a timeout to fallback to polling if WebSocket doesn't connect quickly
+    // Set a shorter timeout to fallback to polling since we know WebSocket will fail
     setTimeout(() => {
       if (!websocketAvailable && connectionStatus === 'disconnected' && !pollingInitialized) {
         console.log('WebSocket connection timeout, switching to polling mode');
         setConnectionStatus('failed');
         initializePolling();
       }
-    }, 15000); // 15 second timeout
+    }, 8000); // Reduced to 8 seconds since WebSocket will fail quickly
 
     // Listen for connection events
     websocketService.on('connected', () => {
@@ -209,13 +216,29 @@ const Messages = () => {
 
     // Listen for new messages from polling service
     pollingService.on('newMessage', (message) => {
+      console.log('Polling: New message received:', message);
       if (selectedConversation && message.conversationId === selectedConversation.id) {
         setMessages(prev => [...prev, message]);
       }
+      
+      // Update conversation list with new message
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === message.conversationId 
+            ? { 
+                ...conv, 
+                lastMessage: message.content, 
+                lastMessageTime: message.timestamp,
+                unreadCount: conv.id === selectedConversation?.id ? conv.unreadCount : conv.unreadCount + 1
+              }
+            : conv
+        )
+      );
     });
 
     // Listen for conversation updates from polling service
     pollingService.on('conversationUpdated', (conversationData) => {
+      console.log('Polling: Conversation updated:', conversationData);
       setConversations(prev => 
         prev.map(conv => 
           conv.id === conversationData.id 
@@ -244,18 +267,29 @@ const Messages = () => {
       setLoading(true);
       
       // Get broker's bids from the database
-      const brokerId = localStorage.getItem('userId'); // Assuming broker ID is stored here
+      const userData = localStorage.getItem('user');
+      let brokerId = null;
+      
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          brokerId = user.id || user._id;
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+        }
+      }
       
       console.log('Broker ID from localStorage:', brokerId);
+      console.log('User data from localStorage:', userData);
       
       if (!brokerId) {
         console.log('No broker ID found in localStorage, using demo data');
         throw new Error('Broker ID not found');
       }
 
-      // Test broker bids API directly (since you're using production backend)
+      // Test broker bids API directly (using local backend for development)
       const token = localStorage.getItem('token');
-      const apiUrl = 'https://rubbereco-backend.onrender.com'; // Use your production backend
+      const apiUrl = 'http://localhost:5000'; // Use local backend for development
       
       console.log('Making API call to production backend:', `${apiUrl}/api/bids/broker/${brokerId}`);
       
@@ -281,8 +315,8 @@ const Messages = () => {
       const conversations = await Promise.all(
         bidsData.bids.map(async (bid) => {
           try {
-            // Get lot owner (farmer) information
-            const lotResponse = await fetch(`https://rubbereco-backend.onrender.com/api/landregistrations/${bid.lotId}`, {
+            // Get lot owner (farmer) information from TreeLot
+            const lotResponse = await fetch(`http://localhost:5000/api/tree-lots/${bid.lotId}`, {
               headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 'Content-Type': 'application/json'
@@ -290,16 +324,14 @@ const Messages = () => {
             });
             
             const lotData = await lotResponse.json();
+            console.log('TreeLot API response:', lotData);
             
-            // Get farmer profile information
-            const farmerResponse = await fetch(`https://rubbereco-backend.onrender.com/api/register/${lotData.ownerId}`, {
-              headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                'Content-Type': 'application/json'
-              }
-            });
+            // Get farmer ID (handle both string and populated object)
+            const farmerId = typeof lotData.data.farmerId === 'string' 
+              ? lotData.data.farmerId 
+              : lotData.data.farmerId._id || lotData.data.farmerId.id;
             
-            const farmerData = await farmerResponse.json();
+            console.log('Farmer ID extracted:', farmerId);
             
             // Get last message from conversation (if exists)
             let lastMessage = 'No messages yet';
@@ -307,7 +339,7 @@ const Messages = () => {
             let unreadCount = 0;
             
             try {
-              const messagesResponse = await fetch(`https://rubbereco-backend.onrender.com/api/messages/conversation/${bid._id}`, {
+              const messagesResponse = await fetch(`http://localhost:5000/api/messages/conversation/${bid._id}`, {
                 headers: {
                   'Authorization': `Bearer ${localStorage.getItem('token')}`,
                   'Content-Type': 'application/json'
@@ -329,17 +361,27 @@ const Messages = () => {
               console.log('No existing conversation found, will create new one');
             }
             
+            // Get farmer info from populated data in TreeLot API
+            let farmerName = 'Unknown Farmer';
+            let farmerAvatar = '';
+            
+            if (lotData.data.farmerId && typeof lotData.data.farmerId === 'object') {
+              // Use populated farmer data from TreeLot API
+              farmerName = lotData.data.farmerId.fullName || lotData.data.farmerId.name || 'Unknown Farmer';
+              farmerAvatar = lotData.data.farmerId.profilePicture || '';
+            }
+            
             return {
               id: bid._id, // Use bid ID as conversation ID
-              farmerId: lotData.ownerId,
-              farmerName: farmerData.fullName || farmerData.name || 'Unknown Farmer',
-              farmerAvatar: farmerData.profilePicture || '',
+              farmerId: farmerId,
+              farmerName: farmerName,
+              farmerAvatar: farmerAvatar,
               lotId: bid.lotId,
               bidId: bid._id,
               lotInfo: {
-                location: lotData.location || 'Location not specified',
-                numberOfTrees: lotData.numberOfTrees || 0,
-                status: lotData.status || 'active',
+                location: lotData.data.location || 'Location not specified',
+                numberOfTrees: lotData.data.numberOfTrees || 0,
+                status: lotData.data.status || 'active',
                 bidAmount: bid.amount,
                 bidStatus: bid.status
               },
@@ -407,7 +449,7 @@ const Messages = () => {
       console.log('Loading messages for conversation (bid):', conversationId);
       
       // Fetch messages for this conversation (bid)
-      const response = await fetch(`https://rubbereco-backend.onrender.com/api/messages/conversation/${conversationId}`, {
+      const response = await fetch(`http://localhost:5000/api/messages/conversation/${conversationId}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -485,11 +527,15 @@ const Messages = () => {
     const messageContent = newMessage.trim();
     setNewMessage('');
 
+    // Get current user ID
+    const userData = localStorage.getItem('user');
+    const currentUserId = userData ? JSON.parse(userData).id || JSON.parse(userData)._id : 'B001';
+    
     // Optimistically add message to UI
     const tempMessageId = `temp_${Date.now()}`;
     const newMsg = {
       id: tempMessageId,
-      senderId: 'B001',
+      senderId: currentUserId,
       senderType: 'broker',
       content: messageContent,
       timestamp: new Date().toISOString(),
@@ -502,7 +548,7 @@ const Messages = () => {
 
     try {
       // Send message to the backend
-      const response = await fetch(`https://rubbereco-backend.onrender.com/api/messages/send`, {
+      const response = await fetch(`http://localhost:5000/api/messages/send`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -525,7 +571,7 @@ const Messages = () => {
       // Transform API response to match component structure
       const sentMessage = {
         id: sentMessageData._id,
-        senderId: localStorage.getItem('userId'),
+        senderId: currentUserId,
         senderType: 'broker',
         content: messageContent,
         timestamp: sentMessageData.createdAt,
@@ -551,38 +597,50 @@ const Messages = () => {
         )
       );
 
-      // Demo: Auto-reply from farmer after 2 seconds
-      setTimeout(() => {
-        const autoReplyMessages = [
-          "Thank you for your message! I'll get back to you soon.",
-          "That's a great question. Let me check the details and respond.",
-          "I appreciate your interest. We can discuss this further.",
-          "Perfect! I'm looking forward to working with you.",
-          "Sounds good! Let me know if you need any more information."
-        ];
-        
-        const randomReply = autoReplyMessages[Math.floor(Math.random() * autoReplyMessages.length)];
-        
-        const autoReply = {
-          id: `auto_${Date.now()}`,
-          senderId: selectedConversation.farmerId,
-          senderType: 'farmer',
-          content: randomReply,
-          timestamp: new Date().toISOString(),
-          status: 'delivered'
-        };
+      // Send message via Socket.IO if available
+      if (websocketAvailable) {
+        websocketService.sendMessage('new_message', {
+          conversationId: selectedConversation.id,
+          content: messageContent,
+          replyTo: replyTo?.id || null
+        });
+      }
 
-        setMessages(prev => [...prev, autoReply]);
-        
-        // Update conversation with auto-reply
-        setConversations(prev => 
-          prev.map(conv => 
-            conv.id === selectedConversation.id 
-              ? { ...conv, lastMessage: randomReply, lastMessageTime: new Date().toISOString() }
-              : conv
-          )
-        );
-      }, 2000);
+      // Demo: Auto-reply from farmer after 2 seconds (only if using mock data)
+      if (selectedConversation.farmerName === 'John Doe') {
+        setTimeout(() => {
+          const autoReplyMessages = [
+            "Thank you for your message! I'll get back to you soon.",
+            "That's a great question. Let me check the details and respond.",
+            "I appreciate your interest. We can discuss this further.",
+            "Perfect! I'm looking forward to working with you.",
+            "Sounds good! Let me know if you need any more information."
+          ];
+          
+          const randomReply = autoReplyMessages[Math.floor(Math.random() * autoReplyMessages.length)];
+          
+          const autoReply = {
+            id: `auto_${Date.now()}`,
+            conversationId: selectedConversation.id,
+            senderId: selectedConversation.farmerId,
+            senderType: 'farmer',
+            content: randomReply,
+            timestamp: new Date().toISOString(),
+            status: 'delivered'
+          };
+
+          setMessages(prev => [...prev, autoReply]);
+          
+          // Update conversation with auto-reply
+          setConversations(prev => 
+            prev.map(conv => 
+              conv.id === selectedConversation.id 
+                ? { ...conv, lastMessage: randomReply, lastMessageTime: new Date().toISOString() }
+                : conv
+            )
+          );
+        }, 2000);
+      }
 
     } catch (error) {
       console.error('Error sending message:', error);
@@ -639,12 +697,18 @@ const Messages = () => {
     
     // Send typing indicator only if WebSocket is available
     if (selectedConversation && websocketAvailable) {
-      websocketService.sendTyping(selectedConversation.id, true);
+      websocketService.sendMessage('typing', {
+        conversationId: selectedConversation.id,
+        isTyping: true
+      });
       
       // Clear typing indicator after 3 seconds
       setTimeout(() => {
         if (websocketAvailable) {
-          websocketService.sendTyping(selectedConversation.id, false);
+          websocketService.sendMessage('typing', {
+            conversationId: selectedConversation.id,
+            isTyping: false
+          });
         }
       }, 3000);
     }
@@ -679,7 +743,6 @@ const Messages = () => {
 
   return (
     <div className="messages-container">
-      <MessagesDebug />
       <div className="messages-header">
         <h2>
           <FaComments className="section-icon" />

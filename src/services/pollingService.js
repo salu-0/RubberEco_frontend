@@ -43,27 +43,54 @@ class PollingService {
   // Check for new messages in a conversation
   async checkForNewMessages(conversationId) {
     try {
-      // Import messagingService dynamically to avoid circular dependencies
-      const messagingService = (await import('./messagingService')).default;
+      // Use direct API call instead of messagingService to avoid circular dependencies
+      const token = localStorage.getItem('token');
+      const apiUrl = 'http://localhost:5000';
       
-      const messages = await messagingService.getMessages(conversationId);
+      const response = await fetch(`${apiUrl}/api/messages/conversation/${conversationId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        console.log('Polling: No messages found for conversation:', conversationId);
+        return;
+      }
+
+      const data = await response.json();
+      const messages = data.messages || [];
       const lastMessage = messages[messages.length - 1];
       
       if (lastMessage) {
         // Check if this is a new message
         const lastKnownMessageId = this.getLastKnownMessageId(conversationId);
         
-        if (lastKnownMessageId !== lastMessage.id) {
-          this.setLastKnownMessageId(conversationId, lastMessage.id);
+        if (lastKnownMessageId !== lastMessage._id) {
+          this.setLastKnownMessageId(conversationId, lastMessage._id);
+          
+          // Transform message to match expected format
+          const transformedMessage = {
+            id: lastMessage._id,
+            conversationId: conversationId, // Add conversationId to the message
+            senderId: lastMessage.senderId,
+            senderType: lastMessage.senderType,
+            content: lastMessage.content,
+            timestamp: lastMessage.createdAt,
+            status: lastMessage.status || 'delivered',
+            replyTo: lastMessage.replyTo
+          };
           
           // Emit new message event
-          this.emit('newMessage', lastMessage);
+          this.emit('newMessage', transformedMessage);
           
           // Update conversation list
           this.emit('conversationUpdated', {
             id: conversationId,
             lastMessage: lastMessage.content,
-            lastMessageTime: lastMessage.timestamp,
+            lastMessageTime: lastMessage.createdAt,
             unreadCount: 1 // This would need to be calculated properly
           });
         }
@@ -141,3 +168,4 @@ class PollingService {
 // Create and export a singleton instance
 const pollingService = new PollingService();
 export default pollingService;
+

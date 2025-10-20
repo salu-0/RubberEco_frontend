@@ -366,3 +366,4 @@ All endpoints return errors in the following format:
 - Message sending: 60 messages per minute per user
 - File uploads: 10 uploads per minute per user
 - API calls: 1000 requests per hour per user
+

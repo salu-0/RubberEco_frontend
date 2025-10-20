@@ -1,27 +1,22 @@
-// WebSocket Service for Real-time Messaging
+// WebSocket Service for Real-time Messaging using Socket.IO
 // This service handles real-time communication between brokers and farmers
+
+import { io } from 'socket.io-client';
 
 class WebSocketService {
   constructor() {
     this.socket = null;
     this.isConnected = false;
     this.reconnectAttempts = 0;
-    this.maxReconnectAttempts = 3; // Reduced from 5 to 3
-    this.reconnectInterval = 5000; // Increased from 3000 to 5000ms
+    this.maxReconnectAttempts = 3;
+    this.reconnectInterval = 5000;
     this.listeners = new Map();
     this.token = localStorage.getItem('token');
   }
 
-  // Connect to WebSocket server
+  // Connect to Socket.IO server
   connect() {
-    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      return;
-    }
-
-    // Check if WebSocket is supported
-    if (!window.WebSocket) {
-      console.warn('WebSocket not supported in this browser');
-      this.emit('websocketNotSupported');
+    if (this.socket && this.socket.connected) {
       return;
     }
 
@@ -40,113 +35,82 @@ class WebSocketService {
         return;
       }
 
-      // Replace with your actual WebSocket server URL
-      const wsUrl = `wss://rubbereco-backend.onrender.com/ws?token=${this.token}`;
-      console.log(`Attempting WebSocket connection (attempt ${this.reconnectAttempts + 1}/${this.maxReconnectAttempts})`);
+      // Connect to Socket.IO server
+      const serverUrl = 'http://localhost:5000'; // Use local backend for development
+      console.log(`Attempting Socket.IO connection (attempt ${this.reconnectAttempts + 1}/${this.maxReconnectAttempts})`);
       
-      this.socket = new WebSocket(wsUrl);
+      this.socket = io(serverUrl, {
+        query: {
+          token: this.token
+        },
+        transports: ['websocket', 'polling'],
+        timeout: 5000,
+        forceNew: true
+      });
 
-      this.socket.onopen = this.handleOpen.bind(this);
-      this.socket.onmessage = this.handleMessage.bind(this);
-      this.socket.onclose = this.handleClose.bind(this);
-      this.socket.onerror = this.handleError.bind(this);
-
-      // Set a timeout to detect connection issues
-      this.connectionTimeout = setTimeout(() => {
-        if (this.socket && this.socket.readyState === WebSocket.CONNECTING) {
-          console.warn('WebSocket connection timeout');
-          this.socket.close();
-        }
-      }, 8000); // Reduced from 10 to 8 seconds
+      this.socket.on('connect', this.handleOpen.bind(this));
+      this.socket.on('disconnect', this.handleClose.bind(this));
+      this.socket.on('connect_error', this.handleError.bind(this));
+      this.socket.on('new_message', this.handleNewMessage.bind(this));
+      this.socket.on('typing', this.handleTyping.bind(this));
+      this.socket.on('message_status', this.handleMessageStatus.bind(this));
+      this.socket.on('error', this.handleError.bind(this));
 
     } catch (error) {
-      console.error('WebSocket connection error:', error);
+      console.error('Socket.IO connection error:', error);
       this.emit('connectionError', error);
       this.scheduleReconnect();
     }
   }
 
-  // Handle WebSocket connection open
+  // Handle Socket.IO connection open
   handleOpen() {
-    console.log('WebSocket connected');
+    console.log('Socket.IO connected successfully');
     this.isConnected = true;
     this.reconnectAttempts = 0;
-    
-    // Clear connection timeout
-    if (this.connectionTimeout) {
-      clearTimeout(this.connectionTimeout);
-      this.connectionTimeout = null;
-    }
-    
     this.emit('connected');
   }
 
-  // Handle incoming WebSocket messages
-  handleMessage(event) {
-    try {
-      const data = JSON.parse(event.data);
-      this.emit('message', data);
-      
-      // Handle specific message types
-      switch (data.type) {
-        case 'new_message':
-          this.emit('newMessage', data.payload);
-          break;
-        case 'message_status':
-          this.emit('messageStatus', data.payload);
-          break;
-        case 'typing':
-          this.emit('typing', data.payload);
-          break;
-        case 'user_online':
-          this.emit('userOnline', data.payload);
-          break;
-        case 'user_offline':
-          this.emit('userOffline', data.payload);
-          break;
-        case 'conversation_updated':
-          this.emit('conversationUpdated', data.payload);
-          break;
-        default:
-          console.log('Unknown message type:', data.type);
-      }
-    } catch (error) {
-      console.error('Error parsing WebSocket message:', error);
-    }
+  // Handle new messages from Socket.IO
+  handleNewMessage(message) {
+    console.log('New message received via Socket.IO:', message);
+    this.emit('newMessage', message);
   }
 
-  // Handle WebSocket connection close
-  handleClose(event) {
-    console.log('WebSocket disconnected (expected - backend WebSocket server not implemented):', event.code);
+  // Handle typing indicators from Socket.IO
+  handleTyping(typingData) {
+    console.log('Typing indicator received:', typingData);
+    this.emit('typing', typingData);
+  }
+
+  // Handle message status updates from Socket.IO
+  handleMessageStatus(statusUpdate) {
+    console.log('Message status update received:', statusUpdate);
+    this.emit('messageStatus', statusUpdate);
+  }
+
+  // Handle Socket.IO connection close
+  handleClose(reason) {
+    console.log('Socket.IO disconnected:', reason);
     this.isConnected = false;
-    
-    // Clear connection timeout
-    if (this.connectionTimeout) {
-      clearTimeout(this.connectionTimeout);
-      this.connectionTimeout = null;
-    }
-    
     this.emit('disconnected');
     
-    // Only attempt to reconnect if it's not a normal closure and not a manual disconnect
-    if (event.code !== 1000 && event.code !== 1001 && this.reconnectAttempts < this.maxReconnectAttempts) {
+    // Only attempt to reconnect if we haven't exceeded max attempts
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.scheduleReconnect();
-    } else if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.warn('WebSocket reconnection failed after maximum attempts. Falling back to polling mode.');
+    } else {
+      console.warn('Socket.IO reconnection failed after maximum attempts. Falling back to polling mode.');
       this.emit('reconnectFailed');
     }
   }
 
-  // Handle WebSocket errors
+  // Handle Socket.IO errors
   handleError(error) {
-    console.log('WebSocket error (expected - backend WebSocket server not implemented):', error.type);
+    console.error('Socket.IO connection error:', error);
     this.emit('error', error);
     
-    // If this is a connection error, don't attempt to reconnect immediately
-    // Let the close handler manage reconnection
-    if (this.socket) {
-      this.socket.close();
-    }
+    // Don't attempt to reconnect immediately on error
+    // Let the disconnect handler manage reconnection
   }
 
   // Schedule reconnection attempt
@@ -167,38 +131,32 @@ class WebSocketService {
     }
   }
 
-  // Send message through WebSocket
+  // Send message through Socket.IO
   sendMessage(type, payload) {
-    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      const message = {
-        type,
-        payload,
-        timestamp: new Date().toISOString()
-      };
-      
+    if (this.socket && this.socket.connected) {
       try {
-        this.socket.send(JSON.stringify(message));
+        this.socket.emit(type, payload);
         return true;
       } catch (error) {
-        console.error('Error sending WebSocket message:', error);
+        console.error('Error sending Socket.IO message:', error);
         return false;
       }
     } else {
-      console.warn('WebSocket not connected, cannot send message');
+      console.warn('Socket.IO not connected, cannot send message');
       return false;
     }
   }
 
-  // Check if WebSocket is available and connected
+  // Check if Socket.IO is available and connected
   isAvailable() {
-    return this.socket && this.socket.readyState === WebSocket.OPEN;
+    return this.socket && this.socket.connected;
   }
 
   // Get connection status
   getStatus() {
     return {
       isConnected: this.isConnected,
-      readyState: this.socket ? this.socket.readyState : WebSocket.CLOSED,
+      connected: this.socket ? this.socket.connected : false,
       reconnectAttempts: this.reconnectAttempts,
       maxReconnectAttempts: this.maxReconnectAttempts
     };
@@ -283,10 +241,10 @@ class WebSocketService {
     }
   }
 
-  // Disconnect WebSocket
+  // Disconnect Socket.IO
   disconnect() {
     if (this.socket) {
-      this.socket.close(1000, 'User disconnected');
+      this.socket.disconnect();
       this.socket = null;
     }
     this.isConnected = false;
@@ -297,7 +255,7 @@ class WebSocketService {
   getConnectionStatus() {
     return {
       isConnected: this.isConnected,
-      readyState: this.socket ? this.socket.readyState : WebSocket.CLOSED,
+      connected: this.socket ? this.socket.connected : false,
       reconnectAttempts: this.reconnectAttempts
     };
   }

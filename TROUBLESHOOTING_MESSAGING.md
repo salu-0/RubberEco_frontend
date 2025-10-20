@@ -167,3 +167,4 @@ If you're still having issues:
 4. Share your backend startup logs
 
 The debug panel will help identify exactly what's preventing the real data from loading!
+
