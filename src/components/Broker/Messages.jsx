@@ -25,7 +25,6 @@ import {
 import messagingService from '../../services/messagingService';
 import websocketService from '../../services/websocketService';
 import pollingService from '../../services/pollingService';
-import { testBackendConnection, testBrokerBids } from '../../utils/apiTest';
 import './Messages.css';
 
 const Messages = () => {
