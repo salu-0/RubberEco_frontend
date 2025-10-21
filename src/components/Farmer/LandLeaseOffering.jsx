@@ -877,12 +877,12 @@ const LandLeaseOffering = ({ isOpen, onClose }) => {
                       <div className="flex items-start justify-between mb-4">
                         <div>
                           <div className="flex items-center space-x-3 mb-2">
-                            <h3 className="text-lg font-semibold text-gray-900">{offering.landTitle}</h3>
+                            <h3 className="text-lg font-semibold text-gray-900">{offering.landId?.landTitle || offering.landTitle || 'Unknown Land'}</h3>
                             {getStatusBadge(offering.status)}
                           </div>
                           <p className="text-gray-600 flex items-center">
                             <MapPin className="h-4 w-4 mr-1" />
-                            {offering.landLocation}
+                            {offering.landId?.landLocation || offering.landLocation || 'Unknown Location'}
                           </p>
                         </div>
                         <div className="text-right">
@@ -894,7 +894,7 @@ const LandLeaseOffering = ({ isOpen, onClose }) => {
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                         <div className="flex items-center space-x-2">
                           <Ruler className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm text-gray-600">Area: {offering.totalArea}</span>
+                          <span className="text-sm text-gray-600">Area: {offering.landId?.totalArea || offering.totalArea || 'Not specified'}</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Calendar className="h-4 w-4 text-gray-400" />
@@ -980,15 +980,15 @@ const LandLeaseOffering = ({ isOpen, onClose }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <span className="text-gray-600 text-sm">Land Title:</span>
-                    <p className="font-medium">{selectedOffering.landTitle}</p>
+                    <p className="font-medium">{selectedOffering.landId?.landTitle || selectedOffering.landTitle || 'Not specified'}</p>
                   </div>
                   <div>
                     <span className="text-gray-600 text-sm">Location:</span>
-                    <p className="font-medium">{selectedOffering.landLocation}</p>
+                    <p className="font-medium">{selectedOffering.landId?.landLocation || selectedOffering.landLocation || 'Not specified'}</p>
                   </div>
                   <div>
                     <span className="text-gray-600 text-sm">Total Area:</span>
-                    <p className="font-medium">{selectedOffering.totalArea}</p>
+                    <p className="font-medium">{selectedOffering.landId?.totalArea || selectedOffering.totalArea || 'Not specified'}</p>
                   </div>
                   <div>
                     <span className="text-gray-600 text-sm">Status:</span>
@@ -1085,7 +1085,7 @@ const LandLeaseOffering = ({ isOpen, onClose }) => {
               </h3>
               
               <p className="text-gray-600 text-center mb-6">
-                Are you sure you want to remove the offering for "{offeringToDelete.landTitle}"? This action cannot be undone.
+                Are you sure you want to remove the offering for "{offeringToDelete.landId?.landTitle || offeringToDelete.landTitle || 'Unknown Land'}"? This action cannot be undone.
               </p>
               
               <div className="flex space-x-3">

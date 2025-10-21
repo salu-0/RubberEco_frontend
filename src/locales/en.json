@@ -692,7 +692,10 @@
     "phonePlaceholder": "e.g., +91 9876543210, +1-234-567-8901",
     "phoneSupportedFormats": "Supported formats: +91 9876543210, +1-234-567-8901, 9876543210",
     "locationPlaceholder": "Enter your location",
-    "bioPlaceholder": "Tell us about yourself..."
+    "bioPlaceholder": "Tell us about yourself...",
+    "messagesAndCommunication": "Messages & Communication",
+    "messages": "Messages",
+    "communicateWithBrokers": "Communicate with brokers about your lot bids"
   },
   "applicationStatus": {
     "title": "Application Status",

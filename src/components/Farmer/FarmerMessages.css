@@ -3,7 +3,9 @@
 
 .farmer-messages-container {
   width: 100%;
-  height: 100%;
+  height: calc(100% - 120px); /* Account for modal header and status bar */
+  display: flex;
+  flex-direction: column;
 }
 
 /* Header */
@@ -69,11 +71,11 @@
 /* Messages Content */
 .messages-content {
   display: flex;
-  height: 600px;
+  height: 100%;
   background: white;
-  border-radius: 20px;
+  border-radius: 0;
   overflow: hidden;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  flex: 1;
 }
 
 /* Conversations Sidebar */

@@ -38,7 +38,8 @@ import {
   Menu,
   Upload,
   Trash2,
-  Image as ImageIcon
+  Image as ImageIcon,
+  MessageCircle
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import TapperRequest from '../components/Farmer/TapperRequest';
@@ -50,6 +51,7 @@ import PaymentStatus from '../components/Farmer/PaymentStatus';
 import FertilizerRainGuardRequest from '../components/Farmer/FertilizerRainGuardRequest';
 import TreeLotListing from '../components/Farmer/TreeLotListing';
 import NurseryBookings from '../components/Farmer/NurseryBookings';
+import FarmerMessages from '../components/Farmer/FarmerMessages';
 
 const Profile = () => {
   const { t } = useTranslation();
@@ -80,6 +82,7 @@ const Profile = () => {
   const [showAssignedWorkers, setShowAssignedWorkers] = useState(false);
   const [isTreeLotListingOpen, setIsTreeLotListingOpen] = useState(false);
   const [isNurseryBookingsOpen, setIsNurseryBookingsOpen] = useState(false);
+  const [isMessagesOpen, setIsMessagesOpen] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
   const navigate = useNavigate();
 
@@ -1116,6 +1119,24 @@ const Profile = () => {
                         </button>
                       </div>
 
+                      {/* Messages & Communication */}
+                      <div className="mb-4">
+                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('profilePage.messagesAndCommunication')}</h3>
+                        <button
+                          className="w-full flex items-center p-3 text-left hover:bg-blue-50 rounded-lg transition-colors group"
+                          onClick={() => setIsMessagesOpen(true)}
+                        >
+                          <div className="bg-blue-100 p-2 rounded-lg mr-3">
+                            <MessageCircle className="h-4 w-4 text-blue-600" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-gray-900">{t('profilePage.messages')}</div>
+                            <div className="text-xs text-gray-500">{t('profilePage.communicateWithBrokers')}</div>
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-blue-600" />
+                        </button>
+                      </div>
+
                       {/* Skilled Services */}
                       <div className="mb-4">
                         <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('profilePage.skilledServices')}</h3>
@@ -1593,6 +1614,12 @@ const Profile = () => {
       <NurseryBookings
         isOpen={isNurseryBookingsOpen}
         onClose={() => setIsNurseryBookingsOpen(false)}
+      />
+
+      {/* Farmer Messages Modal */}
+      <FarmerMessages
+        isOpen={isMessagesOpen}
+        onClose={() => setIsMessagesOpen(false)}
       />
     </div>
   );

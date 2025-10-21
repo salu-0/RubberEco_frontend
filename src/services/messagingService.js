@@ -6,6 +6,13 @@ const API_BASE_URL = 'https://rubbereco-backend.onrender.com/api';
 class MessagingService {
   constructor() {
     this.token = localStorage.getItem('token');
+    console.log('🔑 MessagingService initialized with token:', !!this.token);
+  }
+
+  // Refresh token from localStorage
+  refreshToken() {
+    this.token = localStorage.getItem('token');
+    console.log('🔄 Token refreshed:', !!this.token);
   }
 
   // Get all conversations for the current broker
@@ -35,7 +42,7 @@ class MessagingService {
   async getMessages(conversationId, page = 1, limit = 50) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/messages/conversations/${conversationId}/messages?page=${page}&limit=${limit}`,
+        `${API_BASE_URL}/messages/conversation/${conversationId}?page=${page}&limit=${limit}`,
         {
           method: 'GET',
           headers: {
@@ -283,7 +290,17 @@ class MessagingService {
   // Get conversations for farmers (where farmer is the recipient)
   async getFarmerConversations() {
     try {
-      const response = await fetch(`${API_BASE_URL}/messages/farmer-conversations`, {
+      // Refresh token before making the call
+      this.refreshToken();
+      
+      console.log('🔍 Fetching farmer conversations from:', `${API_BASE_URL}/messages/farmer`);
+      console.log('🔑 Token available:', !!this.token);
+      
+      if (!this.token) {
+        throw new Error('No authentication token found. Please login again.');
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/messages/farmer`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${this.token}`,
@@ -291,14 +308,19 @@ class MessagingService {
         }
       });
 
+      console.log('📡 Response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch farmer conversations');
+        const errorText = await response.text();
+        console.error('❌ API Error:', errorText);
+        throw new Error(`Failed to fetch farmer conversations: ${response.status} ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('📊 API Response:', data);
       return data.conversations || [];
     } catch (error) {
-      console.error('Error fetching farmer conversations:', error);
+      console.error('❌ Error fetching farmer conversations:', error);
       throw error;
     }
   }
