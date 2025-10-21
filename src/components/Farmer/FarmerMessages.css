@@ -3,9 +3,10 @@
 
 .farmer-messages-container {
   width: 100%;
-  height: calc(100% - 120px); /* Account for modal header and status bar */
+  height: calc(100% - 140px); /* Account for modal header and status bar */
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* Header */
@@ -276,6 +277,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0; /* Allow flex shrinking */
 }
 
 .chat-header {
@@ -370,6 +372,7 @@
   display: flex;
   flex-direction: column;
   gap: 15px;
+  min-height: 0; /* Allow flex shrinking */
 }
 
 .message {
@@ -540,6 +543,7 @@
   padding: 20px;
   border-top: 1px solid #e2e8f0;
   background: #f7fafc;
+  flex-shrink: 0; /* Prevent shrinking */
 }
 
 .reply-indicator {

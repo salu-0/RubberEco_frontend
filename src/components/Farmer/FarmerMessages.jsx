@@ -202,117 +202,12 @@ const FarmerMessages = ({ isOpen, onClose }) => {
       const conversationsData = await messagingService.getFarmerConversations();
       console.log('📊 Raw conversations data:', conversationsData);
       
-      // If no conversations found, try direct approach
+      // If no conversations found, show debug info
       if (conversationsData.length === 0) {
-        console.log('🔍 No conversations found, trying direct approach...');
-        try {
-          // Get farmer's lots directly
-          const lotsResponse = await fetch('https://rubbereco-backend.onrender.com/api/tree-lots', {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          if (lotsResponse.ok) {
-            const lotsData = await lotsResponse.json();
-            console.log('🏞️ Farmer lots:', lotsData);
-            
-            // For each lot, try to find bids and messages
-            const directConversations = [];
-            for (const lot of lotsData.lots || []) {
-              try {
-                // Get bids for this lot
-                const bidsResponse = await fetch(`https://rubbereco-backend.onrender.com/api/bids?lotId=${lot.lotId}`, {
-                  method: 'GET',
-                  headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
-                  }
-                });
-                
-                if (bidsResponse.ok) {
-                  const bidsData = await bidsResponse.json();
-                  console.log(`💰 Bids for lot ${lot.lotId}:`, bidsData);
-                  
-                  // For each bid, check if there are messages
-                  for (const bid of bidsData.bids || []) {
-                    try {
-                      const messagesResponse = await fetch(`https://rubbereco-backend.onrender.com/api/messages/conversation/${bid._id}`, {
-                        method: 'GET',
-                        headers: {
-                          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                          'Content-Type': 'application/json'
-                        }
-                      });
-                    
-                      if (messagesResponse.ok) {
-                        const messagesData = await messagesResponse.json();
-                        console.log(`💬 Messages for bid ${bid._id}:`, messagesData);
-                        
-                        if (messagesData.messages && messagesData.messages.length > 0) {
-                          // Found a conversation with messages
-                          const lastMessage = messagesData.messages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
-                          directConversations.push({
-                            _id: bid._id,
-                            brokerId: bid.bidderId,
-                            brokerName: bid.bidderName || 'Unknown Broker',
-                            brokerAvatar: bid.bidderAvatar || '',
-                            lotId: lot._id,
-                            bidId: bid._id,
-                            lotInfo: {
-                              location: lot.location || 'Location not specified',
-                              numberOfTrees: lot.numberOfTrees || 0,
-                              status: lot.status || 'active',
-                              bidAmount: bid.amount,
-                              bidStatus: bid.status
-                            },
-                            lastMessage: lastMessage ? lastMessage.content : 'No messages yet',
-                            lastMessageTime: lastMessage ? lastMessage.createdAt : bid.createdAt,
-                            unreadCount: messagesData.messages.filter(m => m.senderType === 'broker' && m.status !== 'read').length,
-                            isOnline: Math.random() > 0.5
-                          });
-                        }
-                      }
-                    } catch (messageError) {
-                      console.log(`Error checking messages for bid ${bid._id}:`, messageError);
-                    }
-                  }
-                }
-              } catch (error) {
-                console.log(`Error checking lot ${lot.lotId}:`, error);
-              }
-            }
-            
-            console.log('💬 Direct conversations found:', directConversations.length);
-            if (directConversations.length > 0) {
-              // Use the direct conversations instead
-              const transformedDirectConversations = directConversations.map(conv => ({
-                id: conv._id,
-                brokerId: conv.brokerId,
-                brokerName: conv.brokerName,
-                brokerAvatar: conv.brokerAvatar || '',
-                lotId: conv.lotId,
-                bidId: conv.bidId,
-                lotInfo: conv.lotInfo,
-                lastMessage: conv.lastMessage,
-                lastMessageTime: conv.lastMessageTime,
-                unreadCount: conv.unreadCount || 0,
-                isOnline: conv.isOnline || false
-              }));
-              
-              console.log('✅ Direct transformed conversations:', transformedDirectConversations);
-              setConversations(transformedDirectConversations);
-              if (transformedDirectConversations.length > 0) {
-                setSelectedConversation(transformedDirectConversations[0]);
-              }
-              return; // Exit early with direct conversations
-            }
-          }
-        } catch (directError) {
-          console.log('🔍 Direct approach failed:', directError);
-        }
+        console.log('🔍 No conversations found from backend API');
+        console.log('🔍 This suggests the backend query logic needs to be fixed');
+        console.log('🔍 The issue is likely in the backend getFarmerConversations function');
+        console.log('🔍 Backend needs to be restarted to apply the debugging changes');
       }
       
       const transformedConversations = conversationsData
@@ -416,6 +311,7 @@ const FarmerMessages = ({ isOpen, onClose }) => {
       const sentMessage = await messagingService.sendMessage(
         selectedConversation.id,
         messageContent,
+        'farmer', // senderType
         replyTo?.id || null
       );
 
@@ -799,10 +695,15 @@ const FarmerMessages = ({ isOpen, onClose }) => {
                         This could mean:
                       </p>
                       <ul className="text-xs text-yellow-700 mt-2 ml-4 list-disc">
-                        <li>No brokers have bid on your lots</li>
-                        <li>No messages have been sent yet</li>
-                        <li>Backend data structure mismatch</li>
+                        <li>Backend query logic needs to be fixed</li>
+                        <li>Backend server needs to be restarted</li>
+                        <li>Data structure mismatch in database</li>
+                        <li>Authentication or permission issues</li>
                       </ul>
+                      <p className="text-xs text-yellow-600 mt-2">
+                        <strong>Note:</strong> Broker Ajamal has sent messages, but the backend is not finding them. 
+                        This is a backend issue that needs to be resolved.
+                      </p>
                     </div>
                   )}
                 </div>

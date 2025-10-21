@@ -65,7 +65,7 @@ class MessagingService {
   }
 
   // Send a new message
-  async sendMessage(conversationId, content, replyTo = null, attachments = []) {
+  async sendMessage(conversationId, content, senderType = 'farmer', replyTo = null, attachments = []) {
     try {
       const response = await fetch(`${API_BASE_URL}/messages/send`, {
         method: 'POST',
@@ -76,13 +76,16 @@ class MessagingService {
         body: JSON.stringify({
           conversationId,
           content,
+          senderType,
           replyTo,
           attachments
         })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+        throw new Error(`Failed to send message: ${errorMessage}`);
       }
 
       const data = await response.json();
