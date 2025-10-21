@@ -44,10 +44,22 @@ const BrokerProfile = () => {
   
   const [editData, setEditData] = useState({});
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
+  const [errors, setErrors] = useState({});
+  const [validationTimeout, setValidationTimeout] = useState({});
+  const [validating, setValidating] = useState({});
 
   useEffect(() => {
     loadProfileData();
   }, []);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(validationTimeout).forEach(timeoutId => {
+        if (timeoutId) clearTimeout(timeoutId);
+      });
+    };
+  }, [validationTimeout]);
 
   const loadProfileData = async () => {
     try {
@@ -97,9 +109,16 @@ const BrokerProfile = () => {
   const handleCancel = () => {
     setIsEditing(false);
     setEditData({ ...profileData });
+    setErrors({}); // Clear errors when canceling
   };
 
   const handleSave = async () => {
+    // Validate form before saving
+    if (!validateForm(editData)) {
+      showNotification('Please fix the errors before saving', 'error');
+      return;
+    }
+
     setLoading(true);
     try {
       // TODO: Replace with actual API call
@@ -107,6 +126,7 @@ const BrokerProfile = () => {
       
       setProfileData({ ...editData });
       setIsEditing(false);
+      setErrors({}); // Clear errors on successful save
       
       // Update localStorage user data
       const userData = JSON.parse(localStorage.getItem('user') || '{}');
@@ -143,15 +163,264 @@ const BrokerProfile = () => {
       ...prev,
       [field]: value
     }));
+    
+    // Clear existing timeout for this field
+    if (validationTimeout[field]) {
+      clearTimeout(validationTimeout[field]);
+    }
+    
+    // Immediate validation for critical fields (name with numbers, phone with letters)
+    let immediateError = null;
+    if (field === 'name' && /\d/.test(value)) {
+      immediateError = 'Name should not contain numbers';
+    } else if (field === 'phone' && /[a-zA-Z]/.test(value)) {
+      immediateError = 'Phone number should not contain letters';
+    }
+    
+    if (immediateError) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: immediateError
+      }));
+      return;
+    }
+    
+    // Show validating state
+    setValidating(prev => ({
+      ...prev,
+      [field]: true
+    }));
+    
+    // Debounced validation for other cases - show error after user stops typing for 500ms
+    const timeoutId = setTimeout(() => {
+      let error = null;
+      switch (field) {
+        case 'name':
+          error = validateName(value);
+          break;
+        case 'email':
+          error = validateEmail(value);
+          break;
+        case 'phone':
+          error = validatePhone(value);
+          break;
+        case 'location':
+          error = validateLocation(value);
+          break;
+        case 'bio':
+          error = validateBio(value);
+          break;
+        case 'licenseNumber':
+          error = validateLicenseNumber(value);
+          break;
+        case 'companyName':
+          error = validateCompanyName(value);
+          break;
+        case 'education':
+          error = validateEducation(value);
+          break;
+        case 'previousWork':
+          error = validatePreviousWork(value);
+          break;
+        default:
+          break;
+      }
+      
+      // Update errors state and clear validating
+      setErrors(prev => ({
+        ...prev,
+        [field]: error
+      }));
+      
+      setValidating(prev => ({
+        ...prev,
+        [field]: false
+      }));
+    }, 500);
+    
+    // Store timeout ID
+    setValidationTimeout(prev => ({
+      ...prev,
+      [field]: timeoutId
+    }));
   };
 
   const handleSpecializationChange = (specialization) => {
+    const newSpecialization = editData.specialization.includes(specialization)
+      ? editData.specialization.filter(s => s !== specialization)
+      : [...editData.specialization, specialization];
+    
     setEditData(prev => ({
       ...prev,
-      specialization: prev.specialization.includes(specialization)
-        ? prev.specialization.filter(s => s !== specialization)
-        : [...prev.specialization, specialization]
+      specialization: newSpecialization
     }));
+    
+    // Real-time validation for specialization
+    const error = newSpecialization.length === 0 ? 'Please select at least one specialization' : null;
+    setErrors(prev => ({
+      ...prev,
+      specialization: error
+    }));
+  };
+
+  // Validation functions
+  const validateName = (name) => {
+    if (!name || name.trim().length === 0) {
+      return 'Name is required';
+    }
+    if (name.trim().length < 2) {
+      return 'Name must be at least 2 characters';
+    }
+    if (name.trim().length > 50) {
+      return 'Name must be less than 50 characters';
+    }
+    // Check for numbers in name
+    if (/\d/.test(name)) {
+      return 'Name should not contain numbers';
+    }
+    // Check for special characters (allow spaces, hyphens, apostrophes)
+    if (!/^[a-zA-Z\s\-']+$/.test(name)) {
+      return 'Name should only contain letters, spaces, hyphens, and apostrophes';
+    }
+    return null;
+  };
+
+  const validateEmail = (email) => {
+    if (!email || email.trim().length === 0) {
+      return 'Email is required';
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return 'Please enter a valid email address';
+    }
+    if (email.length > 100) {
+      return 'Email must be less than 100 characters';
+    }
+    return null;
+  };
+
+  const validatePhone = (phone) => {
+    if (!phone || phone.trim().length === 0) {
+      return 'Phone number is required';
+    }
+    // Remove all non-digit characters for validation
+    const cleanPhone = phone.replace(/\D/g, '');
+    if (cleanPhone.length < 10) {
+      return 'Phone number must be at least 10 digits';
+    }
+    if (cleanPhone.length > 15) {
+      return 'Phone number must be less than 15 digits';
+    }
+    // Check for valid phone format (allows +, spaces, hyphens, parentheses)
+    const phoneRegex = /^[\+]?[\d\s\-\(\)]+$/;
+    if (!phoneRegex.test(phone)) {
+      return 'Please enter a valid phone number';
+    }
+    return null;
+  };
+
+  const validateLocation = (location) => {
+    if (!location || location.trim().length === 0) {
+      return 'Location is required';
+    }
+    if (location.trim().length < 2) {
+      return 'Location must be at least 2 characters';
+    }
+    if (location.trim().length > 100) {
+      return 'Location must be less than 100 characters';
+    }
+    return null;
+  };
+
+  const validateBio = (bio) => {
+    if (bio && bio.trim().length > 500) {
+      return 'Bio must be less than 500 characters';
+    }
+    return null;
+  };
+
+  const validateLicenseNumber = (licenseNumber) => {
+    if (!licenseNumber || licenseNumber.trim().length === 0) {
+      return 'License number is required';
+    }
+    if (licenseNumber.trim().length < 3) {
+      return 'License number must be at least 3 characters';
+    }
+    if (licenseNumber.trim().length > 20) {
+      return 'License number must be less than 20 characters';
+    }
+    // Check for valid license format (alphanumeric with optional hyphens)
+    const licenseRegex = /^[A-Za-z0-9\-]+$/;
+    if (!licenseRegex.test(licenseNumber)) {
+      return 'License number should only contain letters, numbers, and hyphens';
+    }
+    return null;
+  };
+
+  const validateCompanyName = (companyName) => {
+    if (!companyName || companyName.trim().length === 0) {
+      return 'Company name is required';
+    }
+    if (companyName.trim().length < 2) {
+      return 'Company name must be at least 2 characters';
+    }
+    if (companyName.trim().length > 100) {
+      return 'Company name must be less than 100 characters';
+    }
+    return null;
+  };
+
+  const validateEducation = (education) => {
+    if (education && education.trim().length > 200) {
+      return 'Education must be less than 200 characters';
+    }
+    return null;
+  };
+
+  const validatePreviousWork = (previousWork) => {
+    if (previousWork && previousWork.trim().length > 500) {
+      return 'Previous work experience must be less than 500 characters';
+    }
+    return null;
+  };
+
+  const validateForm = (data) => {
+    const newErrors = {};
+    
+    const nameError = validateName(data.name);
+    if (nameError) newErrors.name = nameError;
+    
+    const emailError = validateEmail(data.email);
+    if (emailError) newErrors.email = emailError;
+    
+    const phoneError = validatePhone(data.phone);
+    if (phoneError) newErrors.phone = phoneError;
+    
+    const locationError = validateLocation(data.location);
+    if (locationError) newErrors.location = locationError;
+    
+    const bioError = validateBio(data.bio);
+    if (bioError) newErrors.bio = bioError;
+    
+    const licenseError = validateLicenseNumber(data.licenseNumber);
+    if (licenseError) newErrors.licenseNumber = licenseError;
+    
+    const companyError = validateCompanyName(data.companyName);
+    if (companyError) newErrors.companyName = companyError;
+    
+    const educationError = validateEducation(data.education);
+    if (educationError) newErrors.education = educationError;
+    
+    const previousWorkError = validatePreviousWork(data.previousWork);
+    if (previousWorkError) newErrors.previousWork = previousWorkError;
+    
+    // Check if at least one specialization is selected
+    if (!data.specialization || data.specialization.length === 0) {
+      newErrors.specialization = 'Please select at least one specialization';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const specializationOptions = [
@@ -327,12 +596,26 @@ const BrokerProfile = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
                     {isEditing ? (
-                      <input
-                        type="text"
-                        value={editData.name}
-                        onChange={(e) => handleInputChange('name', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      />
+                      <div>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={editData.name}
+                            onChange={(e) => handleInputChange('name', e.target.value)}
+                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                              errors.name ? 'border-red-500' : 'border-gray-300'
+                            }`}
+                          />
+                          {validating.name && (
+                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                              <div className="animate-spin h-4 w-4 border-2 border-primary-500 border-t-transparent rounded-full"></div>
+                            </div>
+                          )}
+                        </div>
+                        {errors.name && (
+                          <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                        )}
+                      </div>
                     ) : (
                       <p className="text-gray-900 py-2">{profileData.name}</p>
                     )}
@@ -341,12 +624,19 @@ const BrokerProfile = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
                     {isEditing ? (
-                      <input
-                        type="email"
-                        value={editData.email}
-                        onChange={(e) => handleInputChange('email', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      />
+                      <div>
+                        <input
+                          type="email"
+                          value={editData.email}
+                          onChange={(e) => handleInputChange('email', e.target.value)}
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                            errors.email ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                        />
+                        {errors.email && (
+                          <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                        )}
+                      </div>
                     ) : (
                       <p className="text-gray-900 py-2">{profileData.email}</p>
                     )}
@@ -355,12 +645,26 @@ const BrokerProfile = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
                     {isEditing ? (
-                      <input
-                        type="tel"
-                        value={editData.phone}
-                        onChange={(e) => handleInputChange('phone', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      />
+                      <div>
+                        <div className="relative">
+                          <input
+                            type="tel"
+                            value={editData.phone}
+                            onChange={(e) => handleInputChange('phone', e.target.value)}
+                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                              errors.phone ? 'border-red-500' : 'border-gray-300'
+                            }`}
+                          />
+                          {validating.phone && (
+                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                              <div className="animate-spin h-4 w-4 border-2 border-primary-500 border-t-transparent rounded-full"></div>
+                            </div>
+                          )}
+                        </div>
+                        {errors.phone && (
+                          <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
+                        )}
+                      </div>
                     ) : (
                       <p className="text-gray-900 py-2">{profileData.phone}</p>
                     )}
@@ -369,12 +673,19 @@ const BrokerProfile = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
                     {isEditing ? (
-                      <input
-                        type="text"
-                        value={editData.location}
-                        onChange={(e) => handleInputChange('location', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      />
+                      <div>
+                        <input
+                          type="text"
+                          value={editData.location}
+                          onChange={(e) => handleInputChange('location', e.target.value)}
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                            errors.location ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                        />
+                        {errors.location && (
+                          <p className="mt-1 text-sm text-red-600">{errors.location}</p>
+                        )}
+                      </div>
                     ) : (
                       <p className="text-gray-900 py-2">{profileData.location}</p>
                     )}
@@ -384,12 +695,19 @@ const BrokerProfile = () => {
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
                   {isEditing ? (
-                    <textarea
-                      value={editData.bio}
-                      onChange={(e) => handleInputChange('bio', e.target.value)}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    />
+                    <div>
+                      <textarea
+                        value={editData.bio}
+                        onChange={(e) => handleInputChange('bio', e.target.value)}
+                        rows={3}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                          errors.bio ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                      {errors.bio && (
+                        <p className="mt-1 text-sm text-red-600">{errors.bio}</p>
+                      )}
+                    </div>
                   ) : (
                     <p className="text-gray-900 py-2">{profileData.bio}</p>
                   )}
@@ -406,12 +724,19 @@ const BrokerProfile = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">License Number</label>
                     {isEditing ? (
-                      <input
-                        type="text"
-                        value={editData.licenseNumber}
-                        onChange={(e) => handleInputChange('licenseNumber', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      />
+                      <div>
+                        <input
+                          type="text"
+                          value={editData.licenseNumber}
+                          onChange={(e) => handleInputChange('licenseNumber', e.target.value)}
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                            errors.licenseNumber ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                        />
+                        {errors.licenseNumber && (
+                          <p className="mt-1 text-sm text-red-600">{errors.licenseNumber}</p>
+                        )}
+                      </div>
                     ) : (
                       <p className="text-gray-900 py-2">{profileData.licenseNumber}</p>
                     )}
@@ -439,12 +764,19 @@ const BrokerProfile = () => {
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
                     {isEditing ? (
-                      <input
-                        type="text"
-                        value={editData.companyName}
-                        onChange={(e) => handleInputChange('companyName', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      />
+                      <div>
+                        <input
+                          type="text"
+                          value={editData.companyName}
+                          onChange={(e) => handleInputChange('companyName', e.target.value)}
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                            errors.companyName ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                        />
+                        {errors.companyName && (
+                          <p className="mt-1 text-sm text-red-600">{errors.companyName}</p>
+                        )}
+                      </div>
                     ) : (
                       <p className="text-gray-900 py-2">{profileData.companyName}</p>
                     )}
@@ -455,18 +787,23 @@ const BrokerProfile = () => {
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Specialization</label>
                   {isEditing ? (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      {specializationOptions.map((spec) => (
-                        <label key={spec} className="flex items-center space-x-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={editData.specialization.includes(spec)}
-                            onChange={() => handleSpecializationChange(spec)}
-                            className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                          />
-                          <span className="text-sm text-gray-700">{spec}</span>
-                        </label>
-                      ))}
+                    <div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {specializationOptions.map((spec) => (
+                          <label key={spec} className="flex items-center space-x-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={editData.specialization.includes(spec)}
+                              onChange={() => handleSpecializationChange(spec)}
+                              className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                            />
+                            <span className="text-sm text-gray-700">{spec}</span>
+                          </label>
+                        ))}
+                      </div>
+                      {errors.specialization && (
+                        <p className="mt-1 text-sm text-red-600">{errors.specialization}</p>
+                      )}
                     </div>
                   ) : (
                     <div className="flex flex-wrap gap-2">
@@ -493,12 +830,19 @@ const BrokerProfile = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Education</label>
                     {isEditing ? (
-                      <input
-                        type="text"
-                        value={editData.education}
-                        onChange={(e) => handleInputChange('education', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      />
+                      <div>
+                        <input
+                          type="text"
+                          value={editData.education}
+                          onChange={(e) => handleInputChange('education', e.target.value)}
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                            errors.education ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                        />
+                        {errors.education && (
+                          <p className="mt-1 text-sm text-red-600">{errors.education}</p>
+                        )}
+                      </div>
                     ) : (
                       <p className="text-gray-900 py-2">{profileData.education}</p>
                     )}
@@ -507,12 +851,19 @@ const BrokerProfile = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Previous Work Experience</label>
                     {isEditing ? (
-                      <textarea
-                        value={editData.previousWork}
-                        onChange={(e) => handleInputChange('previousWork', e.target.value)}
-                        rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      />
+                      <div>
+                        <textarea
+                          value={editData.previousWork}
+                          onChange={(e) => handleInputChange('previousWork', e.target.value)}
+                          rows={3}
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                            errors.previousWork ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                        />
+                        {errors.previousWork && (
+                          <p className="mt-1 text-sm text-red-600">{errors.previousWork}</p>
+                        )}
+                      </div>
                     ) : (
                       <p className="text-gray-900 py-2">{profileData.previousWork}</p>
                     )}
