@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { trainingAPI, getUserData, certificateAPI } from '../utils/api';
 import enrollmentManager from '../utils/enrollmentManager';
 import mockAPI from '../utils/mockAPI';
-// import { generateCertificatePDF, canGenerateCertificate, formatCertificateData } from '../utils/certificateGenerator';
+import { generateCertificatePDF, canGenerateCertificate, formatCertificateData } from '../utils/certificateGenerator';
 import { 
   ArrowLeft, 
   Play, 
@@ -522,22 +522,37 @@ const TrainingModule = () => {
   const handleGenerateCertificate = async () => {
     if (!currentEnrollment) {
       console.error('No enrollment data available');
+      alert('No enrollment data available. Please refresh the page.');
+      return;
+    }
+
+    // Check if user has completed the course
+    if (progress < 100) {
+      alert('⚠️ You must complete 100% of the course to download your certificate.');
       return;
     }
 
     setIsGeneratingCertificate(true);
 
     try {
-      // Generate certificate via API
-      const certificateResponse = await certificateAPI.generateCertificate(currentEnrollment.id);
+      // Try to generate certificate via API first
+      let certificateData = null;
+      try {
+        const certificateResponse = await certificateAPI.generateCertificate(currentEnrollment.id);
+        if (certificateResponse?.success) {
+          certificateData = formatCertificateData(currentEnrollment, certificateResponse.certificate);
+        }
+      } catch (apiError) {
+        console.warn('Certificate API call failed, using enrollment data instead:', apiError);
+        // Fallback: generate from enrollment data without API
+        certificateData = formatCertificateData(currentEnrollment, { id: `CERT-${Date.now()}` });
+      }
 
-      if (certificateResponse.success) {
-        // Format certificate data for PDF generation
-        const formattedData = formatCertificateData(currentEnrollment, certificateResponse.certificate);
-        setCertificateData(formattedData);
-
+      if (certificateData) {
+        setCertificateData(certificateData);
+        
         // Generate and download PDF
-        await generateCertificatePDF(formattedData);
+        await generateCertificatePDF(certificateData);
 
         // Update enrollment state to reflect certificate issued
         setCurrentEnrollment(prev => ({
@@ -548,6 +563,8 @@ const TrainingModule = () => {
 
         console.log('✅ Certificate generated successfully');
         alert('🎉 Congratulations! Your certificate has been generated and downloaded.');
+      } else {
+        throw new Error('Failed to format certificate data');
       }
     } catch (error) {
       console.error('Error generating certificate:', error);
@@ -858,16 +875,19 @@ const TrainingModule = () => {
         </div>
       )}
 
-      {/* Certificate Download Button (if already issued) */}
-      {currentEnrollment?.certificateIssued && progress >= 100 && (
+      {/* Certificate Download Button (when course is 100% complete) */}
+      {progress >= 100 && (
         <div className="fixed bottom-6 right-6 z-40">
-          <button
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={handleGenerateCertificate}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+            disabled={isGeneratingCertificate}
+            className={`${isGeneratingCertificate ? 'bg-gray-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'} text-white px-4 py-2 rounded-lg shadow-lg transition-colors flex items-center space-x-2`}
           >
             <Download className="w-4 h-4" />
-            <span>Download Certificate</span>
-          </button>
+            <span>{isGeneratingCertificate ? 'Generating...' : 'Download Certificate'}</span>
+          </motion.button>
         </div>
       )}
     </div>

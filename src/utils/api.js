@@ -174,6 +174,28 @@ export const certificateAPI = {
   }
 };
 
+// Weather / rainfall forecast API
+export const weatherAPI = {
+  // Get forecast for next month for the logged-in farmer
+  getNextMonthForecast: async () => {
+    const response = await fetch(`${API_BASE_URL}/weather/next-month`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
+  },
+  // Get forecast for specific month and district
+  getDistrictForecast: async (month, district, year = null) => {
+    const params = new URLSearchParams({ month: month.toString(), district });
+    if (year) {
+      params.append('year', year.toString());
+    }
+    const response = await fetch(`${API_BASE_URL}/weather/forecast?${params}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
+  }
+};
+
 // User utility functions
 export const getUserData = () => {
   try {

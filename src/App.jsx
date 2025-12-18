@@ -38,6 +38,7 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
 import AuthRouteGuard from './components/Auth/AuthRouteGuard';
+import Weather from './pages/Weather';
 
 function App() {
   return (
@@ -64,6 +65,7 @@ function App() {
       <Route path="/orders" element={<ProtectedRoute requiredRole="farmer"><Orders /></ProtectedRoute>} />
       <Route path="/orders/:orderId" element={<ProtectedRoute requiredRole="farmer"><Orders /></ProtectedRoute>} />
       <Route path="/careers" element={<ProtectedRoute requiredRole="farmer"><Careers /></ProtectedRoute>} />
+      <Route path="/weather" element={<ProtectedRoute requiredRole="farmer"><Weather /></ProtectedRoute>} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/register-broker" element={<BrokerRegister />} />

@@ -265,44 +265,7 @@ const ManageUsers = ({ darkMode }) => {
     }
   };
 
-  const handleDeleteUser = async (userId) => {
-    const user = users.find(u => u.id === userId);
-    if (!user) return;
-    // Prevent deleting Supabase (Google) users from here
-    if (user.provider === 'google' || isUuid(userId)) {
-      alert('Supabase (Google) users cannot be deleted from here. Manage them in Supabase.');
-      return;
-    }
-    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      return;
-    }
 
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/${userId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || 'dummy-token'}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          // Remove user from local state
-          setUsers(users.filter(user => user.id !== userId));
-          console.log('User deleted successfully');
-        } else {
-          alert('Failed to delete user: ' + data.message);
-        }
-      } else {
-        alert('Failed to delete user. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      alert('Error deleting user. Please try again.');
-    }
-  };
 
   // Removed Add User functionality from this view
 
@@ -670,14 +633,6 @@ const ManageUsers = ({ darkMode }) => {
                           title="View User"
                         >
                           <Eye className="h-4 w-4" />
-                        </button>
-                        {/* Edit button removed */}
-                        <button 
-                          onClick={() => handleDeleteUser(user.id)}
-                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                          title="Delete User"
-                        >
-                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </td>

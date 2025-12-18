@@ -185,9 +185,12 @@ const NurseryBookings = ({ darkMode }) => {
                         <td className="px-4 py-3 capitalize">{renderStatusBadge(b.status)}</td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <button className={`${computedDarkMode ? 'px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors' : 'px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors'}`} onClick={() => openDetails(b)}>View</button>
-                            <button className={`${computedDarkMode ? 'px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-500 text-white transition-colors' : 'px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors'}`} onClick={() => decide(b._id, 'approve')}>Approve</button>
-                            <button className={`${computedDarkMode ? 'px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white transition-colors' : 'px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors'}`} onClick={() => decide(b._id, 'reject')}>Reject</button>
+                            <button
+                              className={`${computedDarkMode ? 'px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors' : 'px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors'}`}
+                              onClick={() => openDetails(b)}
+                            >
+                              View
+                            </button>
                           </div>
                         </td>
                       </tr>

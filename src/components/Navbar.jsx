@@ -108,6 +108,11 @@ const Navbar = ({ transparent = false, fixed = true }) => {
       { name: t('navigation.shop'), path: '/shop' }
     ];
 
+    // If a farmer (or any logged-in user) is present, show Weather insight link
+    if (user) {
+      baseItems.push({ name: t('navigation.weather'), path: '/weather' });
+    }
+
     return baseItems;
   };
 
