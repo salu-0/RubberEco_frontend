@@ -61,6 +61,7 @@ const Weather = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [forecast, setForecast] = useState(null);
+  const [allDistrictsData, setAllDistrictsData] = useState(null);
   
   // Form state
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -73,6 +74,10 @@ const Weather = () => {
       setError(null);
       const data = await weatherAPI.getDistrictForecast(selectedMonth, selectedDistrict, selectedYear);
       setForecast(data);
+      // Also update allDistrictsData from the response
+      if (data.allDistricts) {
+        setAllDistrictsData(data.allDistricts);
+      }
     } catch (err) {
       setError(err.message || 'Failed to load weather forecast');
       setForecast(null);
@@ -85,6 +90,25 @@ const Weather = () => {
     e.preventDefault();
     fetchForecast();
   };
+
+  // Fetch all districts data when month/year changes (for map display)
+  useEffect(() => {
+    const fetchAllDistricts = async () => {
+      try {
+        // Fetch data for first district to get allDistricts array
+        const data = await weatherAPI.getDistrictForecast(selectedMonth, 'Kottayam', selectedYear);
+        if (data.allDistricts) {
+          setAllDistrictsData(data.allDistricts);
+        }
+      } catch (err) {
+        console.error('Failed to fetch districts data:', err);
+      }
+    };
+
+    if (selectedMonth && selectedYear) {
+      fetchAllDistricts();
+    }
+  }, [selectedMonth, selectedYear]);
 
   // Generate year options (current year and next few years)
   const currentYear = new Date().getFullYear();
@@ -115,7 +139,7 @@ const Weather = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50">
       <Navbar />
       
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header Section */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -133,6 +157,11 @@ const Weather = () => {
             Select a month and district to get AI-based rainfall forecast for planning your tapping days.
           </p>
         </motion.div>
+
+        {/* Main Content Grid: Form/Results on Left, Map on Right */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+          {/* Left Column: Form and Forecast Results */}
+          <div className="space-y-6">
 
         {/* Forecast Form */}
         <motion.div
@@ -339,14 +368,14 @@ const Weather = () => {
           </motion.div>
         )}
 
-        {/* Line chart: rainfall trend with risk markers */}
-        {forecast && chartData.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="card p-6 lg:p-8"
-          >
+            {/* Line chart: rainfall trend with risk markers */}
+            {forecast && chartData.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="card p-6 lg:p-8"
+              >
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-primary-600" />
@@ -433,6 +462,58 @@ const Weather = () => {
           </div>
         </motion.div>
         )}
+          </div>
+
+          {/* Right Column: Kerala Map */}
+          <div className="lg:sticky lg:top-24 lg:h-fit">
+            {allDistrictsData && allDistrictsData.length > 0 ? (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <KeralaMap
+                  districts={allDistrictsData}
+                  selectedDistrict={forecast?.district || selectedDistrict}
+                  selectedMonth={forecast?.monthName || MONTHS.find(m => m.value === selectedMonth)?.label}
+                  selectedYear={forecast?.year || selectedYear}
+                  onDistrictClick={async (district) => {
+                    setSelectedDistrict(district);
+                    // Fetch forecast for the clicked district
+                    try {
+                      setLoading(true);
+                      setError(null);
+                      const data = await weatherAPI.getDistrictForecast(selectedMonth, district, selectedYear);
+                      setForecast(data);
+                      if (data.allDistricts) {
+                        setAllDistrictsData(data.allDistricts);
+                      }
+                    } catch (err) {
+                      setError(err.message || 'Failed to load weather forecast');
+                      setForecast(null);
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="card p-6 lg:p-8"
+              >
+                <div className="text-center py-12">
+                  <MapPin className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 text-lg">
+                    {loading ? 'Loading map data...' : 'Select a month and year to see district-wise rainfall on the map'}
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
