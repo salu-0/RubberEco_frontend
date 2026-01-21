@@ -1,226 +1,148 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { weatherAPI } from '../utils/api';
 import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar';
-import KeralaMap from '../components/KeralaMap';
-import {
-  CloudRain,
-  MapPin,
-  Calendar,
-  TrendingUp,
-  AlertCircle,
-  CheckCircle,
-  Info
-} from 'lucide-react';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  Legend
-} from 'recharts';
-
-const KERALA_DISTRICTS = [
-  'Thiruvananthapuram',
-  'Kollam',
-  'Pathanamthitta',
-  'Alappuzha',
-  'Kottayam',
-  'Idukki',
-  'Ernakulam',
-  'Thrissur',
-  'Palakkad',
-  'Malappuram',
-  'Kozhikode',
-  'Wayanad',
-  'Kannur',
-  'Kasaragod'
-];
-
-const MONTHS = [
-  { value: 1, label: 'January' },
-  { value: 2, label: 'February' },
-  { value: 3, label: 'March' },
-  { value: 4, label: 'April' },
-  { value: 5, label: 'May' },
-  { value: 6, label: 'June' },
-  { value: 7, label: 'July' },
-  { value: 8, label: 'August' },
-  { value: 9, label: 'September' },
-  { value: 10, label: 'October' },
-  { value: 11, label: 'November' },
-  { value: 12, label: 'December' }
-];
+import { Calendar } from 'lucide-react';
+import KeralaRainfallMap from '../components/KeralaRainfallMap';
 
 const Weather = () => {
   const { t } = useTranslation();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [forecast, setForecast] = useState(null);
-  const [allDistrictsData, setAllDistrictsData] = useState(null);
-  
-  // Form state
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [selectedDistrict, setSelectedDistrict] = useState('Kottayam');
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(null);
 
-  const fetchForecast = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await weatherAPI.getDistrictForecast(selectedMonth, selectedDistrict, selectedYear);
-      setForecast(data);
-      // Also update allDistrictsData from the response
-      if (data.allDistricts) {
-        setAllDistrictsData(data.allDistricts);
-      }
-    } catch (err) {
-      setError(err.message || 'Failed to load weather forecast');
-      setForecast(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    fetchForecast();
-  };
-
-  // Fetch all districts data when month/year changes (for map display)
+  // Initialize with next month
   useEffect(() => {
-    const fetchAllDistricts = async () => {
+    const now = new Date();
+    const nextMonth = ((now.getMonth() + 1) % 12) + 1;
+    const nextYear = nextMonth <= now.getMonth() + 1 ? now.getFullYear() + 1 : now.getFullYear();
+    setSelectedMonth(nextMonth);
+    setSelectedYear(nextYear);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedMonth || !selectedYear) return;
+
+    const fetchForecast = async () => {
       try {
-        // Fetch data for first district to get allDistricts array
-        const data = await weatherAPI.getDistrictForecast(selectedMonth, 'Kottayam', selectedYear);
-        if (data.allDistricts) {
-          setAllDistrictsData(data.allDistricts);
-        }
+        setLoading(true);
+        setError(null);
+        const data = await weatherAPI.getNextMonthForecast(selectedMonth, selectedYear);
+        setForecast(data);
       } catch (err) {
-        console.error('Failed to fetch districts data:', err);
+        setError(err.message || 'Failed to load weather forecast');
+      } finally {
+        setLoading(false);
       }
     };
 
-    if (selectedMonth && selectedYear) {
-      fetchAllDistricts();
-    }
+    fetchForecast();
   }, [selectedMonth, selectedYear]);
 
-  // Generate year options (current year and next few years)
-  const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear + i);
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="max-w-4xl mx-auto px-4 py-10 pt-24">
+          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+            <p className="text-gray-600">{t('common.loading')}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  // Calculate chart data and styling only when forecast exists
-  const chartData = forecast ? (forecast.series || []).map((item) => ({
-    year: item.year,
-    rainfall: item.rainfall,
-    riskLevel: item.riskLevel,
-    isForecast: item.isForecast
-  })) : [];
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="max-w-4xl mx-auto px-4 py-10 pt-24">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {error}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const ratio = forecast ? (forecast.percentOfAverage || 1) : 1;
+  if (!forecast) {
+    return null;
+  }
+
+  const ratio = forecast.percentOfAverage || 1;
   const percentOfAverage = Math.round(ratio * 100);
   const clampedRatio = Math.min(Math.max(ratio, 0), 2); // 0–200% range
   const barWidth = `${clampedRatio * 50}%`; // 1.0 => 50%, 2.0 => 100%
 
-  const riskColor = forecast
-    ? forecast.riskLevel === 'High'
-      ? 'bg-error-100 text-error-700 border-error-300'
+  const riskColor =
+    forecast.riskLevel === 'High'
+      ? 'bg-red-100 text-red-700 border-red-200'
       : forecast.riskLevel === 'Low'
-      ? 'bg-info-100 text-info-700 border-info-300'
-      : 'bg-success-100 text-success-700 border-success-300'
-    : 'bg-gray-100 text-gray-700 border-gray-300';
+      ? 'bg-blue-100 text-blue-700 border-blue-200'
+      : 'bg-green-100 text-green-700 border-green-200';
+
+  // Generate month options with translations
+  const months = [
+    { value: 1, label: t('weather.months.january') },
+    { value: 2, label: t('weather.months.february') },
+    { value: 3, label: t('weather.months.march') },
+    { value: 4, label: t('weather.months.april') },
+    { value: 5, label: t('weather.months.may') },
+    { value: 6, label: t('weather.months.june') },
+    { value: 7, label: t('weather.months.july') },
+    { value: 8, label: t('weather.months.august') },
+    { value: 9, label: t('weather.months.september') },
+    { value: 10, label: t('weather.months.october') },
+    { value: 11, label: t('weather.months.november') },
+    { value: 12, label: t('weather.months.december') }
+  ];
+
+  // Generate year options (current year and next 2 years)
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 3 }, (_, i) => currentYear + i);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header Section */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-8"
-        >
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-4">
-            <CloudRain className="w-8 h-8 text-primary-600" />
-          </div>
-          <h1 className="text-4xl font-display font-bold text-gray-900 mb-3">
-            Rainfall Forecast for Rubber Tapping
+      <div className="max-w-7xl mx-auto px-4 py-10 pt-24">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {t('weather.title')}
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Select a month and district to get AI-based rainfall forecast for planning your tapping days.
+          <p className="text-gray-600 mb-6">
+            {t('weather.subtitle')}
           </p>
-        </motion.div>
 
-        {/* Main Content Grid: Form/Results on Left, Map on Right */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-          {/* Left Column: Form and Forecast Results */}
-          <div className="space-y-6">
-
-        {/* Forecast Form */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="card p-6 lg:p-8"
-        >
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
-              <div>
-                <label className="form-label flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-primary-600" />
-                  Select Month
-                </label>
+          {/* Month and Year Selector */}
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-gray-200">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+              <div className="flex items-center gap-2 text-gray-700">
+                <Calendar className="h-5 w-5" />
+                <span className="font-medium">{t('weather.selectMonthYear')}</span>
+              </div>
+              
+              <div className="flex flex-wrap gap-3">
                 <select
-                  value={selectedMonth}
+                  value={selectedMonth || ''}
                   onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                  className="form-input"
-                  required
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white text-gray-900"
                 >
-                  {MONTHS.map(month => (
+                  {months.map((month) => (
                     <option key={month.value} value={month.value}>
                       {month.label}
                     </option>
                   ))}
                 </select>
-              </div>
 
-              <div>
-                <label className="form-label flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-primary-600" />
-                  Select District
-                </label>
                 <select
-                  value={selectedDistrict}
-                  onChange={(e) => setSelectedDistrict(e.target.value)}
-                  className="form-input"
-                  required
-                >
-                  {KERALA_DISTRICTS.map(district => (
-                    <option key={district} value={district}>
-                      {district}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="form-label flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-primary-600" />
-                  Select Year (Optional)
-                </label>
-                <select
-                  value={selectedYear}
+                  value={selectedYear || ''}
                   onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                  className="form-input"
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white text-gray-900"
                 >
-                  {yearOptions.map(year => (
+                  {years.map((year) => (
                     <option key={year} value={year}>
                       {year}
                     </option>
@@ -228,292 +150,70 @@ const Weather = () => {
                 </select>
               </div>
             </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary w-full md:w-auto"
-            >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Loading...
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <CloudRain className="w-5 h-5" />
-                  Get Forecast
-                </span>
-              )}
-            </button>
-          </form>
-        </motion.div>
-
-        {/* Error Display */}
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-error-50 border border-error-200 text-error-600 px-6 py-4 rounded-xl flex items-start gap-3"
-          >
-            <AlertCircle className="w-5 h-5 text-error-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-error-700">Error</p>
-              <p className="text-sm">{error}</p>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Forecast Results */}
-        {forecast && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="card p-6 lg:p-8 space-y-6"
-          >
-            <div className="flex flex-wrap justify-between items-start gap-6 pb-6 border-b border-gray-200">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-500 mb-2">Forecast for</p>
-                <h2 className="text-3xl font-display font-bold text-gray-900 mb-3">
-                  {forecast.monthName} {forecast.year}
-                </h2>
-                <div className="flex flex-wrap gap-4 text-sm">
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <MapPin className="w-4 h-4 text-primary-600" />
-                    <span className="font-medium">{forecast.district}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Calendar className="w-4 h-4 text-primary-600" />
-                    <span className="font-medium">{forecast.season}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-500 mb-2">Predicted Rainfall</p>
-                <p className="text-4xl font-display font-bold text-primary-600 mb-1">
-                  {forecast.predictedRainfall.toLocaleString()}
-                </p>
-                <p className="text-sm text-gray-500">mm</p>
-                <p className="text-xs text-gray-400 mt-2">Model: {forecast.model}</p>
-              </div>
-            </div>
-
-            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border-2 ${riskColor}`}>
-              {forecast.riskLevel === 'High' && <AlertCircle className="w-4 h-4" />}
-              {forecast.riskLevel === 'Normal' && <CheckCircle className="w-4 h-4" />}
-              {forecast.riskLevel === 'Low' && <Info className="w-4 h-4" />}
-              <span>Risk level: {forecast.riskLevel}</span>
-            </div>
-
-            {forecast.historicalAverage && (
-              <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="font-medium text-gray-700">
-                    Compared to long-term average for {forecast.district}
-                  </span>
-                  <span className="font-bold text-primary-600">{percentOfAverage}% of normal</span>
-                </div>
-                <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden shadow-inner">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: barWidth }}
-                    transition={{ duration: 1, ease: "easeOut" }}
-                    className="h-full bg-gradient-to-r from-info-400 via-primary-500 to-error-500 rounded-full"
-                  ></motion.div>
-                </div>
-              </div>
-            )}
-
-            <div className={`p-4 rounded-lg border-l-4 ${
-              forecast.riskLevel === 'High'
-                ? 'bg-error-50 border-error-500'
-                : forecast.riskLevel === 'Low'
-                ? 'bg-info-50 border-info-500'
-                : 'bg-success-50 border-success-500'
-            }`}>
-              <div className="flex items-start gap-3">
-                {forecast.riskLevel === 'High' && <AlertCircle className="w-5 h-5 text-error-600 flex-shrink-0 mt-0.5" />}
-                {forecast.riskLevel === 'Normal' && <CheckCircle className="w-5 h-5 text-success-600 flex-shrink-0 mt-0.5" />}
-                {forecast.riskLevel === 'Low' && <Info className="w-5 h-5 text-info-600 flex-shrink-0 mt-0.5" />}
-                <div>
-                  <p className="font-semibold text-gray-900 mb-1">Recommendation</p>
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {forecast.riskLevel === 'High' && (
-                      <>
-                        Heavy monsoon rainfall expected. Avoid scheduling new tapping panels on days with
-                        strong rain; prioritize rain-guarding and drainage.
-                      </>
-                    )}
-                    {forecast.riskLevel === 'Normal' && (
-                      <>
-                        Rainfall is expected to be near normal. You can plan regular tapping, but still check
-                        local daily weather before work.
-                      </>
-                    )}
-                    {forecast.riskLevel === 'Low' && (
-                      <>
-                        Below-average rainfall expected. Good conditions for tapping, but monitor trees for
-                        any signs of moisture stress.
-                      </>
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-            {/* Line chart: rainfall trend with risk markers */}
-            {forecast && chartData.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="card p-6 lg:p-8"
-              >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-primary-600" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-display font-bold text-gray-900">
-                  {forecast.district} Rainfall Trend
-                </h2>
-                <p className="text-sm text-gray-500">
-                  Historical comparison with risk level indicators
-                </p>
-              </div>
-            </div>
-
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                <XAxis
-                  dataKey="year"
-                  tick={{ fontSize: 10 }}
-                  interval="preserveStartEnd"
-                />
-                <YAxis
-                  tick={{ fontSize: 10 }}
-                  tickFormatter={(v) => `${Math.round(v / 1000)}k`}
-                  label={{
-                    value: 'Rainfall (mm)',
-                    angle: -90,
-                    position: 'insideLeft',
-                    style: { textAnchor: 'middle', fontSize: 10, fill: '#6B7280' }
-                  }}
-                />
-                <Tooltip
-                  formatter={(value, name, entry) => {
-                    if (name === 'rainfall') {
-                      return [`${value.toLocaleString()} mm`, 'Rainfall'];
-                    }
-                    return value;
-                  }}
-                  labelFormatter={(label, payload) => {
-                    const point = payload && payload[0] && payload[0].payload;
-                    if (point) {
-                      return `${label} • ${point.isForecast ? 'Forecast' : 'History'} • ${point.riskLevel} risk`;
-                    }
-                    return label;
-                  }}
-                />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="rainfall"
-                  stroke="#22c55e"
-                  strokeWidth={3}
-                  dot={(props) => {
-                    const { cx, cy, payload } = props;
-                    const color =
-                      payload.riskLevel === 'High'
-                        ? '#ef4444'
-                        : payload.riskLevel === 'Low'
-                        ? '#3b82f6'
-                        : '#22c55e';
-                    return (
-                      <circle cx={cx} cy={cy} r={5} fill={color} stroke="#ffffff" strokeWidth={2} />
-                    );
-                  }}
-                  activeDot={(props) => {
-                    const { cx, cy, payload } = props;
-                    const color =
-                      payload.riskLevel === 'High'
-                        ? '#ef4444'
-                        : payload.riskLevel === 'Low'
-                        ? '#3b82f6'
-                        : '#22c55e';
-                    return (
-                      <g>
-                        <circle cx={cx} cy={cy} r={7} fill={color} stroke="#ffffff" strokeWidth={2} />
-                      </g>
-                    );
-                  }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
-        )}
-          </div>
-
-          {/* Right Column: Kerala Map */}
-          <div className="lg:sticky lg:top-24 lg:h-fit">
-            {allDistrictsData && allDistrictsData.length > 0 ? (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                <KeralaMap
-                  districts={allDistrictsData}
-                  selectedDistrict={forecast?.district || selectedDistrict}
-                  selectedMonth={forecast?.monthName || MONTHS.find(m => m.value === selectedMonth)?.label}
-                  selectedYear={forecast?.year || selectedYear}
-                  onDistrictClick={async (district) => {
-                    setSelectedDistrict(district);
-                    // Fetch forecast for the clicked district
-                    try {
-                      setLoading(true);
-                      setError(null);
-                      const data = await weatherAPI.getDistrictForecast(selectedMonth, district, selectedYear);
-                      setForecast(data);
-                      if (data.allDistricts) {
-                        setAllDistrictsData(data.allDistricts);
-                      }
-                    } catch (err) {
-                      setError(err.message || 'Failed to load weather forecast');
-                      setForecast(null);
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="card p-6 lg:p-8"
-              >
-                <div className="text-center py-12">
-                  <MapPin className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 text-lg">
-                    {loading ? 'Loading map data...' : 'Select a month and year to see district-wise rainfall on the map'}
-                  </p>
-                </div>
-              </motion.div>
-            )}
           </div>
         </div>
+
+      <div className="bg-white rounded-xl shadow-md p-6 space-y-4 border border-gray-100">
+        <div className="flex flex-wrap justify-between items-center gap-4">
+          <div>
+            <p className="text-sm text-gray-500">{t('weather.selectedMonth')}</p>
+            <p className="text-xl font-semibold text-gray-900">
+              {months.find(m => m.value === selectedMonth)?.label || forecast.monthName} {selectedYear || forecast.year}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              {t('weather.season')}: <span className="font-medium">{forecast.season}</span>
+            </p>
+          </div>
+
+          <div className="text-right">
+            <p className="text-sm text-gray-500">{t('weather.expectedRainfall')}</p>
+            <p className="text-2xl font-bold text-primary-600">
+              {forecast.predictedSeasonRainfall.toLocaleString()} mm
+            </p>
+            <p className="text-xs text-gray-400 mt-1">{t('weather.model')}: {forecast.model}</p>
+          </div>
+        </div>
+
+        <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm border ${riskColor}`}>
+          <span className="font-semibold mr-1">{t('weather.riskLevel')}:</span> {forecast.riskLevel}
+        </div>
+
+        {forecast.historicalAverage && (
+          <div className="mt-4 space-y-2">
+            <div className="flex justify-between text-xs text-gray-500">
+              <span>{t('weather.comparedToAverage')}</span>
+              <span>{percentOfAverage}% {t('weather.ofNormal')}</span>
+            </div>
+            <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-blue-400 via-green-500 to-red-500"
+                style={{ width: barWidth }}
+              ></div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-4 text-sm text-gray-600 leading-relaxed">
+          {forecast.riskLevel === 'High' && (
+            <p>{t('weather.highRiskMessage')}</p>
+          )}
+          {forecast.riskLevel === 'Normal' && (
+            <p>{t('weather.normalRiskMessage')}</p>
+          )}
+          {forecast.riskLevel === 'Low' && (
+            <p>{t('weather.lowRiskMessage')}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Kerala Districts Rainfall Map */}
+      <div className="mt-8">
+        <KeralaRainfallMap 
+          forecast={forecast} 
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
+        />
+      </div>
       </div>
     </div>
   );

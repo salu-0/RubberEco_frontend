@@ -176,20 +176,20 @@ export const certificateAPI = {
 
 // Weather / rainfall forecast API
 export const weatherAPI = {
-  // Get forecast for next month for the logged-in farmer
-  getNextMonthForecast: async () => {
-    const response = await fetch(`${API_BASE_URL}/weather/next-month`, {
-      headers: getAuthHeaders()
-    });
-    return handleResponse(response);
-  },
-  // Get forecast for specific month and district
-  getDistrictForecast: async (month, district, year = null) => {
-    const params = new URLSearchParams({ month: month.toString(), district });
-    if (year) {
-      params.append('year', year.toString());
+  // Get forecast for a specific month (or next month if not specified)
+  // month: 1-12, year: e.g., 2026
+  getNextMonthForecast: async (month = null, year = null) => {
+    let url = `${API_BASE_URL}/weather/next-month`;
+    const params = new URLSearchParams();
+    
+    if (month) params.append('month', month);
+    if (year) params.append('year', year);
+    
+    if (params.toString()) {
+      url += `?${params.toString()}`;
     }
-    const response = await fetch(`${API_BASE_URL}/weather/forecast?${params}`, {
+    
+    const response = await fetch(url, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
