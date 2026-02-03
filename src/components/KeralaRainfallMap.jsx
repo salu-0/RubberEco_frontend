@@ -106,35 +106,33 @@ const KERALA_DISTRICTS = [
 
 // Calculate district-specific risk level based on base forecast and district characteristics
 const calculateDistrictRisk = (baseRisk, baseRainfall, district, month, season) => {
-  // Adjust rainfall based on district multiplier
-  const adjustedRainfall = baseRainfall * district.rainfallMultiplier;
+  // Start with the state-level risk as the base
+  // Then apply district-specific adjustments
   
-  // Seasonal adjustments
-  let seasonalMultiplier = 1.0;
+  // Elevation affects risk differently
+  const elevationRiskModifier = {
+    'high': { 'High': 'High', 'Normal': 'High', 'Low': 'Normal' },    // High elevation = more rain
+    'medium': { 'High': 'High', 'Normal': 'Normal', 'Low': 'Low' },   // Medium = follows state
+    'low': { 'High': 'Normal', 'Normal': 'Low', 'Low': 'Low' }        // Coastal = less rain
+  };
+  
+  // Seasonal overrides for specific districts
   if (season === 'Monsoon') {
-    // High elevation districts get more rain during monsoon
-    if (district.elevation === 'high') seasonalMultiplier = 1.15;
-    else if (district.elevation === 'medium') seasonalMultiplier = 1.08;
-  } else if (season === 'Summer') {
-    // Coastal districts get slightly more summer rain
-    if (district.elevation === 'low') seasonalMultiplier = 1.05;
-  } else if (season === 'Winter') {
-    // Northern districts get more winter rain
-    if (['Kannur', 'Kasaragod', 'Wayanad', 'Kozhikode'].includes(district.name)) {
-      seasonalMultiplier = 1.10;
+    // Western Ghats districts (high elevation) always High during monsoon
+    if (district.elevation === 'high' && ['Wayanad', 'Idukki'].includes(district.name)) {
+      return 'High';
     }
   }
   
-  const finalRainfall = adjustedRainfall * seasonalMultiplier;
+  // Apply district-specific seeded variation based on month
+  const seed = (district.name.charCodeAt(0) + month) % 3;
+  const riskLevels = ['Low', 'Normal', 'High'];
   
-  // Calculate risk based on adjusted rainfall
-  // Using a base average of 2000mm for Kerala
-  const baseAverage = 2000;
-  const percentOfAverage = (finalRainfall / baseAverage) * 100;
+  // Mix the base risk with district-specific variation
+  const baseRiskIndex = riskLevels.indexOf(baseRisk);
+  const modifiedIndex = Math.min(2, Math.max(0, baseRiskIndex + seed - 1));
   
-  if (percentOfAverage > 110) return 'High';
-  if (percentOfAverage < 90) return 'Low';
-  return 'Normal';
+  return riskLevels[modifiedIndex];
 };
 
 // Risk level colors

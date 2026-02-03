@@ -52,6 +52,7 @@ import VideoManagement from './VideoManagement';
 import NurseryBookings from './NurseryBookings';
 import NurseryInventory from './NurseryInventory';
 import PaymentsTable from './PaymentsTable';
+import Reports from './Reports';
 import { useNavigationGuard } from '../../hooks/useNavigationGuard';
 
 const Dashboard = () => {
@@ -1872,8 +1873,11 @@ const Dashboard = () => {
             </motion.div>
           )}
 
+          {/* Reports Section */}
+          {activeTab === 'reports' && <Reports darkMode={darkMode} />}
+
           {/* Other tab contents */}
-          {activeTab !== 'overview' && activeTab !== 'performance' && activeTab !== 'assign-tasks' && activeTab !== 'users' && activeTab !== 'staff' && activeTab !== 'staff-requests' && activeTab !== 'leave-management' && activeTab !== 'land-verification' && activeTab !== 'trainers' && activeTab !== 'brokers' && activeTab !== 'videos' && activeTab !== 'nursery' && activeTab !== 'inventory' && activeTab !== 'services' && activeTab !== 'payments' && (
+          {activeTab !== 'overview' && activeTab !== 'performance' && activeTab !== 'assign-tasks' && activeTab !== 'users' && activeTab !== 'staff' && activeTab !== 'staff-requests' && activeTab !== 'leave-management' && activeTab !== 'land-verification' && activeTab !== 'trainers' && activeTab !== 'brokers' && activeTab !== 'videos' && activeTab !== 'nursery' && activeTab !== 'inventory' && activeTab !== 'services' && activeTab !== 'payments' && activeTab !== 'reports' && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

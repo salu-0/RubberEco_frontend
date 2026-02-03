@@ -196,6 +196,44 @@ export const weatherAPI = {
   }
 };
 
+// Price Forecast API - Market Price Predictions
+export const priceForecastAPI = {
+  // Get current price and short-term forecast
+  getCurrentForecast: async (months = 6, market = 'Kottayam', grade = 'RSS-4') => {
+    const params = new URLSearchParams({ months, market, grade });
+    const response = await fetch(`${API_BASE_URL}/price-forecast/current?${params}`, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return handleResponse(response);
+  },
+
+  // Get historical prices
+  getHistoricalPrices: async (years = 5, market = 'Kottayam', grade = 'RSS-4') => {
+    const params = new URLSearchParams({ years, market, grade });
+    const response = await fetch(`${API_BASE_URL}/price-forecast/historical?${params}`, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return handleResponse(response);
+  },
+
+  // Get forecast for a specific month
+  getMonthlyForecast: async (year, month, market = 'Kottayam', grade = 'RSS-4') => {
+    const params = new URLSearchParams({ market, grade });
+    const response = await fetch(`${API_BASE_URL}/price-forecast/monthly/${year}/${month}?${params}`, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return handleResponse(response);
+  },
+
+  // Get price analysis and insights
+  getPriceAnalysis: async () => {
+    const response = await fetch(`${API_BASE_URL}/price-forecast/analysis`, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return handleResponse(response);
+  }
+};
+
 // User utility functions
 export const getUserData = () => {
   try {

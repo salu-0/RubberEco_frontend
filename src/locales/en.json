@@ -1111,6 +1111,22 @@
       "districtNote1": "Districts show varying risk levels based on geographic location and elevation",
       "districtNote2": "High elevation districts (Idukki, Wayanad) typically receive more rainfall",
       "districtNote3": "Coastal districts may have different patterns based on monsoon direction"
-    }
+    },
+    "marketPricePrediction": "Market Price Prediction",
+    "pricePredictionSubtitle": "AI-powered rubber price forecast for selected month",
+    "hidePrice": "Hide",
+    "showPrice": "Show",
+    "predictedPrice": "Predicted Price",
+    "marketTrend": "Market Trend",
+    "forecastDetails": "Forecast Details",
+    "market": "Market",
+    "district": "District",
+    "grade": "Grade",
+    "change": "change",
+    "noPriceData": "No price data available for this period",
+    "insightTitle": "Weather-Price Insight",
+    "highRainfallPriceImpact": "High rainfall may reduce tapping activity, potentially leading to supply constraints and supporting prices.",
+    "lowRainfallPriceImpact": "Below-average rainfall could allow for consistent tapping, with prices expected to remain stable.",
+    "normalRainfallPriceImpact": "Normal weather conditions expected, supporting regular production with stable prices."
   }
 }

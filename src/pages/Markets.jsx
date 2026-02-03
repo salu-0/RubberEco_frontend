@@ -27,6 +27,7 @@ import {
   Award
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import PricePrediction from '../components/PricePrediction';
 import { useTranslation } from 'react-i18next';
 import GoogleMapsSetup from '../components/GoogleMapsSetup';
 import { useNavigationGuard } from '../hooks/useNavigationGuard';
@@ -1513,6 +1514,9 @@ const Markets = () => {
 
       {/* Market Finder */}
       <MarketFinder onMarketClick={handleMarketClick} />
+
+      {/* Price Prediction Section */}
+      <PricePrediction />
 
       {/* Market Overview */}
       <section className="py-20 bg-white">

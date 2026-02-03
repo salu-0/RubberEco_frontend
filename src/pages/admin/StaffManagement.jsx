@@ -16,7 +16,10 @@ import {
   CheckCircle,
   AlertCircle,
   Clock,
-  X
+  X,
+  Camera,
+  Upload,
+  User
 } from 'lucide-react';
 import { isEmail, phoneValidator, isRequired, numericValidator, nameValidator } from '../../utils/validation';
 
@@ -325,7 +328,7 @@ const StaffManagement = ({ darkMode }) => {
   const handleEditStaff = (staffId) => {
     const staffMember = staff.find(s => s._id === staffId || s.id === staffId);
     if (staffMember) {
-      setFormData({
+      const editData = {
         name: staffMember.name || '',
         email: staffMember.email || '',
         phone: staffMember.phone || '',
@@ -347,8 +350,13 @@ const StaffManagement = ({ darkMode }) => {
         },
         skills: staffMember.skills || [],
         notes: staffMember.notes || ''
-      });
+      };
+      setFormData(editData);
       setSelectedStaff(staffMember);
+      // Validate form and enable button if valid
+      const errors = validateForm(editData);
+      setFormErrors(errors);
+      setIsFormValid(Object.keys(errors).length === 0);
       setShowEditModal(true);
     }
   };
@@ -709,11 +717,21 @@ const StaffManagement = ({ darkMode }) => {
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <img
-                          src={member.avatar}
-                          alt={member.name}
-                          className="h-10 w-10 rounded-full object-cover"
-                        />
+                        {member.avatar ? (
+                          <img
+                            src={member.avatar}
+                            alt={member.name}
+                            className="h-10 w-10 rounded-full object-cover border-2 border-emerald-500/30"
+                          />
+                        ) : (
+                          <div className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold border-2 ${
+                            darkMode 
+                              ? 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white border-emerald-500/30' 
+                              : 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-emerald-400/30'
+                          }`}>
+                            {member.name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || <User className="w-5 h-5" />}
+                          </div>
+                        )}
                         <div className="ml-4">
                           <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                             {member.name}
@@ -857,23 +875,70 @@ const StaffManagement = ({ darkMode }) => {
                     Enter the staff member's personal and contact details
                   </p>
                 </div>
-                {/* Profile Image */}
+                {/* Profile Image Upload */}
                 <div className="md:col-span-2">
                   <label className={`block text-sm font-semibold mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Profile Image
                   </label>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200">
-                      {formData.avatar ? (
-                        <img src={formData.avatar} alt="avatar" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className={`w-full h-full flex items-center justify-center ${darkMode ? 'text-gray-400 bg-gray-700' : 'text-gray-500 bg-gray-100'}`}>No Image</div>
+                  <div className="flex items-center gap-6">
+                    {/* Avatar Preview */}
+                    <div className="relative group">
+                      <div className={`w-24 h-24 rounded-full overflow-hidden border-4 ${
+                        darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-100'
+                      } shadow-lg`}>
+                        {formData.avatar ? (
+                          <img src={formData.avatar} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className={`w-full h-full flex items-center justify-center ${
+                            darkMode ? 'text-gray-500' : 'text-gray-400'
+                          }`}>
+                            <User className="w-12 h-12" />
+                          </div>
+                        )}
+                      </div>
+                      {formData.avatar && (
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, avatar: '' }))}
+                          className="absolute -top-1 -right-1 p-1 bg-red-500 text-white rounded-full shadow-md hover:bg-red-600 transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
                       )}
                     </div>
-                    <input type="file" accept="image/*" onChange={handleAvatarChange} className="text-sm" />
+                    
+                    {/* Upload Area */}
+                    <div className="flex-1">
+                      <label className={`flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 ${
+                        darkMode 
+                          ? 'border-gray-600 bg-gray-700/50 hover:bg-gray-700 hover:border-emerald-500' 
+                          : 'border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-emerald-500'
+                      }`}>
+                        <div className="flex flex-col items-center justify-center py-2">
+                          <div className={`p-2 rounded-full mb-2 ${darkMode ? 'bg-emerald-500/20' : 'bg-emerald-100'}`}>
+                            <Camera className={`w-5 h-5 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
+                          </div>
+                          <p className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                            Click to upload photo
+                          </p>
+                          <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                            PNG, JPG up to 5MB
+                          </p>
+                        </div>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handleAvatarChange} 
+                          className="hidden" 
+                        />
+                      </label>
+                    </div>
                   </div>
                   {formErrors.avatar && (
-                    <p className="mt-2 text-sm text-red-500">{formErrors.avatar}</p>
+                    <p className="mt-2 text-sm text-red-500 flex items-center">
+                      <AlertCircle className="w-4 h-4 mr-1" />
+                      {formErrors.avatar}
+                    </p>
                   )}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1227,8 +1292,22 @@ const StaffManagement = ({ darkMode }) => {
               {/* Profile Section */}
               <div className="lg:col-span-1">
                 <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-2xl p-6 text-center`}>
-                  <div className="w-24 h-24 bg-primary-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <UserCheck className="h-12 w-12 text-white" />
+                  <div className="w-28 h-28 rounded-full mx-auto mb-4 overflow-hidden border-4 border-emerald-500/30 shadow-lg">
+                    {selectedStaff.avatar ? (
+                      <img 
+                        src={selectedStaff.avatar} 
+                        alt={selectedStaff.name} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className={`w-full h-full flex items-center justify-center text-2xl font-bold ${
+                        darkMode 
+                          ? 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white' 
+                          : 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white'
+                      }`}>
+                        {selectedStaff.name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || <User className="w-10 h-10" />}
+                      </div>
+                    )}
                   </div>
                   <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
                     {selectedStaff.name}
@@ -1460,6 +1539,73 @@ const StaffManagement = ({ darkMode }) => {
 
             {/* Edit Form */}
             <form onSubmit={handleSubmitEdit} className="space-y-6">
+              {/* Profile Image Upload */}
+              <div>
+                <label className={`block text-sm font-semibold mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Profile Image
+                </label>
+                <div className="flex items-center gap-6">
+                  {/* Avatar Preview */}
+                  <div className="relative group">
+                    <div className={`w-24 h-24 rounded-full overflow-hidden border-4 ${
+                      darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-100'
+                    } shadow-lg`}>
+                      {formData.avatar ? (
+                        <img src={formData.avatar} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className={`w-full h-full flex items-center justify-center ${
+                          darkMode ? 'text-gray-500' : 'text-gray-400'
+                        }`}>
+                          <User className="w-12 h-12" />
+                        </div>
+                      )}
+                    </div>
+                    {formData.avatar && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, avatar: '' }))}
+                        className="absolute -top-1 -right-1 p-1 bg-red-500 text-white rounded-full shadow-md hover:bg-red-600 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Upload Area */}
+                  <div className="flex-1">
+                    <label className={`flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 ${
+                      darkMode 
+                        ? 'border-gray-600 bg-gray-700/50 hover:bg-gray-700 hover:border-emerald-500' 
+                        : 'border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-emerald-500'
+                    }`}>
+                      <div className="flex flex-col items-center justify-center py-2">
+                        <div className={`p-2 rounded-full mb-2 ${darkMode ? 'bg-emerald-500/20' : 'bg-emerald-100'}`}>
+                          <Camera className={`w-5 h-5 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
+                        </div>
+                        <p className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                          {formData.avatar ? 'Change photo' : 'Click to upload photo'}
+                        </p>
+                        <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                          PNG, JPG up to 5MB
+                        </p>
+                      </div>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleAvatarChange} 
+                        className="hidden" 
+                      />
+                    </label>
+                  </div>
+                </div>
+                {formErrors.avatar && (
+                  <p className="mt-2 text-sm text-red-500 flex items-center">
+                    <AlertCircle className="w-4 h-4 mr-1" />
+                    {formErrors.avatar}
+                  </p>
+                )}
+              </div>
+
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
