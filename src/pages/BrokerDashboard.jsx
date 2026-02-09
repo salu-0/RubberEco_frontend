@@ -54,8 +54,9 @@ const BrokerDashboard = () => {
         return;
       }
 
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
       // Fetch broker's bids data
-      const bidsResponse = await fetch('https://rubbereco-backend.onrender.com/api/bids/my-bids', {
+      const bidsResponse = await fetch(`${API_BASE_URL}/bids/my-bids`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -64,7 +65,7 @@ const BrokerDashboard = () => {
       });
 
       // Fetch available lots data
-      const lotsResponse = await fetch('https://rubbereco-backend.onrender.com/api/tree-lots', {
+      const lotsResponse = await fetch(`${API_BASE_URL}/tree-lots`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -172,7 +173,7 @@ const BrokerDashboard = () => {
                 </div>
                 <span className="hidden sm:inline">Refresh</span>
               </motion.button>
-              
+
               <motion.button
                 className="flex items-center space-x-2 px-4 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all duration-200"
                 whileHover={{ scale: 1.05 }}
@@ -278,11 +279,10 @@ const BrokerDashboard = () => {
                 <motion.button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-                    activeTab === tab.id
+                  className={`flex items-center space-x-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${activeTab === tab.id
                       ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg'
                       : 'text-gray-600 hover:bg-gray-100'
-                  }`}
+                    }`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >

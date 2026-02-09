@@ -62,7 +62,7 @@ const NurseryCenter = () => {
       if (data.success && data.data && Number.isFinite(data.data.lat) && Number.isFinite(data.data.lng)) {
         return { lat: data.data.lat, lng: data.data.lng };
       }
-    } catch (_) {}
+    } catch (_) { }
     // Fallback: if pure district or well-known Kerala place, use centroid
     try {
       const normalized = String(address).toLowerCase().trim();
@@ -75,7 +75,7 @@ const NurseryCenter = () => {
       if (keralaDistrictCentroids[key]) {
         return keralaDistrictCentroids[key];
       }
-    } catch (_) {}
+    } catch (_) { }
     return null;
   };
 
@@ -179,7 +179,7 @@ const NurseryCenter = () => {
             if (coords) setCenterCoords(coords);
             else toastService.warning('Could not locate nursery center on map. Shipping estimate may be unavailable.');
           }
-        } catch (_) {}
+        } catch (_) { }
       } catch (e) {
         toastService.error('Failed to load nursery center');
       } finally {
@@ -356,7 +356,7 @@ const NurseryCenter = () => {
 
             // Refresh plants to reflect updated stock
             await refreshPlants();
-            
+
             // Queue professional modal for receipt download
             setPendingReceiptBookingId(String(data.data._id));
             setReceiptPromptOpen(true);
@@ -455,13 +455,12 @@ const NurseryCenter = () => {
                   </div>
                   {selectedPlant && (
                     <div className="mt-3 flex flex-wrap items-center gap-3">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                        (selectedPlant.stockAvailable || 0) === 0
-                          ? 'bg-red-100 text-red-800'
-                          : (selectedPlant.stockAvailable || 0) < 10
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${(selectedPlant.stockAvailable || 0) === 0
+                        ? 'bg-red-100 text-red-800'
+                        : (selectedPlant.stockAvailable || 0) < 10
                           ? 'bg-yellow-100 text-yellow-800'
                           : 'bg-green-100 text-green-800'
-                      }`}>
+                        }`}>
                         {t('nurseryCenter.stock', 'Stock')}: {selectedPlant.stockAvailable || 0}
                       </span>
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
@@ -482,11 +481,31 @@ const NurseryCenter = () => {
                     <input
                       type="number"
                       min={(selectedPlant?.minOrderQty) || 1}
-                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 bg-white hover:border-gray-300"
+                      className={`w-full border-2 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all duration-200 bg-white ${(booking.quantity !== '' && (booking.quantity < 0 || booking.quantity > 9999999 || (selectedPlant && booking.quantity > (selectedPlant.stockAvailable || 0))))
+                        ? 'border-red-500 focus:ring-red-200 focus:border-red-500'
+                        : 'border-gray-200 focus:ring-emerald-500 focus:border-emerald-500 hover:border-gray-300'
+                        }`}
                       value={booking.quantity}
-                      onChange={(e) => setBooking({ ...booking, quantity: parseInt(e.target.value || '0') })}
+                      onChange={(e) => {
+                        const inputVal = e.target.value;
+                        // Prevent leading zeros (e.g., "0123", "00")
+                        if (inputVal.length > 1 && inputVal.startsWith('0')) {
+                          return; // Ignore input with leading zeros
+                        }
+                        const val = inputVal === '' ? '' : parseInt(inputVal);
+                        setBooking({ ...booking, quantity: val });
+                      }}
                       placeholder={t('nurseryCenter.enterQuantity', 'Enter quantity')}
                     />
+                    {booking.quantity !== '' && booking.quantity < 0 && (
+                      <p className="mt-1 text-xs text-red-500 font-medium">{t('nurseryCenter.qtyNegative', 'Quantity cannot be negative')}</p>
+                    )}
+                    {booking.quantity !== '' && booking.quantity > 9999999 && (
+                      <p className="mt-1 text-xs text-red-500 font-medium">{t('nurseryCenter.qtyTooLarge', 'Quantity is too large (max: 9,999,999)')}</p>
+                    )}
+                    {selectedPlant && booking.quantity > 0 && booking.quantity <= 9999999 && booking.quantity > (selectedPlant.stockAvailable || 0) && (
+                      <p className="mt-1 text-xs text-red-500 font-medium">{t('nurseryCenter.exceedsStock', 'Exceeds available stock')}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-800 mb-3">{t('nurseryCenter.advancePayment', 'Advance Payment')} *</label>
@@ -496,8 +515,8 @@ const NurseryCenter = () => {
                       onChange={(e) => setBooking({ ...booking, advancePercent: parseInt(e.target.value) })}
                       disabled={booking.paymentMode === 'full'}
                     >
-                      {[10,15,20,25,30].map(v => (
-                        <option key={v} value={v}>{v}% {v===10?`- ${t('nurseryCenter.percentLabelMinimum','Minimum')}`:v===20?`- ${t('nurseryCenter.percentLabelRecommended','Recommended')}`:v===30?`- ${t('nurseryCenter.percentLabelHigher','Higher')}`:''}</option>
+                      {[10, 15, 20, 25, 30].map(v => (
+                        <option key={v} value={v}>{v}% {v === 10 ? `- ${t('nurseryCenter.percentLabelMinimum', 'Minimum')}` : v === 20 ? `- ${t('nurseryCenter.percentLabelRecommended', 'Recommended')}` : v === 30 ? `- ${t('nurseryCenter.percentLabelHigher', 'Higher')}` : ''}</option>
                       ))}
                     </select>
                   </div>
@@ -550,7 +569,7 @@ const NurseryCenter = () => {
                         className="mt-2 inline-flex items-center px-3 py-2 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700"
                         disabled={geoLoading || !dropoffAddress}
                       >
-                        {geoLoading ? t('common.loading','Locating…') : t('nurseryCenter.estimateFromAddress','Estimate from Address')}
+                        {geoLoading ? t('common.loading', 'Locating…') : t('nurseryCenter.estimateFromAddress', 'Estimate from Address')}
                       </button>
                       <button
                         type="button"
@@ -558,49 +577,49 @@ const NurseryCenter = () => {
                         className="mt-2 ml-3 inline-flex items-center px-3 py-2 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700"
                         disabled={geoLoading}
                       >
-                        {geoLoading ? t('common.loading','Detecting…') : t('nurseryCenter.useMyLocation','Use My Location')}
+                        {geoLoading ? t('common.loading', 'Detecting…') : t('nurseryCenter.useMyLocation', 'Use My Location')}
                       </button>
                     </div>
                     <div className="flex flex-col justify-end">
                       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                        <div className="text-sm text-amber-800 font-semibold">{t('nurseryCenter.estimatedShipping','Estimated Shipping')}</div>
-                        <div className="mt-1 text-sm text-amber-800">{t('nurseryCenter.distance','Distance')}: {distanceKm ? `${distanceKm.toFixed(1)} km` : '-'}
+                        <div className="text-sm text-amber-800 font-semibold">{t('nurseryCenter.estimatedShipping', 'Estimated Shipping')}</div>
+                        <div className="mt-1 text-sm text-amber-800">{t('nurseryCenter.distance', 'Distance')}: {distanceKm ? `${distanceKm.toFixed(1)} km` : '-'}
                         </div>
                         <div className="mt-1 text-lg font-bold text-amber-900">₹{Number(shippingEstimate || 0).toLocaleString('en-IN')}</div>
-                        <div className="mt-1 text-[11px] text-amber-700">{t('nurseryCenter.estimateFormula','Estimate = ₹150 base + ₹12/km')}</div>
+                        <div className="mt-1 text-[11px] text-amber-700">{t('nurseryCenter.estimateFormula', 'Estimate = ₹150 base + ₹12/km')}</div>
                       </div>
                     </div>
                   </div>
                 )}
 
                 {selectedPlant?.minOrderQty ? (
-                  <div className="flex items-center text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">{t('nurseryCenter.minOrder','Min order')}: {selectedPlant.minOrderQty} {t('nurseryCenter.plants','plants')}</div>
+                  <div className="flex items-center text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">{t('nurseryCenter.minOrder', 'Min order')}: {selectedPlant.minOrderQty} {t('nurseryCenter.plants', 'plants')}</div>
                 ) : null}
 
                 {selectedPlant && booking.variety && booking.quantity > 0 && (
                   <div className="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl p-4">
-                    <h5 className="text-sm font-semibold text-emerald-800 mb-3">{t('nurseryCenter.orderSummary','Order Summary')}</h5>
+                    <h5 className="text-sm font-semibold text-emerald-800 mb-3">{t('nurseryCenter.orderSummary', 'Order Summary')}</h5>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-emerald-600 font-medium">{t('nurseryCenter.variety','Variety')}:</span>
+                        <span className="text-emerald-600 font-medium">{t('nurseryCenter.variety', 'Variety')}:</span>
                         <p className="font-semibold text-emerald-800">{booking.variety}</p>
                       </div>
                       <div>
-                        <span className="text-emerald-600 font-medium">{t('nurseryCenter.quantity','Quantity')}:</span>
+                        <span className="text-emerald-600 font-medium">{t('nurseryCenter.quantity', 'Quantity')}:</span>
                         <p className="font-semibold text-emerald-800">{booking.quantity} plants</p>
                       </div>
                       <div>
-                        <span className="text-emerald-600 font-medium">{t('nurseryCenter.unitPrice','Unit Price')}:</span>
+                        <span className="text-emerald-600 font-medium">{t('nurseryCenter.unitPrice', 'Unit Price')}:</span>
                         <p className="font-semibold text-emerald-800">₹{Number(selectedPlant?.unitPrice || 0).toLocaleString('en-IN')}</p>
                       </div>
                       {booking.shipmentRequired && (
                         <div>
-                          <span className="text-emerald-600 font-medium">{t('nurseryCenter.shippingFee','Shipping Fee')}:</span>
+                          <span className="text-emerald-600 font-medium">{t('nurseryCenter.shippingFee', 'Shipping Fee')}:</span>
                           <p className="font-semibold text-emerald-800">₹{Number(shippingEstimate || booking.shippingFee || 0).toLocaleString('en-IN')}</p>
                         </div>
                       )}
                       <div>
-                        <span className="text-emerald-600 font-medium">{t('nurseryCenter.totals','Totals')}:</span>
+                        <span className="text-emerald-600 font-medium">{t('nurseryCenter.totals', 'Totals')}:</span>
                         <p className="font-semibold text-emerald-800">
                           {(() => {
                             const unit = Number(selectedPlant?.unitPrice || 0);
@@ -608,14 +627,14 @@ const NurseryCenter = () => {
                             const subtotal = unit * qty;
                             const shippingFee = booking.shipmentRequired ? Number(shippingEstimate || booking.shippingFee || 0) : 0;
                             const total = subtotal + shippingFee;
-                            
+
                             if (booking.paymentMode === 'full') {
-                              return `${t('nursery.total','Total')} ₹${total.toLocaleString('en-IN')}${shippingFee > 0 ? ` • ${t('cart.shipping','Shipping')} ₹${shippingFee.toLocaleString('en-IN')}` : ''}`;
+                              return `${t('nursery.total', 'Total')} ₹${total.toLocaleString('en-IN')}${shippingFee > 0 ? ` • ${t('cart.shipping', 'Shipping')} ₹${shippingFee.toLocaleString('en-IN')}` : ''}`;
                             } else {
                               const advPct = Number(booking.advancePercent || 10);
                               const adv = Math.round((subtotal * advPct) / 100);
                               const bal = subtotal - adv;
-                              return `${t('nursery.total','Total')} ₹${subtotal.toLocaleString('en-IN')} • ${t('nursery.advance','Advance')} ₹${adv.toLocaleString('en-IN')} • ${t('nursery.balance','Balance')} ₹${bal.toLocaleString('en-IN')}${shippingFee > 0 ? ` • ${t('cart.shipping','Shipping')} ₹${shippingFee.toLocaleString('en-IN')}` : ''}`;
+                              return `${t('nursery.total', 'Total')} ₹${subtotal.toLocaleString('en-IN')} • ${t('nursery.advance', 'Advance')} ₹${adv.toLocaleString('en-IN')} • ${t('nursery.balance', 'Balance')} ₹${bal.toLocaleString('en-IN')}${shippingFee > 0 ? ` • ${t('cart.shipping', 'Shipping')} ₹${shippingFee.toLocaleString('en-IN')}` : ''}`;
                             }
                           })()}
                         </p>
@@ -626,20 +645,18 @@ const NurseryCenter = () => {
 
                 <div className={`rounded-lg p-3 border ${booking.paymentMode === 'full' ? 'bg-amber-50 border-amber-200' : 'bg-blue-50 border-blue-200'}`}>
                   <div className={`text-sm ${booking.paymentMode === 'full' ? 'text-amber-800' : 'text-blue-700'}`}>
-                    {booking.paymentMode === 'full' ? t('nurseryCenter.payBannerFull','Pay full amount now (shipping fee added if selected).') : t('nurseryCenter.payBannerAdvance','Pay advance online, balance at pickup.')}
+                    {booking.paymentMode === 'full' ? t('nurseryCenter.payBannerFull', 'Pay full amount now (shipping fee added if selected).') : t('nurseryCenter.payBannerAdvance', 'Pay advance online, balance at pickup.')}
                   </div>
                 </div>
 
-                {selectedPlant && booking.quantity > (selectedPlant.stockAvailable || 0) && (
-                  <div className="flex items-center text-xs text-red-700 bg-red-50 px-3 py-2 rounded-lg">{t('nurseryCenter.exceedsStock','Requested quantity exceeds available stock.')}</div>
-                )}
+
 
                 <button
                   disabled={placing || !booking.variety || (selectedPlant && (booking.quantity < (selectedPlant.minOrderQty || 1) || booking.quantity > (selectedPlant.stockAvailable || 0)))}
                   className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 disabled:from-gray-400 disabled:to-gray-400 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl"
                   onClick={placeBooking}
                 >
-                  {placing ? t('nurseryCenter.processingBooking','Processing Booking...') : t('nurseryCenter.bookSaplingsNow','Book Saplings Now')}
+                  {placing ? t('nurseryCenter.processingBooking', 'Processing Booking...') : t('nurseryCenter.bookSaplingsNow', 'Book Saplings Now')}
                 </button>
               </div>
             </div>
@@ -648,10 +665,10 @@ const NurseryCenter = () => {
       </div>
       <ConfirmDialog
         open={receiptPromptOpen}
-        title={t('nursery.paymentSuccess','Payment successful')}
-        message={t('nursery.downloadReceiptPrompt','Would you like to download your receipt now?')}
-        confirmText={t('nursery.download','Download')}
-        cancelText={t('nursery.later','Later')}
+        title={t('nursery.paymentSuccess', 'Payment successful')}
+        message={t('nursery.downloadReceiptPrompt', 'Would you like to download your receipt now?')}
+        confirmText={t('nursery.download', 'Download')}
+        cancelText={t('nursery.later', 'Later')}
         onCancel={() => setReceiptPromptOpen(false)}
         onConfirm={async () => {
           setReceiptPromptOpen(false);
@@ -671,9 +688,9 @@ const NurseryCenter = () => {
             a.click();
             a.remove();
             window.URL.revokeObjectURL(url);
-            toastService.success(t('nursery.receiptDownloaded','Receipt downloaded successfully!'), { duration: 3000 });
+            toastService.success(t('nursery.receiptDownloaded', 'Receipt downloaded successfully!'), { duration: 3000 });
           } catch (e) {
-            toastService.error(t('nursery.receiptDownloadFailed','Failed to download receipt. You can download it later from Payment Status.'));
+            toastService.error(t('nursery.receiptDownloadFailed', 'Failed to download receipt. You can download it later from Payment Status.'));
           }
           setPendingReceiptBookingId('');
         }}

@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { weatherAPI, priceForecastAPI } from '../utils/api';
 import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar';
-import { Calendar, TrendingUp, TrendingDown, Minus, DollarSign, BarChart3, Sparkles, MapPin, Package } from 'lucide-react';
+import { Calendar, TrendingUp, TrendingDown, Minus, DollarSign, BarChart3, Sparkles, MapPin, Package, Cloud } from 'lucide-react';
 import KeralaRainfallMap from '../components/KeralaRainfallMap';
+import LiveWeather from '../components/LiveWeather';
 
 // Kerala rubber markets with district info
 const KERALA_MARKETS = [
@@ -218,12 +219,30 @@ const Weather = () => {
       
       <div className="max-w-7xl mx-auto px-4 py-10 pt-24">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+            <Cloud className="h-8 w-8 text-primary-600" />
             {t('weather.title')}
           </h1>
           <p className="text-gray-600 mb-6">
             {t('weather.subtitle')}
           </p>
+
+          {/* Live Weather Section */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="h-1 w-12 bg-primary-600 rounded"></div>
+              <h2 className="text-2xl font-bold text-gray-900">Live Weather Forecast</h2>
+            </div>
+            <LiveWeather />
+          </div>
+
+          {/* Rainfall Prediction Section */}
+          <div className="mt-12 mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="h-1 w-12 bg-blue-600 rounded"></div>
+              <h2 className="text-2xl font-bold text-gray-900">Historical Rainfall Analysis</h2>
+            </div>
+          </div>
 
           {/* Month and Year Selector */}
           <div className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-gray-200">

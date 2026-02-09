@@ -1,7 +1,7 @@
 // Messaging Service for Broker-Farmer Communication
 // This service handles all messaging-related API calls
 
-const API_BASE_URL = 'https://rubbereco-backend.onrender.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 class MessagingService {
   constructor() {
@@ -295,14 +295,14 @@ class MessagingService {
     try {
       // Refresh token before making the call
       this.refreshToken();
-      
+
       console.log('🔍 Fetching farmer conversations from:', `${API_BASE_URL}/messages/farmer`);
       console.log('🔑 Token available:', !!this.token);
-      
+
       if (!this.token) {
         throw new Error('No authentication token found. Please login again.');
       }
-      
+
       const response = await fetch(`${API_BASE_URL}/messages/farmer`, {
         method: 'GET',
         headers: {
@@ -312,7 +312,7 @@ class MessagingService {
       });
 
       console.log('📡 Response status:', response.status);
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('❌ API Error:', errorText);

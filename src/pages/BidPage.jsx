@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  FaGavel, 
+import {
+  FaGavel,
   FaArrowLeft,
-  FaDollarSign, 
-  FaTree, 
+  FaDollarSign,
+  FaTree,
   FaMapMarkerAlt,
   FaWeight,
   FaCalendarAlt,
@@ -53,7 +53,7 @@ const BidPage = () => {
 
   const loadBidHistory = async () => {
     if (!lot) return;
-    
+
     try {
       // Get auth token
       const token = localStorage.getItem('token');
@@ -64,7 +64,8 @@ const BidPage = () => {
       }
 
       // Call real API to get bid history for this lot
-      const response = await fetch(`https://rubbereco-backend.onrender.com/api/bids/history?lotId=${lot.id}`, {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${API_BASE_URL}/bids/history?lotId=${lot.id}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -97,7 +98,8 @@ const BidPage = () => {
   // Fetch public lot details to know if any bidders exist (any broker)
   const loadLotBidSummary = async () => {
     try {
-      const res = await fetch(`https://rubbereco-backend.onrender.com/api/tree-lots/${lot.id}`);
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const res = await fetch(`${API_BASE_URL}/tree-lots/${lot.id}`);
       if (!res.ok) return setHasBidders(false);
       const json = await res.json();
       const bidsArr = json?.data?.bids || [];
@@ -128,13 +130,13 @@ const BidPage = () => {
 
   const handleSubmitBid = async (e) => {
     e.preventDefault();
-    
+
     if (!validateBid()) {
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       const bidData = {
         lotId: lot.id,
@@ -149,7 +151,8 @@ const BidPage = () => {
       }
 
       // Call real API
-      const response = await fetch('https://rubbereco-backend.onrender.com/api/bids', {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${API_BASE_URL}/bids`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -169,16 +172,16 @@ const BidPage = () => {
         duration: 8000,
         persistent: false
       });
-      
+
       // Navigate back to broker dashboard after a short delay
       setTimeout(() => {
         navigate('/broker-dashboard');
       }, 2000);
-      
+
     } catch (error) {
       console.error('Error submitting bid:', error);
       setErrors({ submit: 'Failed to submit bid. Please try again.' });
-      
+
       // Show professional error message
       toastService.error('❌ Failed to submit bid. Please check your connection and try again.', {
         duration: 7000
@@ -279,7 +282,7 @@ const BidPage = () => {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="flex-1">
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">{lot.farmerName}</h2>
                   <div className="space-y-3">
@@ -377,16 +380,16 @@ const BidPage = () => {
                 )}
 
                 <div className="form-actions">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="btn-cancel"
                     onClick={() => navigate('/broker-dashboard')}
                     disabled={isSubmitting}
                   >
                     Cancel
                   </button>
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     className="btn-submit"
                     disabled={isSubmitting}
                   >

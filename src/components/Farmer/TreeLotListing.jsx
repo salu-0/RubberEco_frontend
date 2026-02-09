@@ -36,8 +36,9 @@ const TreeLotListing = ({ isOpen, onClose }) => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      
-      const response = await fetch('https://rubbereco-backend.onrender.com/api/tree-lots/farmer', {
+
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${API_BASE_URL}/tree-lots/farmer`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -64,8 +65,9 @@ const TreeLotListing = ({ isOpen, onClose }) => {
   const handleCreateLot = async (lotData) => {
     try {
       const token = localStorage.getItem('token');
-      
-      const response = await fetch('https://rubbereco-backend.onrender.com/api/tree-lots', {
+
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${API_BASE_URL}/tree-lots`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -92,8 +94,9 @@ const TreeLotListing = ({ isOpen, onClose }) => {
   const handleEditLot = async (lotId, lotData) => {
     try {
       const token = localStorage.getItem('token');
-      
-      const response = await fetch(`https://rubbereco-backend.onrender.com/api/tree-lots/${lotId}`, {
+
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${API_BASE_URL}/tree-lots/${lotId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -104,7 +107,7 @@ const TreeLotListing = ({ isOpen, onClose }) => {
 
       if (response.ok) {
         const data = await response.json();
-        setTreeLots(prev => prev.map(lot => 
+        setTreeLots(prev => prev.map(lot =>
           lot._id === lotId ? data.data : lot
         ));
         setIsEditModalOpen(false);
@@ -127,8 +130,9 @@ const TreeLotListing = ({ isOpen, onClose }) => {
 
     try {
       const token = localStorage.getItem('token');
-      
-      const response = await fetch(`https://rubbereco-backend.onrender.com/api/tree-lots/${lotId}`, {
+
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${API_BASE_URL}/tree-lots/${lotId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -248,212 +252,212 @@ const TreeLotListing = ({ isOpen, onClose }) => {
                     <h3 className="text-xl font-bold text-gray-900">{t('treeLotManagement.myTreeLots', 'My Tree Lots')}</h3>
                     <p className="text-gray-600 mt-1">{t('treeLotManagement.myTreeLotsSubtitle', 'Manage your registered rubber tree lots for lease or sale')}</p>
                   </div>
-        <motion.button
-          className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg hover:from-primary-600 hover:to-primary-700 transition-all duration-200"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setIsCreateModalOpen(true)}
-        >
-          <Plus className="h-5 w-5" />
-          <span>{t('treeLotManagement.addNewLot', 'Add New Lot')}</span>
-        </motion.button>
-      </div>
+                  <motion.button
+                    className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg hover:from-primary-600 hover:to-primary-700 transition-all duration-200"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setIsCreateModalOpen(true)}
+                  >
+                    <Plus className="h-5 w-5" />
+                    <span>{t('treeLotManagement.addNewLot', 'Add New Lot')}</span>
+                  </motion.button>
+                </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg p-4 shadow-sm border">
-          <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <TreePine className="h-6 w-6 text-green-600" />
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">{t('treeLotManagement.totalLots', 'Total Lots')}</p>
-              <p className="text-2xl font-bold text-gray-900">{treeLots.length}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm border">
-          <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <TrendingUp className="h-6 w-6 text-blue-600" />
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">{t('treeLotManagement.lotStatusActive', 'Active')}</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {treeLots.filter(lot => lot.status === 'active').length}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm border">
-          <div className="flex items-center">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <Clock className="h-6 w-6 text-yellow-600" />
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">{t('treeLotManagement.lotStatusDraft', 'Draft')}</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {treeLots.filter(lot => lot.status === 'draft').length}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm border">
-          <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <CheckCircle className="h-6 w-6 text-blue-600" />
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">{t('treeLotManagement.lotStatusSold', 'Sold')}</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {treeLots.filter(lot => lot.status === 'sold').length}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Tree Lots List */}
-      <div className="space-y-4">
-        {treeLots.length === 0 ? (
-          <motion.div
-            className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-lg border-2 border-dashed border-gray-300"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <TreePine className="h-8 w-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('treeLotManagement.noLotsTitle', 'No tree lots yet')}</h3>
-            <p className="text-gray-600 mb-4">{t('treeLotManagement.noLotsSubtitle', 'List your first rubber tree lot for bidding to get started')}</p>
-            <motion.button
-              className="flex items-center space-x-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setIsCreateModalOpen(true)}
-            >
-              <Plus className="h-5 w-5" />
-              <span>{t('treeLotManagement.listFirstLot', 'List your first lot')}</span>
-            </motion.button>
-          </motion.div>
-        ) : (
-          treeLots.map((lot, index) => {
-            const daysRemaining = getDaysRemaining(lot.biddingEndDate);
-            const isUrgent = daysRemaining <= 3 && lot.status === 'active';
-
-            return (
-              <motion.div
-                key={lot._id}
-                className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <div className="p-6">
-                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                    {/* Lot Info */}
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <span className="text-lg font-bold text-gray-900">#{lot.lotId}</span>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(lot.status)}`}>
-                          {getStatusIcon(lot.status)}
-                          <span className="ml-1 capitalize">{lot.status}</span>
-                        </span>
-                        {isUrgent && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                            <Clock className="h-3 w-3 mr-1" />
-                            {t('treeLotManagement.daysLeft', '{{count}} days left', { count: daysRemaining })}
-                          </span>
-                        )}
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="bg-white rounded-lg p-4 shadow-sm border">
+                    <div className="flex items-center">
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        <TreePine className="h-6 w-6 text-green-600" />
                       </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div className="flex items-center space-x-2">
-                          <MapPin className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm text-gray-600">{lot.location}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <TreePine className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm text-gray-600">{lot.numberOfTrees} {t('treeLotManagement.trees','trees')}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <DollarSign className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm text-gray-600">{formatCurrency(lot.minimumPrice)}</span>
-                        </div>
-                      </div>
-
-                      {lot.description && (
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{lot.description}</p>
-                      )}
-
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <div className="flex items-center space-x-1">
-                          <Eye className="h-4 w-4" />
-                          <span>{lot.viewCount || 0} {t('treeLotManagement.views','views')}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Users className="h-4 w-4" />
-                          <span>{lot.bidCount || 0} {t('treeLotManagement.bids','bids')}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>{t('treeLotManagement.ends','Ends')}: {new Date(lot.biddingEndDate).toLocaleDateString()}</span>
-                        </div>
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-gray-600">{t('treeLotManagement.totalLots', 'Total Lots')}</p>
+                        <p className="text-2xl font-bold text-gray-900">{treeLots.length}</p>
                       </div>
                     </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center space-x-2 mt-4 lg:mt-0 lg:ml-6">
-                      <motion.button
-                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => {
-                          console.log('✏️ Edit button clicked for lot:', lot);
-                          setSelectedLot(lot);
-                          setIsEditModalOpen(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </motion.button>
-                      <motion.button
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => handleDeleteLot(lot._id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </motion.button>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 shadow-sm border">
+                    <div className="flex items-center">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <TrendingUp className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-gray-600">{t('treeLotManagement.lotStatusActive', 'Active')}</p>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {treeLots.filter(lot => lot.status === 'active').length}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 shadow-sm border">
+                    <div className="flex items-center">
+                      <div className="p-2 bg-yellow-100 rounded-lg">
+                        <Clock className="h-6 w-6 text-yellow-600" />
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-gray-600">{t('treeLotManagement.lotStatusDraft', 'Draft')}</p>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {treeLots.filter(lot => lot.status === 'draft').length}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 shadow-sm border">
+                    <div className="flex items-center">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <CheckCircle className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-gray-600">{t('treeLotManagement.lotStatusSold', 'Sold')}</p>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {treeLots.filter(lot => lot.status === 'sold').length}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </motion.div>
-            );
-          })
-        )}
-      </div>
 
-      {/* Create Tree Lot Modal */}
-      <CreateTreeLotModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSubmit={handleCreateLot}
-      />
+                {/* Tree Lots List */}
+                <div className="space-y-4">
+                  {treeLots.length === 0 ? (
+                    <motion.div
+                      className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-lg border-2 border-dashed border-gray-300"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                        <TreePine className="h-8 w-8 text-gray-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('treeLotManagement.noLotsTitle', 'No tree lots yet')}</h3>
+                      <p className="text-gray-600 mb-4">{t('treeLotManagement.noLotsSubtitle', 'List your first rubber tree lot for bidding to get started')}</p>
+                      <motion.button
+                        className="flex items-center space-x-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setIsCreateModalOpen(true)}
+                      >
+                        <Plus className="h-5 w-5" />
+                        <span>{t('treeLotManagement.listFirstLot', 'List your first lot')}</span>
+                      </motion.button>
+                    </motion.div>
+                  ) : (
+                    treeLots.map((lot, index) => {
+                      const daysRemaining = getDaysRemaining(lot.biddingEndDate);
+                      const isUrgent = daysRemaining <= 3 && lot.status === 'active';
 
-      {/* Edit Tree Lot Modal */}
-      {selectedLot && (
-        <CreateTreeLotModal
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setSelectedLot(null);
-          }}
-          onSubmit={(lotData) => handleEditLot(selectedLot._id, lotData)}
-          initialData={selectedLot}
-          isEdit={true}
-        />
-      )}
+                      return (
+                        <motion.div
+                          key={lot._id}
+                          className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.5, delay: index * 0.1 }}
+                        >
+                          <div className="p-6">
+                            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                              {/* Lot Info */}
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-3 mb-3">
+                                  <span className="text-lg font-bold text-gray-900">#{lot.lotId}</span>
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(lot.status)}`}>
+                                    {getStatusIcon(lot.status)}
+                                    <span className="ml-1 capitalize">{lot.status}</span>
+                                  </span>
+                                  {isUrgent && (
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      {t('treeLotManagement.daysLeft', '{{count}} days left', { count: daysRemaining })}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                  <div className="flex items-center space-x-2">
+                                    <MapPin className="h-4 w-4 text-gray-400" />
+                                    <span className="text-sm text-gray-600">{lot.location}</span>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <TreePine className="h-4 w-4 text-gray-400" />
+                                    <span className="text-sm text-gray-600">{lot.numberOfTrees} {t('treeLotManagement.trees', 'trees')}</span>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <DollarSign className="h-4 w-4 text-gray-400" />
+                                    <span className="text-sm text-gray-600">{formatCurrency(lot.minimumPrice)}</span>
+                                  </div>
+                                </div>
+
+                                {lot.description && (
+                                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{lot.description}</p>
+                                )}
+
+                                <div className="flex items-center space-x-4 text-sm text-gray-500">
+                                  <div className="flex items-center space-x-1">
+                                    <Eye className="h-4 w-4" />
+                                    <span>{lot.viewCount || 0} {t('treeLotManagement.views', 'views')}</span>
+                                  </div>
+                                  <div className="flex items-center space-x-1">
+                                    <Users className="h-4 w-4" />
+                                    <span>{lot.bidCount || 0} {t('treeLotManagement.bids', 'bids')}</span>
+                                  </div>
+                                  <div className="flex items-center space-x-1">
+                                    <Calendar className="h-4 w-4" />
+                                    <span>{t('treeLotManagement.ends', 'Ends')}: {new Date(lot.biddingEndDate).toLocaleDateString()}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Actions */}
+                              <div className="flex items-center space-x-2 mt-4 lg:mt-0 lg:ml-6">
+                                <motion.button
+                                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={() => {
+                                    console.log('✏️ Edit button clicked for lot:', lot);
+                                    setSelectedLot(lot);
+                                    setIsEditModalOpen(true);
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </motion.button>
+                                <motion.button
+                                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={() => handleDeleteLot(lot._id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </motion.button>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Create Tree Lot Modal */}
+                <CreateTreeLotModal
+                  isOpen={isCreateModalOpen}
+                  onClose={() => setIsCreateModalOpen(false)}
+                  onSubmit={handleCreateLot}
+                />
+
+                {/* Edit Tree Lot Modal */}
+                {selectedLot && (
+                  <CreateTreeLotModal
+                    isOpen={isEditModalOpen}
+                    onClose={() => {
+                      setIsEditModalOpen(false);
+                      setSelectedLot(null);
+                    }}
+                    onSubmit={(lotData) => handleEditLot(selectedLot._id, lotData)}
+                    initialData={selectedLot}
+                    isEdit={true}
+                  />
+                )}
               </div>
             </div>
           </motion.div>
