@@ -239,7 +239,7 @@ const Nursery = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white" data-testid="nursery-page">
       <Navbar />
       <div className="pt-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
@@ -255,20 +255,35 @@ const Nursery = () => {
           </div>
         </div>
         {loading ? (
-          <p>Loading...</p>
+          <p data-testid="nursery-loading">{t('common.loading', 'Loading...')}</p>
         ) : error ? (
-          <p className="text-red-600">{error}</p>
+          <p className="text-red-600" data-testid="nursery-error">{error}</p>
+        ) : centers.length === 0 ? (
+          <p className="text-center text-gray-600 py-12" data-testid="nursery-empty">
+            {t('nursery.noCenters', 'No nursery centers are available.')}
+          </p>
         ) : (
           <>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10" data-testid="nursery-centers-grid">
             {centers.map((c, idx) => {
               const imgSrc = resolveCenterImage(c.name);
               const fallbackSrc = imageList.length > 0 ? imageList[idx % imageList.length] : undefined;
               return (
                 <div 
                   key={c._id} 
+                  role="button"
+                  tabIndex={0}
+                  data-testid="nursery-card"
+                  data-nursery-center-id={c._id}
+                  aria-label={`${c.name}, ${t('nursery.openCenter', 'Open nursery center')}`}
                   className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer transform hover:-translate-y-2 hover:scale-105 border border-gray-100"
                   onClick={() => openCenter(c)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      openCenter(c);
+                    }
+                  }}
                 >
                   {/* Image Container with Overlay */}
                   <div className="relative overflow-hidden">

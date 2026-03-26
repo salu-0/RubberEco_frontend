@@ -384,16 +384,16 @@ const NurseryCenter = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white" data-testid="nursery-center-page">
       <Navbar />
       <div className="pt-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <button className="mb-6 text-emerald-700 hover:text-emerald-800 font-medium" onClick={() => navigate(-1)}>
           ← {t('nurseryCenter.backToCenters', 'Back to Nursery Centers')}
         </button>
         {loading ? (
-          <div>{t('common.loading', 'Loading...')}</div>
+          <div data-testid="nursery-center-loading">{t('common.loading', 'Loading...')}</div>
         ) : !center ? (
-          <div className="text-red-600">{t('nurseryCenter.centerNotFound', 'Center not found.')}</div>
+          <div className="text-red-600" data-testid="nursery-center-not-found">{t('nurseryCenter.centerNotFound', 'Center not found.')}</div>
         ) : (
           <div className="space-y-6">
             <div className="bg-gradient-to-br from-emerald-50 to-green-50 p-6 rounded-2xl border border-emerald-100">
@@ -411,7 +411,7 @@ const NurseryCenter = () => {
               </div>
             </div>
 
-            <div className="bg-white border border-emerald-200 rounded-2xl shadow-sm overflow-hidden">
+            <div className="bg-white border border-emerald-200 rounded-2xl shadow-sm overflow-hidden" data-testid="nursery-booking-form">
               <div className="bg-gradient-to-r from-emerald-600 to-green-600 px-6 py-4">
                 <h4 className="text-xl font-bold text-white">{t('nurseryCenter.bookSaplings', 'Book Saplings')}</h4>
                 <p className="text-emerald-100 text-sm mt-1">{t('nurseryCenter.bookSaplingsSub', 'Select your preferred variety and quantity')}</p>
@@ -443,6 +443,7 @@ const NurseryCenter = () => {
                   <label className="block text-sm font-semibold text-gray-800 mb-3">{t('nurseryCenter.chooseVariety', 'Choose Variety')} *</label>
                   <div className="relative">
                     <select
+                      data-testid="nursery-variety-select"
                       className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 bg-white hover:border-gray-300"
                       value={booking.variety}
                       onChange={(e) => setBooking({ ...booking, variety: e.target.value, plantId: '' })}
@@ -479,6 +480,7 @@ const NurseryCenter = () => {
                   <div>
                     <label className="block text-sm font-semibold text-gray-800 mb-3">{t('nurseryCenter.quantity', 'Quantity')} *</label>
                     <input
+                      data-testid="nursery-quantity-input"
                       type="number"
                       min={(selectedPlant?.minOrderQty) || 1}
                       className={`w-full border-2 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all duration-200 bg-white ${(booking.quantity !== '' && (booking.quantity < 0 || booking.quantity > 9999999 || (selectedPlant && booking.quantity > (selectedPlant.stockAvailable || 0))))
@@ -652,6 +654,8 @@ const NurseryCenter = () => {
 
 
                 <button
+                  type="button"
+                  data-testid="nursery-book-submit"
                   disabled={placing || !booking.variety || (selectedPlant && (booking.quantity < (selectedPlant.minOrderQty || 1) || booking.quantity > (selectedPlant.stockAvailable || 0)))}
                   className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 disabled:from-gray-400 disabled:to-gray-400 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl"
                   onClick={placeBooking}

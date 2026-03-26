@@ -99,21 +99,16 @@ const Navbar = ({ transparent = false, fixed = true }) => {
     }
 
     // Regular users and non-authenticated users get full navigation
-    const baseItems = [
+    return [
       { name: t('navigation.home'), path: '/' },
       { name: t('navigation.features'), path: '/', scrollTo: 'features' },
       { name: t('navigation.training'), path: '/training' },
       { name: t('navigation.markets'), path: '/markets' },
-      { name: t('navigation.nursery'), path: '/nursery' },
-      { name: t('navigation.shop'), path: '/shop' }
+      { name: t('navigation.nursery'), path: '/nursery', dataTestId: 'nav-nursery' },
+      { name: t('navigation.shop'), path: '/shop' },
+      // Same as other farmer routes: always visible; /weather is protected in App.jsx
+      { name: t('navigation.weather'), path: '/weather' }
     ];
-
-    // If a farmer (or any logged-in user) is present, show Weather insight link
-    if (user) {
-      baseItems.push({ name: t('navigation.weather'), path: '/weather' });
-    }
-
-    return baseItems;
   };
 
   const navItems = getNavItems();
@@ -211,6 +206,7 @@ const Navbar = ({ transparent = false, fixed = true }) => {
               <motion.div key={item.name}>
                 <Link
                   to={item.path}
+                  data-testid={item.dataTestId}
                   onClick={(e) => handleNavClick(item, e)}
                   className={`font-medium transition-all duration-300 relative group ${
                     item.highlight
@@ -338,6 +334,7 @@ const Navbar = ({ transparent = false, fixed = true }) => {
                 <Link
                   key={item.name}
                   to={item.path}
+                  data-testid={item.dataTestId}
                   className={`font-medium transition-all duration-300 py-2 ${
                     item.highlight
                       ? item.color === 'orange'

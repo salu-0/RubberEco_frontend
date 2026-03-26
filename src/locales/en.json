@@ -881,6 +881,8 @@
   "nursery": {
     "rubber": "Rubber",
     "nursery": "Nursery",
+    "noCenters": "No nursery centers are available.",
+    "openCenter": "Open nursery center",
     "discoverNearby": "Discover nearby centers, varieties and booking info",
     "viewDetails": "View Details",
     "varietiesAvailable": "Varieties Available",

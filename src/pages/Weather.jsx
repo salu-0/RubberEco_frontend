@@ -334,6 +334,15 @@ const Weather = () => {
         </div>
       </div>
 
+      {/* Kerala Districts Rainfall Map */}
+      <div className="mt-8">
+        <KeralaRainfallMap 
+          forecast={forecast} 
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
+        />
+      </div>
+
       {/* Market Price Prediction Section */}
       <div className="mt-8">
         <div className="bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-900 rounded-xl shadow-xl overflow-hidden">
@@ -542,15 +551,6 @@ const Weather = () => {
             </div>
           )}
         </div>
-      </div>
-
-      {/* Kerala Districts Rainfall Map */}
-      <div className="mt-8">
-        <KeralaRainfallMap 
-          forecast={forecast} 
-          selectedMonth={selectedMonth}
-          selectedYear={selectedYear}
-        />
       </div>
       </div>
     </div>

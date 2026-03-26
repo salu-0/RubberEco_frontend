@@ -873,6 +873,12 @@ const Dashboard = () => {
 
 
 
+  const adminStatTestId = (name) =>
+    String(name || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+
   const sidebarItems = [
     { name: 'Overview', icon: LayoutDashboard, id: 'overview' },
     { name: 'Manage Users', icon: Users, id: 'users' },
@@ -924,6 +930,7 @@ const Dashboard = () => {
 
   return (
     <div
+      data-testid="admin-dashboard"
       className={`h-screen flex overflow-hidden ${darkMode ? 'dark bg-gradient-to-br from-black via-gray-900 to-black' : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'}`}
       style={{ backgroundColor: darkMode ? '#000000' : '#f9fafb' }}
     >
@@ -943,6 +950,9 @@ const Dashboard = () => {
             {sidebarItems.map((item, index) => (
               <motion.button
                 key={item.id}
+                type="button"
+                data-testid={`admin-sidebar-${item.id}`}
+                aria-current={activeTab === item.id ? 'page' : undefined}
                 onClick={() => setActiveTab(item.id)}
                 className={`w-full flex items-center px-4 py-3 text-left rounded-xl transition-all duration-300 relative group ${
                   activeTab === item.id
@@ -1101,8 +1111,13 @@ const Dashboard = () => {
           </div>
         </header>
 
-        {/* Dashboard Content */}
-        <main className={`flex-1 overflow-y-auto p-6 ${darkMode ? 'bg-gradient-to-br from-black via-gray-900 to-black' : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'}`} style={{ height: 'calc(100vh - 80px)' }}>
+        {/* Dashboard Content — semantic main for a11y & automation (//main only exists here, not on /login) */}
+        <main
+          data-testid="admin-main"
+          id="admin-dashboard-main"
+          className={`flex-1 overflow-y-auto p-6 ${darkMode ? 'bg-gradient-to-br from-black via-gray-900 to-black' : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'}`}
+          style={{ height: 'calc(100vh - 80px)' }}
+        >
 
 
           {activeTab === 'overview' && (
@@ -1113,10 +1128,11 @@ const Dashboard = () => {
               className="w-full"
             >
               {/* Enhanced Stats Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 w-full">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 w-full" data-testid="admin-stats-grid">
                 {stats.map((stat, index) => (
                   <motion.div
                     key={stat.name}
+                    data-testid={`admin-stat-${adminStatTestId(stat.name)}`}
                     className={`${darkMode ? 'bg-gray-800/50 border-green-500/20' : 'bg-white'} backdrop-blur-sm rounded-2xl p-6 shadow-xl border ${
                       darkMode ? 'border-green-500/20' : 'border-gray-100'
                     } relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:shadow-green-500/10 transition-all duration-300`}
