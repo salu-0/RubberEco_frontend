@@ -3,22 +3,8 @@
  * Generates and downloads PDF certificates for completed training modules
  */
 
-// Check if dependencies are available, otherwise provide fallback
-let jsPDF = null;
-let html2canvas = null;
-
-try {
-  const jsPDFModule = require('jspdf');
-  jsPDF = jsPDFModule.jsPDF || jsPDFModule;
-} catch (e) {
-  console.warn('jsPDF not available, will use fallback method');
-}
-
-try {
-  html2canvas = require('html2canvas');
-} catch (e) {
-  console.warn('html2canvas not available, will use fallback method');
-}
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 
 /**
  * Format enrollment data for certificate generation
@@ -52,13 +38,7 @@ export const canGenerateCertificate = (enrollment, progress) => {
  */
 export const generateCertificatePDF = async (certificateData) => {
   try {
-    // If we have jsPDF, use it to create a professional certificate
-    if (jsPDF && html2canvas) {
-      await generateAdvancedCertificate(certificateData);
-    } else {
-      // Fallback: create a simple downloadable certificate using Canvas
-      await generateSimpleCertificate(certificateData);
-    }
+    await generateAdvancedCertificate(certificateData);
   } catch (error) {
     console.error('Error generating certificate:', error);
     // Final fallback: create a text-based certificate

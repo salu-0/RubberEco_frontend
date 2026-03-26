@@ -1,6 +1,8 @@
+import { getApiBaseUrl } from './apiBaseUrl';
+
 // API utility functions for training enrollment
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://rubbereco-backend.onrender.com/api';
+const API_BASE_URL = getApiBaseUrl();
 
 // Get auth headers with token
 const getAuthHeaders = () => {

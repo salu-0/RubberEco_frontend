@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getApiBaseUrl } from '../utils/apiBaseUrl';
 import { 
   Cloud, 
   CloudRain, 
@@ -65,7 +66,7 @@ const LiveWeather = ({ defaultDistrict = 'Kottayam' }) => {
         'Authorization': `Bearer ${token}`
       };
 
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiBase = getApiBaseUrl();
 
       // Build query parameters
       let currentQuery, forecastQuery;
@@ -82,8 +83,8 @@ const LiveWeather = ({ defaultDistrict = 'Kottayam' }) => {
 
       // Fetch current weather and 5-day forecast in parallel
       const [currentRes, forecastRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/weather/current?${currentQuery}`, { headers }),
-        fetch(`${API_BASE_URL}/api/weather/forecast?${forecastQuery}`, { headers })
+        fetch(`${apiBase}/weather/current?${currentQuery}`, { headers }),
+        fetch(`${apiBase}/weather/forecast?${forecastQuery}`, { headers })
       ]);
 
       if (!currentRes.ok || !forecastRes.ok) {
