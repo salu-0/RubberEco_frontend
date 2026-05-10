@@ -397,10 +397,7 @@ const Nursery = () => {
                     )}
                     
                     {/* Action Button */}
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-gray-500">
-                        {t('nursery.clickToViewVarieties')}
-                      </div>
+                    <div className="flex items-center justify-end">
                       <div className="bg-emerald-500 text-white p-2 rounded-full group-hover:bg-emerald-600 transition-colors duration-300">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

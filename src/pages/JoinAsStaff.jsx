@@ -185,7 +185,7 @@ const JoinAsStaff = () => {
       // Validate file type
       const allowedTypes = {
         photo: ['image/jpeg', 'image/png', 'image/jpg'],
-        idProof: ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'],
+        idProof: ['image/jpeg', 'image/png', 'image/jpg'],
         resume: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
       };
       
@@ -959,12 +959,12 @@ const JoinAsStaff = () => {
                   {/* ID Proof Upload */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ID Proof * <span className="text-xs text-gray-500">(JPG, PNG, PDF - Max 5MB)</span>
+                      ID Proof * <span className="text-xs text-gray-500">(JPG, PNG only - Max 5MB)</span>
                     </label>
                     <div className="relative">
                       <input
                         type="file"
-                        accept="image/jpeg,image/png,image/jpg,application/pdf"
+                        accept="image/jpeg,image/png,image/jpg"
                         onChange={(e) => handleFileUpload('idProof', e.target.files[0])}
                         className="hidden"
                         id="idproof-upload"

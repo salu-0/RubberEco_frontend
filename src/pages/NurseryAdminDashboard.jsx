@@ -34,6 +34,7 @@ const NurseryAdminDashboard = () => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [bookingDecisionSupported, setBookingDecisionSupported] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('nurseryAdminToken');
@@ -243,53 +244,183 @@ const NurseryAdminDashboard = () => {
 
   const updateBookingStatus = async (bookingId, status) => {
     try {
-      const token = localStorage.getItem('nurseryAdminToken');
-      const response = await fetch(`${API_BASE_URL}/nursery-admin/bookings/${bookingId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status })
-      });
-      
-      if (response.ok) {
-        fetchBookings(); // Refresh bookings list
-        return true;
+      if (!bookingDecisionSupported) {
+        throw new Error('Booking approve/reject is not available on current backend. Please enable nursery-admin booking decision routes.');
       }
-      return false;
+
+      const nurseryAdminToken = localStorage.getItem('nurseryAdminToken') || '';
+      const tokens = Array.from(new Set([nurseryAdminToken].filter(Boolean)));
+      const action = status === 'approved' ? 'approve' : 'reject';
+
+      if (tokens.length === 0) {
+        throw new Error('No auth token found. Please login again.');
+      }
+
+      let lastErrorMessage = '';
+      let successPayload = null;
+      let success = false;
+      let generic404Count = 0;
+      const requestPlan = [
+        {
+          url: `${API_BASE_URL}/nursery-admin/bookings/${bookingId}/decision`,
+          body: { action }
+        },
+        {
+          url: `${API_BASE_URL}/nursery-admin/bookings/${bookingId}/status`,
+          body: { status }
+        }
+      ];
+
+      for (const token of tokens) {
+        for (const req of requestPlan) {
+          const response = await fetch(req.url, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(req.body)
+          });
+
+          if (response.ok) {
+            successPayload = await response.json().catch(() => ({}));
+            success = true;
+            break;
+          }
+
+          const errorData = await response.json().catch(() => ({}));
+          lastErrorMessage = errorData?.message || `HTTP ${response.status}`;
+          const isGeneric404 =
+            response.status === 404 &&
+            (!errorData?.message ||
+              /^http 404$/i.test(String(lastErrorMessage)) ||
+              /cannot\s+put/i.test(String(lastErrorMessage)));
+          if (isGeneric404) {
+            generic404Count += 1;
+          }
+
+          // Try next endpoint for route mismatch or role mismatch.
+          if (response.status === 401 || response.status === 403 || response.status === 404) {
+            continue;
+          }
+
+          // Any other error likely indicates backend-side business failure.
+          break;
+        }
+        if (success) break;
+      }
+
+      if (!success) {
+        const triedAllNurseryAdminEndpoints = generic404Count >= requestPlan.length;
+        if (triedAllNurseryAdminEndpoints) {
+          setBookingDecisionSupported(false);
+          throw new Error('Backend missing nursery-admin booking decision endpoint. Please add `/nursery-admin/bookings/:id/decision` or `/nursery-admin/bookings/:id/status`.');
+        }
+        if (/Admin or staff only/i.test(lastErrorMessage)) {
+          throw new Error('Backend currently blocks nursery-admin on this action endpoint. Please enable nursery-admin access for booking decisions.');
+        }
+        if (/Nursery admin not found/i.test(lastErrorMessage)) {
+          throw new Error('Session is invalid for nursery actions. Please logout and login again via Nursery Admin login.');
+        }
+        throw new Error(lastErrorMessage || 'Failed to update booking status');
+      }
+
+      toastService.success(
+        successPayload?.message ||
+        (status === 'approved'
+          ? 'Booking approved successfully. Farmer has been notified.'
+          : 'Booking rejected successfully. Farmer has been notified.')
+      );
+      fetchBookings(); // Refresh bookings list
+      return true;
     } catch (error) {
       console.error('Error updating booking status:', error);
+      toastService.error(error.message || 'Failed to update booking status.');
       return false;
     }
   };
 
+  const tabs = [
+    { id: 'dashboard', name: 'Dashboard', icon: ChartBarIcon },
+    { id: 'plants', name: 'Plant Management', icon: CubeIcon },
+    { id: 'bookings', name: 'Bookings', icon: UserGroupIcon },
+    { id: 'shipments', name: 'Shipments', icon: TruckIcon },
+    { id: 'payments', name: 'Payments', icon: CreditCardIcon },
+    { id: 'settings', name: 'Settings', icon: CogIcon }
+  ];
+
+  const quickStats = [
+    {
+      id: 'plants',
+      label: 'Total Plants',
+      value: stats.totalPlants,
+      icon: CubeIcon,
+      iconClass: 'text-emerald-600',
+      chipClass: 'bg-emerald-50 text-emerald-700 border-emerald-100'
+    },
+    {
+      id: 'stock',
+      label: 'Total Stock',
+      value: stats.totalStock,
+      icon: ChartBarIcon,
+      iconClass: 'text-blue-600',
+      chipClass: 'bg-blue-50 text-blue-700 border-blue-100'
+    },
+    {
+      id: 'bookings',
+      label: 'Total Bookings',
+      value: stats.totalBookings,
+      icon: UserGroupIcon,
+      iconClass: 'text-amber-600',
+      chipClass: 'bg-amber-50 text-amber-700 border-amber-100'
+    },
+    {
+      id: 'revenue',
+      label: 'Total Revenue',
+      value: `₹${Number(stats.totalRevenue || 0).toLocaleString()}`,
+      icon: CurrencyDollarIcon,
+      iconClass: 'text-violet-600',
+      chipClass: 'bg-violet-50 text-violet-700 border-violet-100'
+    }
+  ];
+
+  const bookingStatusClass = (status) => {
+    if (status === 'pending') return 'bg-amber-50 text-amber-700 border-amber-100';
+    if (status === 'approved') return 'bg-emerald-50 text-emerald-700 border-emerald-100';
+    if (status === 'completed') return 'bg-blue-50 text-blue-700 border-blue-100';
+    return 'bg-rose-50 text-rose-700 border-rose-100';
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/40 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-14 w-14 border-4 border-emerald-100 border-b-emerald-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/90 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <CubeIcon className="h-8 w-8 text-green-600 mr-3" />
+          <div className="flex flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-emerald-50 p-2.5 ring-1 ring-emerald-100">
+                <CubeIcon className="h-6 w-6 text-emerald-600" />
+              </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Nursery Admin Dashboard</h1>
-                <p className="text-sm text-gray-500">{user?.nurseryCenterName}</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Nursery Admin Dashboard</h1>
+                <p className="text-sm text-slate-500">{user?.nurseryCenterName || 'Nursery Operations Center'}</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Welcome, {user?.name || 'Admin'}</span>
+            <div className="flex items-center justify-between gap-3 md:justify-end">
+              <span className="inline-flex items-center rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs sm:text-sm font-medium text-emerald-700">
+                Welcome, {user?.name || 'Admin'}
+              </span>
               <button
                 onClick={handleLogout}
-                className="flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md"
+                className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
               >
                 <ArrowRightOnRectangleIcon className="h-4 w-4 mr-2" />
                 Logout
@@ -299,149 +430,136 @@ const NurseryAdminDashboard = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Navigation Tabs */}
-        <div className="mb-8">
-          <nav className="flex space-x-8">
-            {[
-              { id: 'dashboard', name: 'Dashboard', icon: ChartBarIcon },
-              { id: 'plants', name: 'Plant Management', icon: CubeIcon },
-              { id: 'bookings', name: 'Bookings', icon: UserGroupIcon },
-              { id: 'shipments', name: 'Shipments', icon: TruckIcon },
-              { id: 'payments', name: 'Payments', icon: CreditCardIcon },
-              { id: 'settings', name: 'Settings', icon: CogIcon }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                  activeTab === tab.id
-                    ? 'bg-green-100 text-green-700'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <tab.icon className="h-4 w-4 mr-2" />
-                {tab.name}
-              </button>
-            ))}
-          </nav>
-        </div>
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">
+          <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-3 shadow-sm lg:sticky lg:top-24">
+            <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Navigation</p>
+            <nav className="flex flex-col gap-1.5">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`inline-flex items-center rounded-xl px-4 py-3 text-sm font-medium transition ${
+                    activeTab === tab.id
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                  }`}
+                >
+                  <tab.icon className="mr-2.5 h-4 w-4" />
+                  {tab.name}
+                </button>
+              ))}
+            </nav>
+          </aside>
 
-        {/* Dashboard Tab */}
-        {activeTab === 'dashboard' && (
-          <div>
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <div className="bg-white p-6 rounded-lg shadow">
-                <div className="flex items-center">
-                  <CubeIcon className="h-8 w-8 text-blue-600" />
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Total Plants</p>
-                    <p className="text-2xl font-semibold text-gray-900">{stats.totalPlants}</p>
-                  </div>
+          <main>
+            {/* Dashboard Tab */}
+            {activeTab === 'dashboard' && (
+              <div>
+            <div className="mb-6 rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-600 to-green-600 px-6 py-5 text-white shadow-sm">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.16em] text-emerald-100">Overview</p>
+                  <h2 className="mt-1 text-xl font-semibold">Nursery Performance Snapshot</h2>
+                  <p className="mt-1 text-sm text-emerald-50/90">Track inventory, bookings, and revenue from one clean workspace.</p>
                 </div>
-              </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow">
-                <div className="flex items-center">
-                  <ChartBarIcon className="h-8 w-8 text-green-600" />
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Total Stock</p>
-                    <p className="text-2xl font-semibold text-gray-900">{stats.totalStock}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow">
-                <div className="flex items-center">
-                  <UserGroupIcon className="h-8 w-8 text-yellow-600" />
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Total Bookings</p>
-                    <p className="text-2xl font-semibold text-gray-900">{stats.totalBookings}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow">
-                <div className="flex items-center">
-                  <CurrencyDollarIcon className="h-8 w-8 text-purple-600" />
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Total Revenue</p>
-                    <p className="text-2xl font-semibold text-gray-900">₹{stats.totalRevenue.toLocaleString()}</p>
-                  </div>
+                <div className="inline-flex w-fit items-center rounded-xl bg-white/15 px-4 py-2 text-sm font-medium ring-1 ring-white/20">
+                  Pending: {stats.pendingBookings || 0} | Completed: {stats.completedBookings || 0}
                 </div>
               </div>
             </div>
 
-            {/* Recent Bookings */}
-            <div className="bg-white rounded-lg shadow">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">Recent Bookings</h3>
-              </div>
-              <div className="p-6">
-                {bookings.slice(0, 5).map((booking) => (
-                  <div key={booking._id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {quickStats.map((item) => (
+                <div key={item.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md">
+                  <div className="flex items-start justify-between">
                     <div>
-                      <p className="font-medium text-gray-900">{booking.farmerName}</p>
-                      <p className="text-sm text-gray-500">{booking.plantName} - Qty: {booking.quantity}</p>
+                      <p className="text-sm font-medium text-slate-500">{item.label}</p>
+                      <p className="mt-1 text-3xl font-bold tracking-tight text-slate-900">{item.value}</p>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        booking.status === 'approved' ? 'bg-green-100 text-green-800' :
-                        booking.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
+                    <div className={`rounded-xl border p-2.5 ${item.chipClass}`}>
+                      <item.icon className={`h-5 w-5 ${item.iconClass}`} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Recent Bookings */}
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+                <h3 className="text-lg font-semibold text-slate-900">Recent Bookings</h3>
+                <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+                  Last {Math.min(bookings.length, 5)} entries
+                </span>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {bookings.length === 0 && (
+                  <div className="px-6 py-10 text-center">
+                    <p className="text-sm font-medium text-slate-500">No bookings available yet.</p>
+                  </div>
+                )}
+                {bookings.slice(0, 5).map((booking) => (
+                  <div key={booking._id} className="flex flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="font-semibold text-slate-900">{booking.farmerName}</p>
+                      <p className="text-sm text-slate-500">{booking.plantName} | Qty: {booking.quantity}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium capitalize ${bookingStatusClass(booking.status)}`}>
                         {booking.status}
                       </span>
-                      <span className="text-sm font-medium text-gray-900">₹{booking.amountTotal}</span>
+                      <span className="text-sm font-semibold text-slate-900">₹{booking.amountTotal}</span>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
-        )}
+            )}
 
-        {/* Plants Tab */}
-        {activeTab === 'plants' && (
-          <PlantManagement 
-            plants={plants} 
-            onUpdatePlant={updatePlant}
-            onRefresh={fetchPlants}
-          />
-        )}
+            {/* Plants Tab */}
+            {activeTab === 'plants' && (
+              <PlantManagement
+                plants={plants}
+                onUpdatePlant={updatePlant}
+                onRefresh={fetchPlants}
+              />
+            )}
 
-        {/* Bookings Tab */}
-        {activeTab === 'bookings' && (
-          <BookingManagement 
-            bookings={bookings} 
-            onUpdateStatus={updateBookingStatus}
-            onRefresh={fetchBookings}
-          />
-        )}
+            {/* Bookings Tab */}
+            {activeTab === 'bookings' && (
+              <BookingManagement
+                bookings={bookings}
+                onUpdateStatus={updateBookingStatus}
+                onRefresh={fetchBookings}
+              />
+            )}
 
-        {/* Shipments Tab */}
-        {activeTab === 'shipments' && (
-          <ShipmentManagement 
-            shipments={shipments} 
-            bookings={bookings}
-            onRefresh={fetchShipments}
-          />
-        )}
+            {/* Shipments Tab */}
+            {activeTab === 'shipments' && (
+              <ShipmentManagement
+                shipments={shipments}
+                bookings={bookings}
+                onRefresh={fetchShipments}
+              />
+            )}
 
-        {/* Payments Tab */}
-        {activeTab === 'payments' && (
-          <PaymentManagement 
-            payments={payments} 
-            onRefresh={fetchPayments}
-          />
-        )}
+            {/* Payments Tab */}
+            {activeTab === 'payments' && (
+              <PaymentManagement
+                payments={payments}
+                onRefresh={fetchPayments}
+              />
+            )}
 
-        {/* Settings Tab */}
-        {activeTab === 'settings' && (
-          <Settings user={user} onUpdateProfile={fetchUserProfile} />
-        )}
+            {/* Settings Tab */}
+            {activeTab === 'settings' && (
+              <Settings user={user} onUpdateProfile={fetchUserProfile} />
+            )}
+          </main>
+        </div>
       </div>
     </div>
   );
@@ -631,12 +749,13 @@ const PlantManagement = ({ plants, onUpdatePlant, onRefresh }) => {
 const BookingManagement = ({ bookings, onUpdateStatus, onRefresh }) => {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [actingBookingId, setActingBookingId] = useState(null);
 
   const handleStatusUpdate = async (bookingId, newStatus) => {
+    setActingBookingId(bookingId);
     const success = await onUpdateStatus(bookingId, newStatus);
-    if (success) {
-      // Status updated successfully
-    }
+    setActingBookingId(null);
+    return success;
   };
 
   const openDetails = (b) => {
@@ -715,15 +834,17 @@ const BookingManagement = ({ bookings, onUpdateStatus, onRefresh }) => {
                       <>
                         <button
                           onClick={() => handleStatusUpdate(booking._id, 'approved')}
-                          className="text-green-600 hover:text-green-900"
+                          disabled={actingBookingId === booking._id}
+                          className={`text-green-600 hover:text-green-900 ${actingBookingId === booking._id ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                          Approve
+                          {actingBookingId === booking._id ? 'Updating...' : 'Approve'}
                         </button>
                         <button
                           onClick={() => handleStatusUpdate(booking._id, 'rejected')}
-                          className="text-red-600 hover:text-red-900"
+                          disabled={actingBookingId === booking._id}
+                          className={`text-red-600 hover:text-red-900 ${actingBookingId === booking._id ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                          Reject
+                          {actingBookingId === booking._id ? 'Updating...' : 'Reject'}
                         </button>
                       </>
                     )}

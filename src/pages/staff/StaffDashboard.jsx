@@ -804,7 +804,7 @@ const StaffDashboard = ({ darkMode }) => {
 
   return (
     <motion.div
-      className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}
+      className={`min-h-screen ${darkMode ? 'bg-slate-950' : 'bg-gradient-to-br from-slate-50 via-white to-emerald-50/30'} transition-colors duration-300`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -812,19 +812,19 @@ const StaffDashboard = ({ darkMode }) => {
       {/* Toast Notifications */}
       <Toast />
       {/* Header */}
-      <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b sticky top-0 z-40 backdrop-blur-md bg-opacity-90`}>
+      <div className={`${darkMode ? 'bg-slate-900/95 border-slate-800' : 'bg-white/95 border-slate-200'} border-b sticky top-0 z-40 backdrop-blur-md`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-20">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <TreePine className="h-6 w-6 text-green-600" />
+                <div className={`p-2.5 rounded-xl ring-1 ${darkMode ? 'bg-emerald-500/10 ring-emerald-500/20' : 'bg-emerald-50 ring-emerald-100'}`}>
+                  <TreePine className={`h-6 w-6 ${darkMode ? 'text-emerald-300' : 'text-emerald-600'}`} />
                 </div>
                 <div>
-                  <h1 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <h1 className={`text-2xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                     Staff Dashboard
                   </h1>
-                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                     Welcome back, {loadingStaffData ? 'Loading...' : (staffData?.fullName || user?.name || 'Staff Member')}
                   </p>
                 </div>
@@ -833,7 +833,7 @@ const StaffDashboard = ({ darkMode }) => {
 
             <div className="flex items-center space-x-4">
               {/* Current Time */}
-              <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <div className={`text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                 {currentTime.toLocaleTimeString()}
               </div>
 
@@ -946,37 +946,41 @@ const StaffDashboard = ({ darkMode }) => {
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-8 overflow-x-auto">
-            {tabItems.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-green-500 text-green-600'
-                    : `border-transparent ${darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'}`
-                }`}
-              >
-                <tab.icon className="h-5 w-5" />
-                <span className="relative flex items-center">
-                  {tab.label}
-                  {tab.id === 'requests' && availableRequestsCount > 0 && (
-                    <span className="ml-2 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-xs h-5 min-w-[1.25rem] px-1">
-                      {availableRequestsCount}
-                    </span>
-                  )}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">
+          <aside className={`h-fit rounded-2xl border p-3 shadow-sm lg:sticky lg:top-24 ${
+            darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+          }`}>
+            <p className={`px-3 pb-2 text-xs font-semibold uppercase tracking-[0.16em] ${
+              darkMode ? 'text-slate-500' : 'text-slate-400'
+            }`}>Navigation</p>
+            <nav className="flex flex-col gap-1.5">
+              {tabItems.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`inline-flex items-center rounded-xl px-4 py-3 text-sm font-medium transition ${
+                    activeTab === tab.id
+                      ? `${darkMode ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-600 text-white'}`
+                      : `${darkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`
+                  }`}
+                >
+                  <tab.icon className="mr-2.5 h-4 w-4" />
+                  <span className="relative flex items-center">
+                    {tab.label}
+                    {tab.id === 'requests' && availableRequestsCount > 0 && (
+                      <span className="ml-2 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-xs h-5 min-w-[1.25rem] px-1">
+                        {availableRequestsCount}
+                      </span>
+                    )}
+                  </span>
+                </button>
+              ))}
+            </nav>
+          </aside>
+
+          <main>
         <AnimatePresence mode="wait">
           {activeTab === 'overview' && (
             <motion.div
@@ -986,13 +990,26 @@ const StaffDashboard = ({ darkMode }) => {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
+              <div className={`mb-6 rounded-2xl border px-6 py-5 ${darkMode ? 'border-emerald-500/20 bg-gradient-to-r from-emerald-900/40 to-green-900/30' : 'border-emerald-100 bg-gradient-to-r from-emerald-600 to-green-600 text-white'}`}>
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className={`text-xs uppercase tracking-[0.16em] ${darkMode ? 'text-emerald-300' : 'text-emerald-100'}`}>Staff Overview</p>
+                    <h2 className={`mt-1 text-xl font-semibold ${darkMode ? 'text-white' : 'text-white'}`}>Daily Work Snapshot</h2>
+                    <p className={`mt-1 text-sm ${darkMode ? 'text-emerald-100/90' : 'text-emerald-50/90'}`}>Track requests, collections, and assignments at a glance.</p>
+                  </div>
+                  <div className={`inline-flex w-fit items-center rounded-xl px-4 py-2 text-sm font-medium ring-1 ${darkMode ? 'bg-white/10 text-emerald-100 ring-white/20' : 'bg-white/15 text-white ring-white/20'}`}>
+                    Active tab: {tabItems.find((t) => t.id === activeTab)?.label || 'Overview'}
+                  </div>
+                </div>
+              </div>
+
               {/* Quick Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 {quickStats.map((stat, index) => (
                   <motion.div
                     key={stat.title}
-                    className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
-                      darkMode ? 'border-gray-700' : 'border-gray-100'
+                    className={`${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} rounded-2xl p-6 shadow-sm border transition hover:shadow-md ${
+                      darkMode ? 'hover:border-slate-700' : 'hover:border-slate-300'
                     }`}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -1001,10 +1018,10 @@ const StaffDashboard = ({ darkMode }) => {
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        <p className={`text-sm font-medium ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                           {stat.title}
                         </p>
-                        <p className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mt-2`}>
+                        <p className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'} mt-2`}>
                           {stat.value}
                         </p>
                       </div>
@@ -1021,37 +1038,42 @@ const StaffDashboard = ({ darkMode }) => {
 
                 {/* Today's Tasks */}
                 <motion.div
-                  className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-lg border ${
-                    darkMode ? 'border-gray-700' : 'border-gray-100'
+                  className={`${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} rounded-2xl p-6 shadow-sm border ${
+                    darkMode ? '' : ''
                   }`}
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5, delay: 0.3 }}
                 >
-                  <h3 className={`text-xl font-semibold mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <h3 className={`text-xl font-semibold mb-6 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                     Today's Tasks
                   </h3>
                   <div className="space-y-4">
+                    {assignments.length === 0 && (
+                      <div className={`rounded-xl border px-4 py-6 text-center ${darkMode ? 'border-slate-700 bg-slate-800/60 text-slate-300' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>
+                        No assignments yet. New tasks will appear here.
+                      </div>
+                    )}
                     {assignments.slice(0, 3).map((task) => {
                       const req = typeof task.tappingRequestId === 'object' ? task.tappingRequestId : null;
                       return (
                         <div
                           key={task._id}
                           className={`p-4 rounded-xl border ${
-                            darkMode ? 'border-gray-700 bg-gray-750' : 'border-gray-100 bg-gray-50'
+                            darkMode ? 'border-slate-700 bg-slate-800/60' : 'border-slate-200 bg-slate-50'
                           }`}
                         >
                           <div className="flex items-center justify-between">
                             <div>
-                              <h4 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                              <h4 className={`font-medium ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                                 {task.applicationId}
                               </h4>
-                              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                              <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                                 {req ? (typeof req.farmLocation === 'string' ? req.farmLocation : 
                                         typeof req.farmLocation === 'object' && req.farmLocation?.address ? req.farmLocation.address :
                                         'Service Request') : 'Service Request'}
                               </p>
-                              <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'} mt-1`}>
+                              <p className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-400'} mt-1`}>
                                 {req && req.startDate ? new Date(req.startDate).toLocaleDateString() : 'Start date not specified'}
                               </p>
                             </div>
@@ -1077,7 +1099,9 @@ const StaffDashboard = ({ darkMode }) => {
                   </div>
                   <button
                     onClick={() => setActiveTab('assignments')}
-                    className="w-full mt-4 py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                    className={`w-full mt-4 py-2.5 px-4 rounded-xl transition-colors font-medium ${
+                      darkMode ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-500/30' : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    }`}
                   >
                     View All Assignments
                   </button>
@@ -1934,7 +1958,7 @@ const StaffDashboard = ({ darkMode }) => {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </main>
 
       {/* Password Change Modal */}
       {showPasswordModal && (
@@ -2286,7 +2310,9 @@ const StaffDashboard = ({ darkMode }) => {
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
+        </AnimatePresence>
+        </div>
+      </div>
 
       {/* Attendance Marking Form Modal */}
       <AttendanceMarkingForm

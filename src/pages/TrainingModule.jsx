@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { trainingAPI, getUserData, certificateAPI } from '../utils/api';
+import { trainingAPI, getUserData } from '../utils/api';
 import enrollmentManager from '../utils/enrollmentManager';
 import mockAPI from '../utils/mockAPI';
-import { generateCertificatePDF, canGenerateCertificate, formatCertificateData } from '../utils/certificateGenerator';
 import { 
   ArrowLeft, 
   Play, 
@@ -21,8 +20,7 @@ import {
   Share2,
   Heart,
   MessageCircle,
-  Award,
-  Trophy
+  Award
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import LocalVideoPlayer from '../components/LocalVideoPlayer';
@@ -45,7 +43,6 @@ const TrainingModule = () => {
     const { user, isLoggedIn } = getUserData();
 
     if (!isLoggedIn) {
-      console.log('🚫 Unauthorized access to training module, redirecting to login');
       // Store the intended destination for redirect after login (only for regular users)
       localStorage.setItem('redirectAfterLogin', `/training/${moduleId}`);
       navigate('/login', { replace: true });
@@ -54,38 +51,28 @@ const TrainingModule = () => {
 
     // Staff users should be redirected to their dashboard
     if (user?.role === 'staff' && user?.useStaffDashboard) {
-      console.log('🚫 Staff user accessing training module, redirecting to staff dashboard');
       navigate('/staff-dashboard', { replace: true });
       return;
     }
 
     // Admin users should be redirected to their dashboard
     if (user?.role === 'admin') {
-      console.log('🚫 Admin user accessing training module, redirecting to admin dashboard');
       navigate('/admin-dashboard', { replace: true });
       return;
     }
 
     // Broker users should be redirected to their dashboard
     if (user?.role === 'broker') {
-      console.log('🚫 Broker user accessing training module, redirecting to broker dashboard');
       navigate('/broker-dashboard', { replace: true });
       return;
     }
 
-    console.log('✅ Authorized access to training module:', {
-      moduleId,
-      userName: user?.name,
-      userRole: user?.role
-    });
+    
   }, [moduleId, navigate, getUserData]);
   const [completedLessons, setCompletedLessons] = useState(new Set());
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrollmentLoading, setEnrollmentLoading] = useState(true);
   const [currentEnrollment, setCurrentEnrollment] = useState(null);
-  const [showCertificateModal, setShowCertificateModal] = useState(false);
-  const [certificateData, setCertificateData] = useState(null);
-  const [isGeneratingCertificate, setIsGeneratingCertificate] = useState(false);
 
   // Training module data
   const placeholderThumb = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360"><rect width="640" height="360" fill="%23f3f4f6"/><g fill="%239ca3af" font-family="Arial, Helvetica, sans-serif"><rect x="220" y="120" width="200" height="120" rx="12" ry="12" fill="%23e5e7eb"/><text x="320" y="190" font-size="18" text-anchor="middle">Thumbnail</text><text x="320" y="215" font-size="14" text-anchor="middle">640x360</text></g></svg>';
@@ -286,31 +273,24 @@ const TrainingModule = () => {
     // Primary check: Use enrollment manager (local storage)
     const isEnrolledLocally = enrollmentManager.isUserEnrolled(user.id, moduleId);
     if (isEnrolledLocally) {
-      console.log('User is enrolled (found in local storage)');
       return true;
     }
 
     // Fallback 1: Try API check (real then mock)
     try {
-      console.log('🔄 Checking enrollment via real API...');
       const data = await trainingAPI.checkEnrollmentStatus(user.id, moduleId);
       if (data.isEnrolled) {
-        console.log('✅ User is enrolled (found via real API)');
         return true;
       }
     } catch (apiError) {
-      console.warn('Real API enrollment check failed, trying mock API:', apiError.message);
-
       // Try mock API
       try {
-        console.log('🎭 Checking enrollment via mock API...');
         const mockData = await mockAPI.checkEnrollmentStatus(user.id, moduleId);
         if (mockData.isEnrolled) {
-          console.log('✅ User is enrolled (found via mock API)');
           return true;
         }
       } catch (mockError) {
-        console.warn('Mock API enrollment check also failed:', mockError.message);
+        void mockError;
       }
     }
 
@@ -320,7 +300,6 @@ const TrainingModule = () => {
       try {
         const enrollmentData = JSON.parse(pendingEnrollment);
         if (enrollmentData.moduleId === parseInt(moduleId)) {
-          console.log('User has pending enrollment for this module');
           return true;
         }
       } catch (parseError) {
@@ -335,7 +314,6 @@ const TrainingModule = () => {
       const timeDiff = Date.now() - paymentTime;
       // Consider enrollment valid for 24 hours
       if (timeDiff < 24 * 60 * 60 * 1000) {
-        console.log('User has recent demo payment for this module');
         return true;
       }
     }
@@ -366,14 +344,12 @@ const TrainingModule = () => {
           if (currentEnrollmentData && currentEnrollmentData.completedLessons) {
             const completedSet = new Set(currentEnrollmentData.completedLessons);
             setCompletedLessons(completedSet);
-            console.log('📚 Loaded completed lessons from backend:', currentEnrollmentData.completedLessons);
 
             // Also save to localStorage as backup
             const progressKey = `progress_${user.id}_${moduleId}`;
             localStorage.setItem(progressKey, JSON.stringify(currentEnrollmentData.completedLessons));
           } else {
             // Fallback: Load from localStorage if backend data is not available
-            console.log('⚠️ No backend progress data found, checking localStorage...');
             const progressKey = `progress_${user.id}_${moduleId}`;
             const savedProgress = localStorage.getItem(progressKey);
             if (savedProgress) {
@@ -381,7 +357,6 @@ const TrainingModule = () => {
                 const completedArray = JSON.parse(savedProgress);
                 const completedSet = new Set(completedArray);
                 setCompletedLessons(completedSet);
-                console.log('📚 Loaded completed lessons from localStorage fallback:', completedArray);
               } catch (error) {
                 console.error('Error parsing saved progress:', error);
               }
@@ -391,7 +366,6 @@ const TrainingModule = () => {
           console.error('Error fetching enrollment details:', error);
 
           // Fallback: Load from localStorage if API fails
-          console.log('⚠️ API failed, checking localStorage for progress...');
           const { user } = getUserData();
           const progressKey = `progress_${user.id}_${moduleId}`;
           const savedProgress = localStorage.getItem(progressKey);
@@ -400,7 +374,6 @@ const TrainingModule = () => {
               const completedArray = JSON.parse(savedProgress);
               const completedSet = new Set(completedArray);
               setCompletedLessons(completedSet);
-              console.log('📚 Loaded completed lessons from localStorage after API error:', completedArray);
             } catch (parseError) {
               console.error('Error parsing saved progress after API error:', parseError);
             }
@@ -410,7 +383,6 @@ const TrainingModule = () => {
 
       // If not enrolled in a paid course, redirect back to training page
       if (!enrolled && currentModule.isFree === false) {
-        console.log('🚫 User not enrolled in paid course, redirecting to training page');
         navigate('/training', { replace: true });
         return;
       }
@@ -428,29 +400,8 @@ const TrainingModule = () => {
       const totalLessons = currentModule.videos.length;
       const newProgress = totalLessons > 0 ? (completedCount / totalLessons) * 100 : 0;
       setProgress(newProgress);
-
-      console.log(`📊 Progress calculated: ${completedCount}/${totalLessons} = ${newProgress.toFixed(1)}%`);
-
-      // Check if course is completed and certificate can be generated
-      if (newProgress >= 100 && currentEnrollment && !currentEnrollment.certificateIssued) {
-        setShowCertificateModal(true);
-      }
     }
-  }, [completedLessons, currentModule, currentEnrollment?.certificateIssued]);
-
-  // Debug: Log video URLs to console
-  useEffect(() => {
-    if (currentModule && currentModule.videos) {
-      console.log('Video URLs:', currentModule.videos.map((v, i) => ({
-        index: i,
-        title: v.title,
-        videoUrl: v.videoUrl,
-        type: v.type
-      })));
-      console.log('Current video index:', currentVideo);
-      console.log('Current video URL:', currentModule.videos[currentVideo]?.videoUrl);
-    }
-  }, [currentModule, currentVideo]);
+  }, [completedLessons, currentModule]);
 
   // Load progress from localStorage on component mount (additional fallback)
   useEffect(() => {
@@ -464,7 +415,6 @@ const TrainingModule = () => {
           if (completedArray.length > 0) {
             const completedSet = new Set(completedArray);
             setCompletedLessons(completedSet);
-            console.log('🔄 Loaded progress from localStorage on mount:', completedArray);
           }
         } catch (error) {
           console.error('Error parsing saved progress on mount:', error);
@@ -483,12 +433,10 @@ const TrainingModule = () => {
     // Always save to localStorage as backup
     const progressKey = `progress_${user.id}_${moduleId}`;
     localStorage.setItem(progressKey, JSON.stringify(completedArray));
-    console.log('💾 Progress saved to localStorage:', completedArray);
 
     // Also update enrollment manager
     const totalLessons = currentModule.videos.length;
     enrollmentManager.updateProgress(user.id, moduleId, completedArray, totalLessons);
-    console.log('📊 Progress updated in enrollment manager');
 
     // Update backend progress if enrolled
     if (currentEnrollment) {
@@ -500,13 +448,9 @@ const TrainingModule = () => {
           totalLessons: totalLessons
         });
 
-        console.log('✅ Progress updated in backend');
       } catch (error) {
         console.error('Error updating progress in backend:', error);
-        console.log('📝 Progress still saved locally as fallback');
       }
-    } else {
-      console.log('📝 No enrollment found, progress saved locally only');
     }
   };
 
@@ -516,63 +460,6 @@ const TrainingModule = () => {
 
   const toggleMute = () => {
     setIsMuted(!isMuted);
-  };
-
-  // Certificate generation function
-  const handleGenerateCertificate = async () => {
-    if (!currentEnrollment) {
-      console.error('No enrollment data available');
-      alert('No enrollment data available. Please refresh the page.');
-      return;
-    }
-
-    // Check if user has completed the course
-    if (progress < 100) {
-      alert('⚠️ You must complete 100% of the course to download your certificate.');
-      return;
-    }
-
-    setIsGeneratingCertificate(true);
-
-    try {
-      // Try to generate certificate via API first
-      let certificateData = null;
-      try {
-        const certificateResponse = await certificateAPI.generateCertificate(currentEnrollment.id);
-        if (certificateResponse?.success) {
-          certificateData = formatCertificateData(currentEnrollment, certificateResponse.certificate);
-        }
-      } catch (apiError) {
-        console.warn('Certificate API call failed, using enrollment data instead:', apiError);
-        // Fallback: generate from enrollment data without API
-        certificateData = formatCertificateData(currentEnrollment, { id: `CERT-${Date.now()}` });
-      }
-
-      if (certificateData) {
-        setCertificateData(certificateData);
-        
-        // Generate and download PDF
-        await generateCertificatePDF(certificateData);
-
-        // Update enrollment state to reflect certificate issued
-        setCurrentEnrollment(prev => ({
-          ...prev,
-          certificateIssued: true,
-          certificateIssuedDate: new Date()
-        }));
-
-        console.log('✅ Certificate generated successfully');
-        alert('🎉 Congratulations! Your certificate has been generated and downloaded.');
-      } else {
-        throw new Error('Failed to format certificate data');
-      }
-    } catch (error) {
-      console.error('Error generating certificate:', error);
-      alert('Failed to generate certificate. Please try again.');
-    } finally {
-      setIsGeneratingCertificate(false);
-      setShowCertificateModal(false);
-    }
   };
 
   if (!currentModule) {
@@ -649,14 +536,6 @@ const TrainingModule = () => {
                   <p className="text-sm text-gray-600">
                     {Math.round(progress)}% Complete
                   </p>
-                  {progress >= 100 && (
-                    <div className="flex items-center justify-center space-x-1 mt-1">
-                      <Award className="w-4 h-4 text-green-600" />
-                      <span className="text-xs text-green-600 font-medium">
-                        {currentEnrollment?.certificateIssued ? 'Certificate Issued' : 'Certificate Available'}
-                      </span>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -675,9 +554,8 @@ const TrainingModule = () => {
                     videoSrc={currentModule.videos[currentVideo]?.videoUrl}
                     title={currentModule.videos[currentVideo]?.title}
                     poster={currentModule.videos[currentVideo]?.thumbnailUrl}
-                    onProgress={(progress) => {
-                      // Handle progress tracking
-                      console.log('Video progress:', progress);
+                    onProgress={() => {
+                      // Hook reserved for future granular progress tracking.
                     }}
                     onComplete={() => {
                       // Auto-mark as completed when video ends
@@ -710,12 +588,6 @@ const TrainingModule = () => {
                     {currentModule.videos[currentVideo]?.description}
                   </p>
 
-                  {/* Debug info - remove this later */}
-                  <div className="bg-yellow-50 border border-yellow-200 rounded p-2 mb-4 text-xs">
-                    <strong>Debug:</strong> Video {currentVideo + 1} -
-                    URL: {currentModule.videos[currentVideo]?.videoUrl?.substring(0, 50)}...
-                  </div>
-                  
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <button
@@ -825,71 +697,6 @@ const TrainingModule = () => {
         </div>
       </div>
 
-      {/* Certificate Generation Modal */}
-      {showCertificateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-xl p-8 max-w-md mx-4 text-center"
-          >
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Trophy className="w-8 h-8 text-green-600" />
-            </div>
-
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">
-              🎉 Congratulations!
-            </h3>
-
-            <p className="text-gray-600 mb-6">
-              You have successfully completed the <strong>{currentModule.title}</strong> course!
-              You can now generate and download your certificate.
-            </p>
-
-            <div className="flex space-x-3">
-              <button
-                onClick={() => setShowCertificateModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Later
-              </button>
-              <button
-                onClick={handleGenerateCertificate}
-                disabled={isGeneratingCertificate}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-              >
-                {isGeneratingCertificate ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Generating...</span>
-                  </>
-                ) : (
-                  <>
-                    <Award className="w-4 h-4" />
-                    <span>Generate Certificate</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Certificate Download Button (when course is 100% complete) */}
-      {progress >= 100 && (
-        <div className="fixed bottom-6 right-6 z-40">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleGenerateCertificate}
-            disabled={isGeneratingCertificate}
-            className={`${isGeneratingCertificate ? 'bg-gray-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'} text-white px-4 py-2 rounded-lg shadow-lg transition-colors flex items-center space-x-2`}
-          >
-            <Download className="w-4 h-4" />
-            <span>{isGeneratingCertificate ? 'Generating...' : 'Download Certificate'}</span>
-          </motion.button>
-        </div>
-      )}
     </div>
   );
 };

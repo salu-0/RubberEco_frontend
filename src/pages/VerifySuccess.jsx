@@ -14,21 +14,24 @@ import Navbar from '../components/Navbar';
 const VerifySuccess = () => {
   const [countdown, setCountdown] = useState(5);
   const navigate = useNavigate();
+  const [hasNavigated, setHasNavigated] = useState(false);
 
   useEffect(() => {
     // Auto-redirect to login after 5 seconds
     const timer = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          navigate('/login');
-          return 0;
-        }
-        return prev - 1;
-      });
+      setCountdown(prev => Math.max(0, prev - 1));
     }, 1000);
 
     return () => clearInterval(timer);
   }, [navigate]);
+
+  useEffect(() => {
+    if (hasNavigated) return;
+    if (countdown <= 0) {
+      setHasNavigated(true);
+      navigate('/login');
+    }
+  }, [countdown, navigate, hasNavigated]);
 
   const handleGoToLogin = () => {
     navigate('/login');

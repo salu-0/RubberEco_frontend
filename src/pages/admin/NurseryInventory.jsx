@@ -29,9 +29,9 @@ const NurseryInventory = ({ darkMode }) => {
       id: p.id,
       name: p.name,
       category: p.category,
-      price: Number(p.price || 0),
+      price: Number(savedStock[p.id]?.price ?? p.price ?? 0),
       image: p.image,
-      stock: Number(savedStock[p.id]?.stock || 0)
+      stock: Number(savedStock[p.id]?.stock ?? 0)
     }));
     setItems(merged);
     setLoading(false);
@@ -41,7 +41,7 @@ const NurseryInventory = ({ darkMode }) => {
 
   const persist = (next) => {
     const key = 'admin_shop_stock';
-    const map = next.reduce((acc, it) => { acc[it.id] = { stock: it.stock }; return acc; }, {});
+    const map = next.reduce((acc, it) => { acc[it.id] = { stock: it.stock, price: it.price }; return acc; }, {});
     localStorage.setItem(key, JSON.stringify(map));
   };
 

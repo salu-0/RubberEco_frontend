@@ -59,21 +59,27 @@ const PracticalTraining = () => {
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
-          setTrainings(result.data || []);
+          const apiTrainings = Array.isArray(result.data) ? result.data : [];
+          // If backend has no active sessions, show refreshed fallback modules.
+          if (apiTrainings.length === 0) {
+            setTrainings(getFreshMockTrainings());
+          } else {
+            setTrainings(apiTrainings);
+          }
         } else {
           console.error('Failed to load trainings:', result.message);
           // Fallback to mock data if API fails
-          setTrainings(mockTrainings);
+          setTrainings(getFreshMockTrainings());
         }
       } else {
         console.error('API request failed:', response.status);
         // Fallback to mock data if API fails
-        setTrainings(mockTrainings);
+        setTrainings(getFreshMockTrainings());
       }
     } catch (error) {
       console.error('Error loading trainings:', error);
       // Fallback to mock data if API fails
-      setTrainings(mockTrainings);
+      setTrainings(getFreshMockTrainings());
     } finally {
       setLoading(false);
     }
@@ -487,6 +493,36 @@ const PracticalTraining = () => {
       ]
     }
   ];
+
+  const getFreshMockTrainings = () => {
+    const today = new Date();
+    return mockTrainings.map((training, index) => {
+      const start = new Date(today);
+      start.setDate(today.getDate() + 7 + index * 6);
+
+      const durationDays = Math.max(1, Math.ceil((training.schedule?.duration || 8) / 8));
+      const end = new Date(start);
+      end.setDate(start.getDate() + durationDays - 1);
+
+      const registrationDeadline = new Date(start);
+      registrationDeadline.setDate(start.getDate() - 2);
+
+      return {
+        ...training,
+        sessionId: `PT-${start.getFullYear()}${String(start.getMonth() + 1).padStart(2, '0')}${String(start.getDate()).padStart(2, '0')}-${index + 1}`,
+        schedule: {
+          ...training.schedule,
+          startDate: start.toISOString().split('T')[0],
+          endDate: end.toISOString().split('T')[0]
+        },
+        enrollment: {
+          ...training.enrollment,
+          registrationDeadline: registrationDeadline.toISOString().split('T')[0]
+        },
+        status: 'registration_open'
+      };
+    });
+  };
 
   const filteredTrainings = trainings.filter(training => {
     const matchesSearch = training.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

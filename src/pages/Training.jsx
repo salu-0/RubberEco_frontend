@@ -272,21 +272,6 @@ const Training = () => {
       {/* Training Modules */}
       <section id="training-modules" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              {t('training.modulesTitle')}
-            </h2>
-            <p className="text-xl text-gray-600">
-              {t('training.modulesSub')}
-            </p>
-          </motion.div>
-
           <div className="grid lg:grid-cols-2 gap-8">
             {trainingModules.map((module, index) => (
               <motion.div

@@ -2,10 +2,10 @@
 // Catalog data and helpers. Images are resolved via import.meta.glob by folder.
 
 const imageGlobs = {
-  tapping_tool: import.meta && import.meta.glob('../assets/images/tapping_tool/*', { eager: true, import: 'default', query: '?url' }),
-  fertilizers: import.meta && import.meta.glob('../assets/images/fertilizers/*', { eager: true, import: 'default', query: '?url' }),
-  protective: import.meta && import.meta.glob("../assets/images/gloves & boots/*", { eager: true, import: 'default', query: '?url' }),
-  rpc: import.meta && import.meta.glob('../assets/images/rubber shades/*', { eager: true, import: 'default', query: '?url' }),
+  tapping_tool: import.meta && import.meta.glob('../assets/images/tapping_tool/*.{png,jpg,jpeg,webp,avif,gif}', { eager: true, import: 'default', query: '?url' }),
+  fertilizers: import.meta && import.meta.glob('../assets/images/fertilizers/*.{png,jpg,jpeg,webp,avif,gif}', { eager: true, import: 'default', query: '?url' }),
+  protective: import.meta && import.meta.glob("../assets/images/gloves & boots/*.{png,jpg,jpeg,webp,avif,gif}", { eager: true, import: 'default', query: '?url' }),
+  rpc: import.meta && import.meta.glob('../assets/images/rubber shades/*.{png,jpg,jpeg,webp,avif,gif}', { eager: true, import: 'default', query: '?url' }),
 };
 
 function pickFirst(globMap) {
@@ -113,7 +113,7 @@ export const products = [
     name: 'Electric Rubber Tapping Machine Model B',
     category: 'tapping-tools',
     brand: 'PrecisionTech',
-    price: 295.0,
+    price: 80000.0,
     popularity: 80,
     image: Object.values(imageGlobs.tapping_tool || {}).find(img => img.includes('41wTa5vcO6L')) || Object.values(imageGlobs.tapping_tool || {})[7] || pickFirst(imageGlobs.tapping_tool),
     images: Object.values(imageGlobs.tapping_tool || {}),

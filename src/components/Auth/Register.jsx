@@ -10,8 +10,7 @@ import {
   ArrowRight,
   CheckCircle,
   AlertCircle,
-  Loader2,
-  Globe
+  Loader2
 } from 'lucide-react';
 import { supabase } from "../../supabaseClient"; 
 import Navbar from '../Navbar';
@@ -271,8 +270,11 @@ const Register = () => {
         throw new Error(backendData.message || `Registration failed: ${response.status} ${response.statusText}`);
       }
 
-      showNotification('Registration successful! User created in both Supabase and MongoDB. Please check your email to verify your account.', 'success');
-      setTimeout(() => navigate('/login'), 2000);
+      showNotification('Registration successful! Check your email for your OTP, then verify to activate your account.', 'success');
+      setTimeout(() => {
+        const emailParam = encodeURIComponent(formData.email);
+        navigate(`/verify-email-otp?email=${emailParam}`);
+      }, 2000);
 
     } catch (error) {
 
@@ -700,7 +702,17 @@ const Register = () => {
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
-                  <Globe className="w-5 h-5" />
+                  <span
+                    className="w-6 h-6 inline-flex items-center justify-center rounded-full"
+                    aria-hidden="true"
+                  >
+                    <span
+                      className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-[#4285F4] via-[#EA4335] to-[#34A853]"
+                      style={{ lineHeight: '1' }}
+                    >
+                      G
+                    </span>
+                  </span>
                   <span>Continue with Google</span>
                 </>
               )}

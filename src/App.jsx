@@ -28,6 +28,7 @@ import ProtectedRoute from './components/Auth/ProtectedRoute';
 import NurseryAdminProtectedRoute from './components/Auth/NurseryAdminProtectedRoute';
 import AuthCallback from './components/Auth/AuthCallback';
 import VerifySuccess from './pages/VerifySuccess';
+import VerifyEmailOtp from './pages/VerifyEmailOtp';
 import NurseryAdminLogin from './pages/NurseryAdminLogin';
 import NurseryAdminDashboard from './pages/NurseryAdminDashboard';
 import Toast from './components/Toast';
@@ -73,6 +74,7 @@ function App() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/verify-success" element={<VerifySuccess />} />
+      <Route path="/verify-email-otp" element={<VerifyEmailOtp />} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/admin-dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/staff-dashboard" element={<ProtectedRoute><StaffDashboard /></ProtectedRoute>} />

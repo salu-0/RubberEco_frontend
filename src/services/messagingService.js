@@ -6,13 +6,11 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000
 class MessagingService {
   constructor() {
     this.token = localStorage.getItem('token');
-    console.log('🔑 MessagingService initialized with token:', !!this.token);
   }
 
   // Refresh token from localStorage
   refreshToken() {
     this.token = localStorage.getItem('token');
-    console.log('🔄 Token refreshed:', !!this.token);
   }
 
   // Get all conversations for the current broker
@@ -296,9 +294,6 @@ class MessagingService {
       // Refresh token before making the call
       this.refreshToken();
 
-      console.log('🔍 Fetching farmer conversations from:', `${API_BASE_URL}/messages/farmer`);
-      console.log('🔑 Token available:', !!this.token);
-
       if (!this.token) {
         throw new Error('No authentication token found. Please login again.');
       }
@@ -311,19 +306,15 @@ class MessagingService {
         }
       });
 
-      console.log('📡 Response status:', response.status);
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ API Error:', errorText);
         throw new Error(`Failed to fetch farmer conversations: ${response.status} ${errorText}`);
       }
 
       const data = await response.json();
-      console.log('📊 API Response:', data);
       return data.conversations || [];
     } catch (error) {
-      console.error('❌ Error fetching farmer conversations:', error);
+      console.error('Error fetching farmer conversations:', error);
       throw error;
     }
   }

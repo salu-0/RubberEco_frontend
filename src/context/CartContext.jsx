@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useMemo, useReducer } from
 const STORAGE_KEYS = {
   CART: 'shop.cart.v1',
   ORDERS: 'shop.orders.v1',
+  STOCK: 'admin_shop_stock',
 };
 
 const CartContext = createContext(null);
@@ -20,6 +21,30 @@ function saveToStorage(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch {}
+}
+
+function reduceStockForPurchasedItems(orderItems) {
+  const stockMap = loadFromStorage(STORAGE_KEYS.STOCK, {});
+  let changed = false;
+
+  for (const item of orderItems) {
+    const productId = String(item.id);
+    const currentStock = Number(stockMap?.[productId]?.stock ?? 0);
+    const purchaseQty = Number(item.qty || 0);
+
+    if (!Number.isFinite(purchaseQty) || purchaseQty <= 0) continue;
+
+    const nextStock = Math.max(0, currentStock - purchaseQty);
+    stockMap[productId] = {
+      ...(stockMap[productId] || {}),
+      stock: nextStock,
+    };
+    changed = true;
+  }
+
+  if (changed) {
+    saveToStorage(STORAGE_KEYS.STOCK, stockMap);
+  }
 }
 
 const initialState = {
@@ -103,6 +128,7 @@ export function CartProvider({ children }) {
     };
     const next = [newOrder, ...orders];
     saveToStorage(STORAGE_KEYS.ORDERS, next);
+    reduceStockForPurchasedItems(state.items);
     clearCart();
     return newOrder.id;
   }

@@ -18,8 +18,4 @@ export default defineConfig({
     sourcemap: false,
   },
   base: '/',
-  define: {
-    'import.meta.env.VITE_API_BASE_URL': JSON.stringify('http://localhost:5000/api'),
-    'import.meta.env.VITE_BACKEND_URL': JSON.stringify('http://localhost:5000'),
-  },
 })

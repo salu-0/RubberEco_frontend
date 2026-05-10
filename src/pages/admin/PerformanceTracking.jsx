@@ -13,100 +13,94 @@ import {
   Calendar,
   BarChart3
 } from 'lucide-react';
+import { getApiBaseUrl } from '../../utils/apiBaseUrl';
 
 const PerformanceTracking = ({ darkMode }) => {
   const [performanceData, setPerformanceData] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [filterPeriod, setFilterPeriod] = useState('month');
   const [filterRole, setFilterRole] = useState('all');
+  
+  const getAuthToken = () => localStorage.getItem('token') || 'dummy-token-for-testing';
 
-  // Sample performance data
-  const samplePerformanceData = [
-    {
-      id: 1,
-      name: 'Ravi Kumar',
-      role: 'Field Officer',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
-      tasksCompleted: 45,
-      tasksAssigned: 50,
-      completionRate: 90,
-      avgRating: 4.8,
-      totalEarnings: 2400,
-      lastActive: '2 hours ago',
-      status: 'active',
-      recentTasks: [
-        { task: 'Tapping Service - Farm A', status: 'completed', date: '2024-01-15' },
-        { task: 'Fertilizer Application', status: 'completed', date: '2024-01-14' },
-        { task: 'Training Session', status: 'in-progress', date: '2024-01-13' }
-      ],
-      monthlyProgress: [85, 88, 90, 92, 90, 88, 90]
-    },
-    {
-      id: 2,
-      name: 'Priya Nair',
-      role: 'Tapper',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face',
-      tasksCompleted: 38,
-      tasksAssigned: 42,
-      completionRate: 85,
-      avgRating: 4.6,
-      totalEarnings: 1900,
-      lastActive: '1 hour ago',
-      status: 'active',
-      recentTasks: [
-        { task: 'Latex Collection - Zone B', status: 'completed', date: '2024-01-15' },
-        { task: 'Quality Check', status: 'completed', date: '2024-01-14' },
-        { task: 'Equipment Maintenance', status: 'pending', date: '2024-01-13' }
-      ],
-      monthlyProgress: [80, 82, 85, 87, 85, 83, 85]
-    },
-    {
-      id: 3,
-      name: 'Suresh Menon',
-      role: 'Skilled Worker',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-      tasksCompleted: 32,
-      tasksAssigned: 40,
-      completionRate: 80,
-      avgRating: 4.4,
-      totalEarnings: 1600,
-      lastActive: '3 hours ago',
-      status: 'active',
-      recentTasks: [
-        { task: 'Rain Guard Installation', status: 'completed', date: '2024-01-15' },
-        { task: 'Tree Health Assessment', status: 'in-progress', date: '2024-01-14' },
-        { task: 'Irrigation Setup', status: 'completed', date: '2024-01-12' }
-      ],
-      monthlyProgress: [75, 78, 80, 82, 80, 78, 80]
-    },
-    {
-      id: 4,
-      name: 'Lakshmi Devi',
-      role: 'Trainer',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
-      tasksCompleted: 28,
-      tasksAssigned: 35,
-      completionRate: 75,
-      avgRating: 4.7,
-      totalEarnings: 2100,
-      lastActive: '5 hours ago',
-      status: 'inactive',
-      recentTasks: [
-        { task: 'Tapping Training Program', status: 'completed', date: '2024-01-14' },
-        { task: 'Safety Workshop', status: 'completed', date: '2024-01-13' },
-        { task: 'Certification Exam', status: 'scheduled', date: '2024-01-16' }
-      ],
-      monthlyProgress: [70, 72, 75, 77, 75, 73, 75]
+  const getTimeAgo = (dateString) => {
+    if (!dateString) return 'Recently';
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return 'Recently';
+    const now = new Date();
+    const diffInMin = Math.floor((now - date) / (1000 * 60));
+    if (diffInMin < 1) return 'Just now';
+    if (diffInMin < 60) return `${diffInMin} minutes ago`;
+    const diffInHr = Math.floor(diffInMin / 60);
+    if (diffInHr < 24) return `${diffInHr} hours ago`;
+    return `${Math.floor(diffInHr / 24)} days ago`;
+  };
+
+  const normalizeRole = (role) => {
+    const map = {
+      tapper: 'Tapper',
+      latex_collector: 'Latex Collector',
+      field_officer: 'Field Officer',
+      trainer: 'Trainer',
+      supervisor: 'Supervisor',
+      skilled_worker: 'Skilled Worker',
+      manager: 'Manager',
+      staff: 'Staff'
+    };
+    return map[String(role || '').toLowerCase()] || role || 'Staff';
+  };
+
+  const fetchPerformanceData = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${getApiBaseUrl()}/staff`, {
+        headers: {
+          'Authorization': `Bearer ${getAuthToken()}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        setPerformanceData([]);
+        return;
+      }
+
+      const result = await response.json();
+      const staffList = Array.isArray(result?.data) ? result.data : [];
+
+      const transformed = staffList.map((staff) => {
+        const tasksAssigned = Number(staff.tasks_assigned || 0);
+        const tasksCompleted = Number(staff.tasks_completed || 0);
+        const completionRate = tasksAssigned > 0
+          ? Math.round((tasksCompleted / tasksAssigned) * 100)
+          : 0;
+
+        return {
+          id: staff._id || staff.id || `${staff.email}-${staff.name}`,
+          name: staff.name || staff.fullName || 'Unknown Staff',
+          role: normalizeRole(staff.role),
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(staff.name || staff.fullName || 'Staff')}&background=10b981&color=ffffff`,
+          tasksCompleted,
+          tasksAssigned,
+          completionRate,
+          avgRating: Number(staff.performance_rating || 0).toFixed(1),
+          totalEarnings: Number(staff.salary || 0),
+          lastActive: getTimeAgo(staff.last_active || staff.updatedAt || staff.createdAt),
+          status: String(staff.status || 'active').toLowerCase() === 'active' ? 'active' : 'inactive'
+        };
+      });
+
+      setPerformanceData(transformed);
+    } catch (error) {
+      console.error('Error fetching performance data:', error);
+      setPerformanceData([]);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   useEffect(() => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setPerformanceData(samplePerformanceData);
-      setLoading(false);
-    }, 1000);
+    fetchPerformanceData();
   }, [filterPeriod]);
 
   // Filter performance data
@@ -290,9 +284,9 @@ const PerformanceTracking = ({ darkMode }) => {
                 } focus:ring-2 focus:ring-primary-500 focus:border-primary-500`}
               >
                 <option value="all">All Roles</option>
-                <option value="field">Field Officers</option>
+                <option value="field officer">Field Officers</option>
                 <option value="tapper">Tappers</option>
-                <option value="skilled">Skilled Workers</option>
+                <option value="skilled worker">Skilled Workers</option>
                 <option value="trainer">Trainers</option>
               </select>
 

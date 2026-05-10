@@ -28,7 +28,13 @@ export default function Shop() {
   }, []);
 
   const products = useMemo(() => {
-    let list = allProducts.slice();
+    const overridden = allProducts.map(p => ({
+      ...p,
+      stock: Number(stockMap[p.id]?.stock ?? 0),
+      price: Number(stockMap[p.id]?.price ?? p.price ?? 0),
+    }));
+
+    let list = overridden;
     if (category !== 'all') list = list.filter(p => p.category === category);
     if (price > 0) list = list.filter(p => p.price <= price);
     if (search) {
@@ -38,7 +44,7 @@ export default function Shop() {
     if (sort === 'pop') list.sort((a, b) => b.popularity - a.popularity);
     if (sort === 'price-asc') list.sort((a, b) => a.price - b.price);
     if (sort === 'price-desc') list.sort((a, b) => b.price - a.price);
-    return list.map(p => ({ ...p, stock: Number(stockMap[p.id]?.stock || 0) }));
+    return list;
   }, [search, category, price, sort, stockMap]);
 
   return (

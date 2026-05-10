@@ -450,7 +450,7 @@ export default function Checkout() {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between"><span>Subtotal</span><span>₹{totals.subtotal.toFixed(2)}</span></div>
               <div className="flex justify-between"><span>Shipping</span><span>₹{totals.shipping.toFixed(2)}</span></div>
-              <div className="flex justify-between"><span>Tax</span><span>₹{totals.tax.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span>GST</span><span>₹{totals.tax.toFixed(2)}</span></div>
               <div className="flex justify-between font-semibold text-lg border-t pt-2 mt-4">
                 <span>Total</span><span>₹{totals.total.toFixed(2)}</span>
               </div>

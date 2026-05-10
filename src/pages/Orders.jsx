@@ -182,7 +182,7 @@ function OrderDetail({ orderId }) {
                 <span className="font-medium">₹{order.totals.shipping.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Tax</span>
+                <span className="text-gray-600">GST</span>
                 <span className="font-medium">₹{order.totals.tax.toFixed(2)}</span>
               </div>
               <div className="border-t pt-3">

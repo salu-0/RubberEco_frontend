@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import {
   TrendingUp,
@@ -12,7 +12,6 @@ import {
   ArrowRight,
   RefreshCw,
   AlertCircle,
-  Target,
   MapPin,
   Clock,
   Search,
@@ -24,13 +23,16 @@ import {
   Building2,
   Bookmark,
   Share2,
-  Award
+  Award,
+  Sparkles,
+  Package,
+  Minus
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
-import PricePrediction from '../components/PricePrediction';
 import { useTranslation } from 'react-i18next';
 import GoogleMapsSetup from '../components/GoogleMapsSetup';
 import { useNavigationGuard } from '../hooks/useNavigationGuard';
+import { priceForecastAPI } from '../utils/api';
 
 // Market images - using public folder for better compatibility
 const marketImages = {
@@ -42,6 +44,31 @@ const marketImages = {
   m6: '/images/markets/m6.png',
   m7: '/images/markets/m7.png'
 };
+
+const KERALA_MARKETS = [
+  { value: 'Thiruvananthapuram', label: 'Thiruvananthapuram', district: 'Thiruvananthapuram', premium: -2.5 },
+  { value: 'Kollam', label: 'Kollam', district: 'Kollam', premium: -2.0 },
+  { value: 'Pathanamthitta', label: 'Pathanamthitta', district: 'Pathanamthitta', premium: -1.0 },
+  { value: 'Alappuzha', label: 'Alappuzha', district: 'Alappuzha', premium: -1.4 },
+  { value: 'Kottayam', label: 'Kottayam', district: 'Kottayam', premium: 0 },
+  { value: 'Idukki', label: 'Idukki', district: 'Idukki', premium: -1.8 },
+  { value: 'Ernakulam', label: 'Ernakulam', district: 'Ernakulam', premium: 0.5 },
+  { value: 'Thrissur', label: 'Thrissur', district: 'Thrissur', premium: -2.3 },
+  { value: 'Palakkad', label: 'Palakkad', district: 'Palakkad', premium: -2.1 },
+  { value: 'Malappuram', label: 'Malappuram', district: 'Malappuram', premium: -3.2 },
+  { value: 'Kozhikode', label: 'Kozhikode', district: 'Kozhikode', premium: -3.0 },
+  { value: 'Wayanad', label: 'Wayanad', district: 'Wayanad', premium: -2.8 },
+  { value: 'Kannur', label: 'Kannur', district: 'Kannur', premium: -3.5 },
+  { value: 'Kasaragod', label: 'Kasaragod', district: 'Kasaragod', premium: -4.0 }
+];
+
+const RUBBER_GRADES = [
+  { value: 'RSS-4', label: 'RSS-4 - Dried Sheet (Most Common)', multiplier: 1.0 },
+  { value: 'RSS-3', label: 'RSS-3 - Best Quality Sheet', multiplier: 1.08 },
+  { value: 'RSS-5', label: 'RSS-5 - Lower Quality Sheet', multiplier: 0.93 },
+  { value: 'ISNR-20', label: 'Block Rubber (For Industries)', multiplier: 0.9 },
+  { value: 'Latex', label: 'Liquid Latex (Fresh)', multiplier: 1.12 }
+];
 
 // Market Finder Component
 const MarketFinder = ({ onMarketClick }) => {
@@ -1301,6 +1328,14 @@ const Markets = () => {
   const [modalMarket, setModalMarket] = useState(null);
   const [chartLoading, setChartLoading] = useState(false);
   const [showSetupGuide, setShowSetupGuide] = useState(false);
+  const [priceLoading, setPriceLoading] = useState(false);
+  const [priceForecast, setPriceForecast] = useState(null);
+  const [priceError, setPriceError] = useState(null);
+  const [showPricePrediction, setShowPricePrediction] = useState(true);
+  const [selectedMarketPrediction, setSelectedMarketPrediction] = useState('Kottayam');
+  const [selectedGradePrediction, setSelectedGradePrediction] = useState('RSS-4');
+  const [selectedMonthPrediction, setSelectedMonthPrediction] = useState(null);
+  const [selectedYearPrediction, setSelectedYearPrediction] = useState(null);
 
   // Initialize navigation guard
   const { getUserData } = useNavigationGuard({
@@ -1322,6 +1357,100 @@ const Markets = () => {
       navigate('/broker-dashboard', { replace: true });
     }
   }, [navigate, getUserData]);
+
+  useEffect(() => {
+    const now = new Date();
+    const nextMonth = ((now.getMonth() + 1) % 12) + 1;
+    const nextYear = nextMonth <= now.getMonth() + 1 ? now.getFullYear() + 1 : now.getFullYear();
+    setSelectedMonthPrediction(nextMonth);
+    setSelectedYearPrediction(nextYear);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedMonthPrediction || !selectedYearPrediction || !showPricePrediction) return;
+
+    const fetchMonthlyPrediction = async () => {
+      try {
+        setPriceLoading(true);
+        setPriceError(null);
+        const marketInfo =
+          KERALA_MARKETS.find((m) => m.value === selectedMarketPrediction) || KERALA_MARKETS[0];
+        const gradeInfo =
+          RUBBER_GRADES.find((g) => g.value === selectedGradePrediction) || RUBBER_GRADES[0];
+
+        let data;
+        try {
+          data = await priceForecastAPI.getMonthlyForecast(
+            selectedYearPrediction,
+            selectedMonthPrediction,
+            selectedMarketPrediction,
+            selectedGradePrediction
+          );
+        } catch (apiError) {
+          const monthNames = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+          ];
+          const seasonalMultipliers = {
+            1: 1.02, 2: 1.05, 3: 1.08, 4: 1.06, 5: 1.04, 6: 0.98,
+            7: 0.95, 8: 0.96, 9: 1.0, 10: 1.03, 11: 1.06, 12: 1.04
+          };
+          const basePrice = 185;
+          const seasonalMultiplier = seasonalMultipliers[selectedMonthPrediction] || 1;
+          const yearOffset = (selectedYearPrediction - 2025) * 5;
+          const marketPremium = marketInfo.premium;
+          const gradeMultiplier = gradeInfo.multiplier;
+          const predictedPrice =
+            (basePrice * seasonalMultiplier * gradeMultiplier) +
+            marketPremium +
+            yearOffset +
+            (Math.random() * 6 - 3);
+
+          const prevMonth = selectedMonthPrediction === 1 ? 12 : selectedMonthPrediction - 1;
+          const prevMultiplier = seasonalMultipliers[prevMonth] || 1;
+          const trend =
+            seasonalMultiplier > prevMultiplier
+              ? 'Rising'
+              : seasonalMultiplier < prevMultiplier
+                ? 'Falling'
+                : 'Stable';
+          const percentChange = ((seasonalMultiplier - prevMultiplier) / prevMultiplier * 100).toFixed(2);
+
+          data = {
+            success: true,
+            year: selectedYearPrediction,
+            month: selectedMonthPrediction,
+            monthName: monthNames[selectedMonthPrediction - 1],
+            market: selectedMarketPrediction,
+            district: marketInfo.district,
+            grade: selectedGradePrediction,
+            predictedPrice: Math.round(predictedPrice * 100) / 100,
+            lowerCI: Math.round((predictedPrice - 8) * 100) / 100,
+            upperCI: Math.round((predictedPrice + 8) * 100) / 100,
+            trend,
+            percentChange: parseFloat(percentChange),
+            model: 'SARIMA(1,1,1)(1,1,1,12)',
+            isForecast: true
+          };
+          void apiError;
+        }
+
+        setPriceForecast(data);
+      } catch (err) {
+        setPriceError(err.message || 'Failed to load price prediction');
+      } finally {
+        setPriceLoading(false);
+      }
+    };
+
+    fetchMonthlyPrediction();
+  }, [
+    selectedMonthPrediction,
+    selectedYearPrediction,
+    showPricePrediction,
+    selectedMarketPrediction,
+    selectedGradePrediction
+  ]);
 
   // Generate dynamic price data based on selected timeframe
   const generatePriceData = (timeframe) => {
@@ -1462,48 +1591,6 @@ const Markets = () => {
     }
   ];
 
-  const priceAlerts = [
-    {
-      type: "Target Reached",
-      message: "RSS3 price reached your target of ₹1,55,000/MT",
-      time: "2 hours ago",
-      icon: <Target className="h-5 w-5 text-green-500" />
-    },
-    {
-      type: "Market Update",
-      message: "Strong demand from automotive sector driving prices up",
-      time: "4 hours ago",
-      icon: <TrendingUp className="h-5 w-5 text-blue-500" />
-    },
-    {
-      type: "Weather Alert",
-      message: "Heavy rainfall expected in major producing regions",
-      time: "6 hours ago",
-      icon: <AlertCircle className="h-5 w-5 text-orange-500" />
-    }
-  ];
-
-  const marketInsights = [
-    {
-      title: "Global Demand Outlook",
-      description: "Automotive industry recovery driving increased rubber demand",
-      trend: "+5.2%",
-      period: "Q3 2024"
-    },
-    {
-      title: "Supply Chain Analysis",
-      description: "Southeast Asian production levels stabilizing after weather disruptions",
-      trend: "+2.1%",
-      period: "This Month"
-    },
-    {
-      title: "Price Forecast",
-      description: "Technical analysis suggests continued upward momentum",
-      trend: "+3.8%",
-      period: "Next 30 Days"
-    }
-  ];
-
   const timeframes = ['1D', '1W', '1M', '3M', '6M', '1Y'];
 
   return (
@@ -1512,11 +1599,196 @@ const Markets = () => {
       
 
 
-      {/* Market Finder */}
-      <MarketFinder onMarketClick={handleMarketClick} />
+      {/* Compact Market Price Prediction */}
+      <section className="pt-24 pb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-4">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Market Price Prediction</h2>
+            <p className="text-sm sm:text-base text-gray-600">District-wise AI forecast for next month rubber prices</p>
+          </div>
+          <div className="bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-900 rounded-xl shadow-xl overflow-hidden">
+            <div className="p-6 border-b border-white/10">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-emerald-500/20 rounded-lg">
+                    <Sparkles className="w-6 h-6 text-emerald-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Market Price Prediction</h2>
+                    <p className="text-sm text-emerald-200/70">
+                      AI-powered rubber price forecast for selected month
+                    </p>
+                  </div>
+                </div>
 
-      {/* Price Prediction Section */}
-      <PricePrediction />
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-emerald-400" />
+                    <select
+                      value={selectedMarketPrediction}
+                      onChange={(e) => setSelectedMarketPrediction(e.target.value)}
+                      className="px-3 py-1.5 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none cursor-pointer hover:bg-white/15 transition-colors"
+                    >
+                      {KERALA_MARKETS.map((market) => (
+                        <option key={market.value} value={market.value} className="bg-slate-800 text-white">
+                          {market.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Package className="w-4 h-4 text-purple-400" />
+                    <select
+                      value={selectedGradePrediction}
+                      onChange={(e) => setSelectedGradePrediction(e.target.value)}
+                      className="px-3 py-1.5 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none cursor-pointer hover:bg-white/15 transition-colors"
+                    >
+                      {RUBBER_GRADES.map((grade) => (
+                        <option key={grade.value} value={grade.value} className="bg-slate-800 text-white">
+                          {grade.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <label className="flex items-center gap-2 cursor-pointer ml-2">
+                    <span className="text-sm text-gray-300">{showPricePrediction ? 'Hide' : 'Show'}</span>
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        checked={showPricePrediction}
+                        onChange={() => setShowPricePrediction(!showPricePrediction)}
+                        className="sr-only"
+                      />
+                      <div className={`w-11 h-6 rounded-full transition-colors ${showPricePrediction ? 'bg-emerald-500' : 'bg-gray-600'}`}>
+                        <div className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${showPricePrediction ? 'translate-x-5' : 'translate-x-0.5'} mt-0.5`}></div>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {showPricePrediction && (
+              <div className="p-6">
+                {priceLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
+                    <span className="ml-3 text-emerald-200">{t('common.loading') || 'Loading...'}</span>
+                  </div>
+                ) : priceError ? (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-300">
+                    {priceError}
+                  </div>
+                ) : priceForecast ? (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-5 border border-white/10">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="p-2 bg-emerald-500/20 rounded-lg">
+                            <DollarSign className="w-5 h-5 text-emerald-400" />
+                          </div>
+                          <span className="text-gray-300 text-sm">Predicted Price</span>
+                        </div>
+                        <p className="text-3xl font-bold text-white">
+                          ₹{priceForecast.predictedPrice?.toFixed(2)}
+                          <span className="text-lg text-gray-400 font-normal">/kg</span>
+                        </p>
+                        <p className="text-sm text-emerald-300 mt-2">
+                          {priceForecast.monthName} {priceForecast.year}
+                        </p>
+                        {priceForecast.lowerCI && priceForecast.upperCI && (
+                          <p className="text-xs text-gray-400 mt-1">
+                            95% CI: ₹{priceForecast.lowerCI?.toFixed(2)} - ₹{priceForecast.upperCI?.toFixed(2)}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-5 border border-white/10">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className={`p-2 rounded-lg ${
+                            priceForecast.trend === 'Rising' ? 'bg-green-500/20' :
+                            priceForecast.trend === 'Falling' ? 'bg-red-500/20' : 'bg-gray-500/20'
+                          }`}>
+                            {priceForecast.trend === 'Rising' && <TrendingUp className="w-5 h-5 text-green-400" />}
+                            {priceForecast.trend === 'Falling' && <TrendingDown className="w-5 h-5 text-red-400" />}
+                            {priceForecast.trend === 'Stable' && <Minus className="w-5 h-5 text-gray-400" />}
+                          </div>
+                          <span className="text-gray-300 text-sm">Market Trend</span>
+                        </div>
+                        <p className={`text-2xl font-bold ${
+                          priceForecast.trend === 'Rising' ? 'text-green-400' :
+                          priceForecast.trend === 'Falling' ? 'text-red-400' : 'text-gray-400'
+                        }`}>
+                          {priceForecast.trend}
+                        </p>
+                        {priceForecast.percentChange !== undefined && (
+                          <p className={`text-sm mt-2 ${
+                            priceForecast.percentChange > 0 ? 'text-green-400' :
+                            priceForecast.percentChange < 0 ? 'text-red-400' : 'text-gray-400'
+                          }`}>
+                            {priceForecast.percentChange > 0 ? '+' : ''}{priceForecast.percentChange}% change
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-5 border border-white/10">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="p-2 bg-purple-500/20 rounded-lg">
+                            <BarChart3 className="w-5 h-5 text-purple-400" />
+                          </div>
+                          <span className="text-gray-300 text-sm">Forecast Details</span>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-400">Market</span>
+                            <span className="text-white">{priceForecast.market || selectedMarketPrediction}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-400">District</span>
+                            <span className="text-emerald-300">
+                              {priceForecast.district || KERALA_MARKETS.find((m) => m.value === selectedMarketPrediction)?.district}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-400">Grade</span>
+                            <span className="text-white">{priceForecast.grade || selectedGradePrediction}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-400">Model</span>
+                            <span className="text-emerald-400 text-xs">{priceForecast.model || 'SARIMA'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 bg-white/5 rounded-xl p-4 border border-white/10">
+                      <div className="flex items-start gap-3">
+                        <Sparkles className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-white mb-1">Weather-Price Insight</p>
+                          <p className="text-sm text-gray-300">
+                            {priceForecast.trend === 'Rising'
+                              ? `Demand and seasonal patterns indicate upward pressure, with prices expected near ₹${priceForecast.predictedPrice?.toFixed(0)}/kg.`
+                              : priceForecast.trend === 'Falling'
+                                ? `Supply conditions suggest softer prices this period, averaging around ₹${priceForecast.predictedPrice?.toFixed(0)}/kg.`
+                                : `Normal conditions expected, supporting regular production with stable prices near ₹${priceForecast.predictedPrice?.toFixed(0)}/kg.`}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8 text-gray-400">
+                    No price data available for this period
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
 
       {/* Market Overview */}
       <section className="py-20 bg-white">
@@ -1710,67 +1982,8 @@ const Markets = () => {
         </div>
       </section>
 
-      {/* Market Insights */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12">
-            {/* Insights */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
-            >
-              <h2 className="text-3xl font-bold text-gray-900 mb-8">{t('market.insights')}</h2>
-              <div className="space-y-6">
-                {marketInsights.map((insight, index) => (
-                  <div key={index} className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold text-gray-900">{insight.title}</h3>
-                      <span className="text-green-600 font-medium">{insight.trend}</span>
-                    </div>
-                    <p className="text-gray-600 mb-2">{insight.description}</p>
-                    <span className="text-sm text-gray-500">{insight.period}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Price Alerts */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
-            >
-              <h2 className="text-3xl font-bold text-gray-900 mb-8">{t('market.priceAlerts')}</h2>
-              <div className="space-y-4">
-                {priceAlerts.map((alert, index) => (
-                  <div key={index} className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
-                    <div className="flex items-start space-x-3">
-                      {alert.icon}
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <h4 className="font-medium text-gray-900">{alert.type}</h4>
-                          <span className="text-sm text-gray-500">{alert.time}</span>
-                        </div>
-                        <p className="text-gray-600">{alert.message}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-6">
-                <Link to="/register">
-                  <button className="w-full bg-gradient-to-r from-primary-500 to-primary-600 text-white py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-300">
-                    {t('market.setCustomAlerts')}
-                  </button>
-                </Link>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
+      {/* Market Finder */}
+      <MarketFinder onMarketClick={handleMarketClick} />
 
 
 

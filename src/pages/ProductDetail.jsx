@@ -16,6 +16,8 @@ export default function ProductDetail() {
   const relatedProducts = getRelatedProducts(id);
   const [quantity, setQuantity] = useState(1);
 
+  const effectivePrice = Number(stockMap[product?.id]?.price ?? product?.price ?? 0);
+
   if (!product) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -43,7 +45,7 @@ export default function ProductDetail() {
             )}
           </h1>
           <div className="mt-1 text-sm text-gray-500 uppercase">{t(`brands.${product.brand}`, product.brand)}</div>
-          <div className="mt-3 text-2xl font-bold">₹{product.price.toFixed(2)}</div>
+          <div className="mt-3 text-2xl font-bold">₹{effectivePrice.toFixed(2)}</div>
           <div className="mt-1 text-sm text-gray-600">{t('shop.inStock')}: <span className="font-medium">{Number(stockMap[product.id]?.stock || 0)}</span></div>
           <p className="mt-4 text-gray-700">{t(`products.${product.id}.description`, product.description)}</p>
 
@@ -69,7 +71,12 @@ export default function ProductDetail() {
               }}
               className="w-16 px-2 py-1 border rounded text-center"
             />
-            <button className="px-4 py-2 rounded bg-indigo-600 text-white" onClick={() => addItem(product, quantity)}>{t('shop.addToCart')}</button>
+            <button
+              className="px-4 py-2 rounded bg-indigo-600 text-white"
+              onClick={() => addItem({ ...product, price: effectivePrice }, quantity)}
+            >
+              {t('shop.addToCart')}
+            </button>
             <Link to="/shop" className="px-4 py-2 rounded border">{t('shop.continueShopping', 'Continue Shopping')}</Link>
           </div>
         </div>
@@ -109,12 +116,14 @@ export default function ProductDetail() {
                   <p className="text-xs text-gray-600 mb-3 line-clamp-2">{t(`products.${relatedProduct.id}.description`, relatedProduct.description)}</p>
                   <div className="mt-auto">
                     <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-gray-900">₹{relatedProduct.price.toFixed(2)}</span>
+                      <span className="text-lg font-bold text-gray-900">
+                        ₹{Number(stockMap[relatedProduct.id]?.price ?? relatedProduct.price ?? 0).toFixed(2)}
+                      </span>
                     </div>
                     <div className="text-xs text-gray-600 mt-1">{t('shop.inStock')}: <span className="font-medium">{Number(stockMap[relatedProduct.id]?.stock || 0)}</span></div>
                     <div className="mt-2 flex items-center justify-end">
                       <button 
-                        onClick={() => addItem(relatedProduct, 1)}
+                        onClick={() => addItem({ ...relatedProduct, price: Number(stockMap[relatedProduct.id]?.price ?? relatedProduct.price ?? 0) }, 1)}
                         className="px-3 py-1.5 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
                       >
                         {t('shop.addToCart')}

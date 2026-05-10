@@ -38,7 +38,6 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
 
   useEffect(() => {
     if (isEdit && initialData) {
-      console.log('🔄 Edit mode - populating form with initial data:', initialData);
       const formDataToSet = {
         location: initialData.location || '',
         numberOfTrees: initialData.numberOfTrees || '',
@@ -53,7 +52,6 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
         accessibilityDescription: initialData.accessibility?.description || '',
         additionalInfo: initialData.additionalInfo || ''
       };
-      console.log('📝 Setting form data:', formDataToSet);
       setFormData(formDataToSet);
       // Normalize images to objects with a preview field
       const normalizedImages = (initialData.images || []).map((img, idx) =>
@@ -118,9 +116,7 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     const newValue = type === 'checkbox' ? checked : value;
-    
-    console.log(`📝 Input changed: ${name} = ${newValue}`);
-    
+
     setFormData(prev => ({
       ...prev,
       [name]: newValue
@@ -149,26 +145,40 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
     setImages(prev => prev.filter((_, i) => i !== index));
   };
 
+  const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Failed to read image file'));
+    reader.readAsDataURL(file);
+  });
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('🚀 Form submit started');
-    console.log('📋 Current form data:', formData);
-    
+
     if (!validateForm()) {
-      console.log('❌ Form validation failed');
       return;
     }
 
-    console.log('✅ Form validation passed');
     setLoading(true);
     try {
+      // Convert selected files to persistent strings so they can be saved in DB
+      // and rendered later in broker bids/tree lot cards.
+      const imagePayload = await Promise.all(
+        images.map(async (img) => {
+          if (typeof img === 'string') return img;
+          if (img?.file) return fileToDataUrl(img.file);
+          if (typeof img?.preview === 'string' && !img.preview.startsWith('blob:')) return img.preview;
+          return null;
+        })
+      );
+
       const submitData = {
         ...formData,
         numberOfTrees: parseInt(formData.numberOfTrees),
         minimumPrice: parseInt(formData.minimumPrice),
         treeAge: formData.treeAge && formData.treeAge.toString().trim() ? formData.treeAge.toString().trim() : '',
         tappingSchedule: formData.tappingSchedule && formData.tappingSchedule.trim() ? formData.tappingSchedule.trim() : '',
-        images: [], // TODO: Implement proper image upload
+        images: imagePayload.filter(Boolean),
         accessibility: {
           roadAccess: formData.roadAccess,
           truckAccess: formData.truckAccess,
@@ -177,9 +187,6 @@ const CreateTreeLotModal = ({ isOpen, onClose, onSubmit, initialData = null, isE
         additionalInfo: formData.additionalInfo && formData.additionalInfo.trim() ? formData.additionalInfo.trim() : ''
       };
       
-      console.log('📤 Frontend sending data:', JSON.stringify(submitData, null, 2));
-      
-
       const result = await onSubmit(submitData);
       
       if (result.success) {

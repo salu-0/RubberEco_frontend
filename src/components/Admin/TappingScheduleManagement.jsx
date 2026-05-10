@@ -21,8 +21,12 @@ import {
   Activity
 } from 'lucide-react';
 import './TappingScheduleManagement.css';
+import { getApiBaseUrl } from '../../utils/apiBaseUrl';
 
 const TappingScheduleManagement = ({ darkMode }) => {
+  const API_BASE_URL = getApiBaseUrl();
+  const getAuthToken = () => localStorage.getItem('token') || 'dummy-token-for-testing';
+
   const [schedules, setSchedules] = useState([]);
   const [filteredSchedules, setFilteredSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,17 +48,31 @@ const TappingScheduleManagement = ({ darkMode }) => {
     filterSchedules();
   }, [schedules, searchTerm, statusFilter]);
 
+  useEffect(() => {
+    // Keep stats in sync with whatever is rendered (DB schedules or request-derived fallback)
+    const activeSchedules = schedules.filter(s => s.status === 'active');
+    const completedSchedules = schedules.filter(s => s.status === 'completed');
+    const scheduledSchedules = schedules.filter(s => s.status === 'scheduled');
+    const avgProgress = schedules.length > 0
+      ? schedules.reduce((sum, s) => sum + (s.progressPercentage || 0), 0) / schedules.length
+      : 0;
+
+    setStats({
+      total: schedules.length,
+      active: activeSchedules.length,
+      completed: completedSchedules.length,
+      scheduled: scheduledSchedules.length,
+      averageProgress: Math.round(avgProgress)
+    });
+  }, [schedules]);
+
   const loadSchedules = async () => {
     try {
       setLoading(true);
       console.log('📅 Loading tapping schedules from database...');
 
-      const getAuthToken = () => {
-        return localStorage.getItem('token') || 'dummy-token-for-testing';
-      };
-
       // Get schedules from the tapping_schedules collection
-      const response = await fetch('https://rubbereco-backend.onrender.com/api/tapping-schedules', {
+      const response = await fetch(`${API_BASE_URL}/tapping-schedules`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${getAuthToken()}`,
@@ -66,8 +84,75 @@ const TappingScheduleManagement = ({ darkMode }) => {
         const data = await response.json();
         console.log('📅 Schedules loaded from database:', data);
 
-        // Use schedules directly from the database
-        const schedules = data.data || [];
+        // Use schedules directly from the database (support multiple response shapes)
+        let schedules = Array.isArray(data?.data) ? data.data : (Array.isArray(data?.schedules) ? data.schedules : []);
+
+        // Fallback: derive schedule-like rows from farmer requests when schedule collection is empty.
+        if (schedules.length === 0) {
+          const requestsResponse = await fetch(`${API_BASE_URL}/farmer-requests`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${getAuthToken()}`,
+              'Content-Type': 'application/json',
+            }
+          });
+
+          if (requestsResponse.ok) {
+            const requestData = await requestsResponse.json();
+            const requests = Array.isArray(requestData?.data) ? requestData.data : [];
+            const statusToScheduleStatus = {
+              accepted: 'scheduled',
+              assigned: 'scheduled',
+              in_progress: 'active',
+              completed: 'completed',
+              cancelled: 'cancelled',
+              rejected: 'cancelled'
+            };
+
+            schedules = requests
+              .filter(req => statusToScheduleStatus[String(req?.status || '').toLowerCase()])
+              .map(req => {
+                const startDate = req.startDate || req.submittedAt || req.createdAt || new Date().toISOString();
+                const duration = Number(req.duration) || 30;
+                const endDate = (() => {
+                  const start = new Date(startDate);
+                  const end = new Date(start);
+                  end.setDate(start.getDate() + duration);
+                  return end.toISOString();
+                })();
+
+                const mappedStatus = statusToScheduleStatus[String(req.status || '').toLowerCase()] || 'scheduled';
+                const progressPercentage =
+                  mappedStatus === 'completed' ? 100 :
+                  mappedStatus === 'active' ? 50 : 0;
+
+                return {
+                  _id: req._id,
+                  requestId: req.requestId,
+                  scheduleId: req.scheduleId || `SCH-${String(req.requestId || req._id || '').slice(-6).toUpperCase()}`,
+                  farmerName: req.farmerName || 'Farmer',
+                  farmerEmail: req.farmerEmail || '',
+                  farmerPhone: req.farmerPhone || '',
+                  tapperName: req.assignedTapper?.tapperName || req.assignedTapperName || req.tapperName || 'Not assigned',
+                  tapperPhone: req.assignedTapper?.tapperPhone || '',
+                  farmLocation: req.farmLocation || req.location || 'Not specified',
+                  farmSize: req.farmSize || 'N/A',
+                  numberOfTrees: req.numberOfTrees || req.treeCount || 0,
+                  tappingType: req.tappingType || 'daily',
+                  duration,
+                  preferredTime: req.preferredTime || 'morning',
+                  startDate,
+                  endDate,
+                  status: mappedStatus,
+                  progressPercentage,
+                  completedDays: mappedStatus === 'completed' ? duration : mappedStatus === 'active' ? Math.floor(duration / 2) : 0,
+                  totalScheduledDays: duration,
+                  missedDays: 0,
+                  dailyRecords: []
+                };
+              });
+          }
+        }
 
         console.log('📅 Raw schedules:', schedules);
         setSchedules(schedules);
@@ -171,12 +256,8 @@ const TappingScheduleManagement = ({ darkMode }) => {
 
   const loadStats = async () => {
     try {
-      const getAuthToken = () => {
-        return localStorage.getItem('token') || 'dummy-token-for-testing';
-      };
-
-      // Get stats from the tapping schedules
-      const response = await fetch('https://rubbereco-backend.onrender.com/api/tapping-schedules', {
+      // Get stats from tapping schedules endpoint (optional; local schedule-based stats are in useEffect).
+      const response = await fetch(`${API_BASE_URL}/tapping-schedules`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${getAuthToken()}`,
@@ -186,7 +267,7 @@ const TappingScheduleManagement = ({ darkMode }) => {
 
       if (response.ok) {
         const data = await response.json();
-        const schedules = data.data || [];
+        const schedules = Array.isArray(data?.data) ? data.data : (Array.isArray(data?.schedules) ? data.schedules : []);
 
         const activeSchedules = schedules.filter(s => s.status === 'active');
         const completedSchedules = schedules.filter(s => s.status === 'completed');
@@ -204,13 +285,15 @@ const TappingScheduleManagement = ({ darkMode }) => {
           ? schedules.reduce((sum, s) => sum + (s.progressPercentage || 0), 0) / schedules.length
           : 0;
 
-        setStats({
-          total: schedules.length,
-          active: activeSchedules.length,
-          completed: completedSchedules.length,
-          scheduled: scheduledSchedules.length,
-          averageProgress: Math.round(avgProgress)
-        });
+        if (schedules.length > 0) {
+          setStats({
+            total: schedules.length,
+            active: activeSchedules.length,
+            completed: completedSchedules.length,
+            scheduled: scheduledSchedules.length,
+            averageProgress: Math.round(avgProgress)
+          });
+        }
       }
     } catch (error) {
       console.error('❌ Error loading stats:', error);
@@ -226,26 +309,68 @@ const TappingScheduleManagement = ({ darkMode }) => {
 
   const loadAcceptedRequests = async () => {
     try {
-      const getAuthToken = () => {
-        return localStorage.getItem('token') || 'dummy-token-for-testing';
+      const authHeaders = {
+        'Authorization': `Bearer ${getAuthToken()}`,
+        'Content-Type': 'application/json',
+      };
+      const plainHeaders = { 'Content-Type': 'application/json' };
+
+      const tryFetchRequests = async (path, headers) => {
+        try {
+          const response = await fetch(`${API_BASE_URL}${path}`, { method: 'GET', headers });
+          if (!response.ok) return [];
+          const data = await response.json();
+          return Array.isArray(data?.data) ? data.data : [];
+        } catch {
+          return [];
+        }
       };
 
-      const response = await fetch('https://rubbereco-backend.onrender.com/api/farmer-requests?status=accepted', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${getAuthToken()}`,
-          'Content-Type': 'application/json',
-        }
+      // Primary: service requests stored as farmer requests
+      let allRequests = await tryFetchRequests('/farmer-requests', authHeaders);
+      if (allRequests.length === 0) {
+        allRequests = await tryFetchRequests('/farmer-requests', plainHeaders);
+      }
+
+      // Fallback: some environments expose tapping-requests as service requests
+      if (allRequests.length === 0) {
+        allRequests = await tryFetchRequests('/tapping-requests', authHeaders);
+      }
+      if (allRequests.length === 0) {
+        allRequests = await tryFetchRequests('/tapping-requests', plainHeaders);
+      }
+
+      // Build a set of requests that already have schedules.
+      const alreadyScheduledRequestIds = new Set(
+        schedules.map(s => String(s?._id || s?.requestId || '')).filter(Boolean)
+      );
+
+      // Allow scheduling for request statuses that represent real incoming requests.
+      const schedulableStatuses = new Set([
+        'submitted',
+        'under_review',
+        'negotiating',
+        'assigned',
+        'accepted'
+      ]);
+
+      const schedulableRequests = allRequests.filter(request => {
+        const status = String(request?.status || '').toLowerCase();
+        const requestId = String(request?._id || request?.requestId || '');
+        return schedulableStatuses.has(status) && !alreadyScheduledRequestIds.has(requestId);
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setAcceptedRequests(data.data || []);
-      }
+      setAcceptedRequests(schedulableRequests);
     } catch (error) {
       console.error('❌ Error loading accepted requests:', error);
+      setAcceptedRequests([]);
     }
   };
+
+  useEffect(() => {
+    // Re-compute available requests whenever schedules change.
+    loadAcceptedRequests();
+  }, [schedules]);
 
   const filterSchedules = () => {
     let filtered = [...schedules];
@@ -270,12 +395,8 @@ const TappingScheduleManagement = ({ darkMode }) => {
 
   const createSchedule = async (requestId, notes) => {
     try {
-      const getAuthToken = () => {
-        return localStorage.getItem('token') || 'dummy-token-for-testing';
-      };
-
       // Update the tapping request status to 'in_progress' to activate the schedule
-      const response = await fetch(`https://rubbereco-backend.onrender.com/api/farmer-requests/${requestId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/farmer-requests/${requestId}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${getAuthToken()}`,
@@ -305,10 +426,6 @@ const TappingScheduleManagement = ({ darkMode }) => {
 
   const updateScheduleStatus = async (scheduleId, newStatus, reason) => {
     try {
-      const getAuthToken = () => {
-        return localStorage.getItem('token') || 'dummy-token-for-testing';
-      };
-
       // Find the schedule to get the actual request ID
       const schedule = schedules.find(s => s.scheduleId === scheduleId);
       if (!schedule) {
@@ -327,7 +444,7 @@ const TappingScheduleManagement = ({ darkMode }) => {
 
       const requestStatus = statusMap[newStatus] || newStatus;
 
-      const response = await fetch(`https://rubbereco-backend.onrender.com/api/farmer-requests/${schedule._id}/status`, {
+      const response = await fetch(`${API_BASE_URL}/farmer-requests/${schedule._id}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${getAuthToken()}`,
@@ -605,6 +722,17 @@ const ScheduleCard = ({ schedule, onViewDetails, onUpdateStatus, getStatusInfo, 
             Pause
           </button>
         )}
+
+        {(schedule.status === 'scheduled' || schedule.status === 'active' || schedule.status === 'paused') && (
+          <button
+            className="btn-pause"
+            style={{ background: '#ef4444' }}
+            onClick={() => onUpdateStatus(schedule.scheduleId, 'cancelled', 'Cancelled by admin')}
+          >
+            <X size={16} />
+            Cancel
+          </button>
+        )}
       </div>
     </motion.div>
   );
@@ -614,10 +742,16 @@ const ScheduleCard = ({ schedule, onViewDetails, onUpdateStatus, getStatusInfo, 
 const CreateScheduleModal = ({ acceptedRequests, onClose, onCreate, darkMode }) => {
   const [selectedRequest, setSelectedRequest] = useState('');
   const [notes, setNotes] = useState('');
+  const selectedRequestData = acceptedRequests.find(request => request._id === selectedRequest);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (selectedRequest) {
+      const requestLabel = `${selectedRequestData?.farmerName || 'Farmer'} - ${selectedRequestData?.farmLocation || selectedRequestData?.location || 'Unknown location'}`;
+      const confirmed = window.confirm(
+        `Create tapping schedule for:\n${requestLabel}\n\nYou can cancel it later from the schedule card/details. Continue?`
+      );
+      if (!confirmed) return;
       onCreate(selectedRequest, notes);
     }
   };
@@ -633,8 +767,12 @@ const CreateScheduleModal = ({ acceptedRequests, onClose, onCreate, darkMode }) 
         </div>
 
         <form onSubmit={handleSubmit}>
+          <div className="request-count-pill">
+            {acceptedRequests.length} schedulable request{acceptedRequests.length === 1 ? '' : 's'} found
+          </div>
+
           <div className="form-group">
-            <label>Select Accepted Request</label>
+            <label>Select Service Request</label>
             <select
               value={selectedRequest}
               onChange={(e) => setSelectedRequest(e.target.value)}
@@ -643,11 +781,25 @@ const CreateScheduleModal = ({ acceptedRequests, onClose, onCreate, darkMode }) 
               <option value="">Choose a request...</option>
               {acceptedRequests.map(request => (
                 <option key={request._id} value={request._id}>
-                  {request.requestId} - {request.farmerName} ({request.farmLocation})
+                  {(request.requestId || request._id)} - {request.farmerName || 'Farmer'} ({request.farmLocation || request.location || 'Location not set'})
                 </option>
               ))}
             </select>
+            {acceptedRequests.length === 0 && (
+              <p style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#9ca3af' }}>
+                No schedulable requests available right now.
+              </p>
+            )}
           </div>
+
+          {selectedRequestData && (
+            <div className="selected-request-preview">
+              <div className="preview-item"><span>Farmer</span><strong>{selectedRequestData.farmerName || 'N/A'}</strong></div>
+              <div className="preview-item"><span>Location</span><strong>{selectedRequestData.farmLocation || selectedRequestData.location || 'N/A'}</strong></div>
+              <div className="preview-item"><span>Trees</span><strong>{selectedRequestData.numberOfTrees || selectedRequestData.treeCount || 'N/A'}</strong></div>
+              <div className="preview-item"><span>Status</span><strong>{String(selectedRequestData.status || 'submitted').replace('_', ' ')}</strong></div>
+            </div>
+          )}
 
           <div className="form-group">
             <label>Notes (Optional)</label>
@@ -663,7 +815,7 @@ const CreateScheduleModal = ({ acceptedRequests, onClose, onCreate, darkMode }) 
             <button type="button" className="btn-cancel" onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" className="btn-create">
+            <button type="submit" className="btn-create" disabled={!selectedRequest}>
               Create Schedule
             </button>
           </div>
@@ -881,6 +1033,20 @@ const ScheduleDetailsModal = ({ schedule, onClose, onUpdateStatus, darkMode }) =
             >
               <Pause size={16} />
               Pause Schedule
+            </button>
+          )}
+
+          {(schedule.status === 'scheduled' || schedule.status === 'active' || schedule.status === 'paused') && (
+            <button
+              className="btn-pause"
+              style={{ background: '#ef4444' }}
+              onClick={() => {
+                onUpdateStatus(schedule.scheduleId, 'cancelled', 'Cancelled by admin');
+                onClose();
+              }}
+            >
+              <X size={16} />
+              Cancel Schedule
             </button>
           )}
         </div>

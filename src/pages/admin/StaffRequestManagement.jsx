@@ -272,6 +272,162 @@ const StaffRequestManagement = ({ darkMode }) => {
     return labels[position] || position;
   };
 
+  const OCR_NAME_BLOCKLIST = [
+    'government of india',
+    'bharat sarkar',
+    'aadhaar',
+    'aadhar',
+    'issue date',
+    'download date',
+    'date of birth',
+    'dob',
+    'female',
+    'male',
+    'vid'
+  ];
+
+  const isLikelyNoiseLine = (line = '') => {
+    const normalized = line.toLowerCase().replace(/\s+/g, ' ').trim();
+    if (!normalized) return true;
+    if (OCR_NAME_BLOCKLIST.some(keyword => normalized.includes(keyword))) return true;
+    if (/\d{4}\s?\d{4}\s?\d{4}/.test(normalized)) return true;
+    if (/^[^a-zA-Z]*$/.test(normalized)) return true;
+    // Reject acronym-like OCR junk such as "WW SME WMEX PR"
+    const words = line.trim().split(/\s+/).filter(Boolean);
+    if (words.length >= 2) {
+      const upperShortWords = words.filter(word => /^[A-Z]{1,4}$/.test(word)).length;
+      if (upperShortWords === words.length) return true;
+    }
+    return false;
+  };
+
+  const normalizeNameLine = (line = '') =>
+    line
+      .replace(/[^A-Za-z\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const pickNameFromRawText = (rawText = '') => {
+    if (!rawText) return '';
+    const lines = rawText
+      .split('\n')
+      .map(normalizeNameLine)
+      .filter(Boolean);
+
+    // Aadhaar cards usually have the person's name right above DOB line.
+    const dobLineIndex = lines.findIndex(line => /date of birth|dob/i.test(line));
+    if (dobLineIndex > 0) {
+      const aboveDob = lines[dobLineIndex - 1];
+      if (!isLikelyNoiseLine(aboveDob) && aboveDob.split(' ').length <= 4) {
+        return aboveDob;
+      }
+    }
+
+    const candidates = lines.filter(line => {
+      if (isLikelyNoiseLine(line)) return false;
+      const words = line.split(' ').filter(Boolean);
+      return words.length >= 2 && words.length <= 4 && words.every(w => w.length >= 2);
+    });
+
+    return candidates[0] || '';
+  };
+
+  const pickDobFromRawText = (rawText = '') => {
+    if (!rawText) return '';
+    const match = rawText.match(/\b(0?[1-9]|[12]\d|3[01])[-/.](0?[1-9]|1[0-2])[-/.]((19|20)\d{2})\b/);
+    return match ? `${match[1].padStart(2, '0')}/${match[2].padStart(2, '0')}/${match[3]}` : '';
+  };
+
+  const isLikelyCorruptedOcrName = (name = '') => {
+    const cleaned = normalizeNameLine(name);
+    if (!cleaned) return true;
+    if (isLikelyNoiseLine(cleaned)) return true;
+    const words = cleaned.split(' ').filter(Boolean);
+    if (words.length < 2) return true;
+    // Very low vowel ratio is often a sign of OCR garbage.
+    const lettersOnly = cleaned.toLowerCase().replace(/[^a-z]/g, '');
+    const vowelCount = (lettersOnly.match(/[aeiou]/g) || []).length;
+    if (lettersOnly.length > 0 && vowelCount / lettersOnly.length < 0.2) return true;
+    return false;
+  };
+
+  const getDisplayOcrData = (idOcr = {}) => {
+    const extractedName = normalizeNameLine(idOcr.extracted?.name || '');
+    const extractedDob = (idOcr.extracted?.dob || '').trim();
+    const rawText = idOcr.rawText || '';
+
+    const fallbackName = pickNameFromRawText(rawText);
+    const fallbackDob = pickDobFromRawText(rawText);
+
+    return {
+      // Never replace OCR name with user-provided name (prevents false positives).
+      name: extractedName && !isLikelyNoiseLine(extractedName) ? extractedName : fallbackName || extractedName,
+      dob: extractedDob || fallbackDob
+    };
+  };
+
+  const normalizeComparableName = (value = '') =>
+    value
+      .toLowerCase()
+      .replace(/[^a-z\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const hasLooseNameMatch = (a = '', b = '') => {
+    const left = normalizeComparableName(a);
+    const right = normalizeComparableName(b);
+    if (!left || !right) return false;
+    if (left === right) return true;
+    return left.includes(right) || right.includes(left);
+  };
+
+  const normalizeDateForCompare = (value = '') => {
+    if (!value) return '';
+    const input = String(value).trim();
+
+    // Handle YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(input)) return input;
+
+    // Handle ISO date-time (e.g. 2002-04-23T00:00:00.000Z)
+    const isoDateMatch = input.match(/^(\d{4})-(\d{2})-(\d{2})T/);
+    if (isoDateMatch) {
+      return `${isoDateMatch[1]}-${isoDateMatch[2]}-${isoDateMatch[3]}`;
+    }
+
+    // Handle DD/MM/YYYY or DD-MM-YYYY
+    const dmyMatch = input.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+    if (dmyMatch) {
+      const day = dmyMatch[1].padStart(2, '0');
+      const month = dmyMatch[2].padStart(2, '0');
+      const year = dmyMatch[3];
+      return `${year}-${month}-${day}`;
+    }
+
+    // Last fallback: parse with Date if possible.
+    const parsed = new Date(input);
+    if (!Number.isNaN(parsed.getTime())) {
+      const year = parsed.getUTCFullYear();
+      const month = String(parsed.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(parsed.getUTCDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    return '';
+  };
+
+  const getEffectiveOcrStatus = (idOcr = {}, request = {}) => {
+    const displayOcr = getDisplayOcrData(idOcr);
+    const nameMatched = hasLooseNameMatch(displayOcr.name, request.fullName || '');
+    const dobMatched = (
+      normalizeDateForCompare(displayOcr.dob) &&
+      normalizeDateForCompare(request.dateOfBirth) &&
+      normalizeDateForCompare(displayOcr.dob) === normalizeDateForCompare(request.dateOfBirth)
+    );
+
+    const effectiveStatus = nameMatched && dobMatched ? 'passed' : (idOcr.status || 'under_review');
+    return { displayOcr, nameMatched, dobMatched, effectiveStatus };
+  };
+
   const StatCard = ({ title, value, icon: Icon, color, description }) => {
     const gradientColors = {
       'text-blue-600': darkMode ? 'from-green-500/20 to-emerald-600/20' : 'from-green-500/10 to-emerald-600/10',
@@ -634,20 +790,25 @@ const StaffRequestManagement = ({ darkMode }) => {
                             <span className="ml-2 capitalize">{request.status.replace('_', ' ')}</span>
                           </span>
                           {request.verification?.idOcr?.status && (
+                            (() => {
+                              const ocrEval = getEffectiveOcrStatus(request.verification.idOcr, request);
+                              return (
                             <span
-                              title={`OCR: ${request.verification.idOcr.status}${request.verification.idOcr.confidence ? ` (conf ${Math.round(request.verification.idOcr.confidence)}%)` : ''}`}
+                              title={`OCR: ${ocrEval.effectiveStatus}${request.verification.idOcr.confidence ? ` (conf ${Math.round(request.verification.idOcr.confidence)}%)` : ''}`}
                               className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium border ${
-                                request.verification.idOcr.status === 'passed'
+                                ocrEval.effectiveStatus === 'passed'
                                   ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700/50'
-                                  : request.verification.idOcr.status === 'failed'
+                                  : ocrEval.effectiveStatus === 'failed'
                                   ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700/50'
-                                  : request.verification.idOcr.status === 'error'
+                                  : ocrEval.effectiveStatus === 'error'
                                   ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-700/50'
                                   : 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800/50 dark:text-gray-300 dark:border-gray-700/50'
                               }`}
                             >
-                              OCR: {request.verification.idOcr.status}
+                              OCR: {ocrEval.effectiveStatus}
                             </span>
+                              );
+                            })()
                           )}
                         </div>
                       </td>
@@ -973,18 +1134,21 @@ const StaffRequestManagement = ({ darkMode }) => {
                   Document Verification (OCR)
                 </h3>
                 {selectedRequest.verification?.idOcr ? (
+                  (() => {
+                    const ocrEval = getEffectiveOcrStatus(selectedRequest.verification.idOcr, selectedRequest);
+                    return (
                   <div className={`p-4 rounded-lg border ${darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}>
                     <div className="flex items-center space-x-2 mb-3">
                       <span className={`px-2 py-1 rounded-lg text-xs font-medium border ${
-                        selectedRequest.verification.idOcr.status === 'passed'
+                        ocrEval.effectiveStatus === 'passed'
                           ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700/50'
-                          : selectedRequest.verification.idOcr.status === 'failed'
+                          : ocrEval.effectiveStatus === 'failed'
                           ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700/50'
-                          : selectedRequest.verification.idOcr.status === 'error'
+                          : ocrEval.effectiveStatus === 'error'
                           ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-700/50'
                           : 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800/50 dark:text-gray-300 dark:border-gray-700/50'
                       }`}>
-                        {selectedRequest.verification.idOcr.status.toUpperCase()}
+                        {ocrEval.effectiveStatus.toUpperCase()}
                       </span>
                       {typeof selectedRequest.verification.idOcr.confidence === 'number' && (
                         <span className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -995,16 +1159,16 @@ const StaffRequestManagement = ({ darkMode }) => {
                     <div className="grid md:grid-cols-2 gap-4 text-sm">
                       <div>
                         <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Extracted Name</p>
-                        <p className={`${darkMode ? 'text-gray-100' : 'text-gray-900'} font-medium`}>{selectedRequest.verification.idOcr.extracted?.name || '—'}</p>
-                        <p className={`mt-1 text-xs ${selectedRequest.verification.idOcr.matched?.name ? 'text-green-600' : 'text-red-600'}`}>
-                          {selectedRequest.verification.idOcr.matched?.name ? 'Matched' : 'Not matched'}
+                        <p className={`${darkMode ? 'text-gray-100' : 'text-gray-900'} font-medium`}>{ocrEval.displayOcr.name || '—'}</p>
+                        <p className={`mt-1 text-xs ${ocrEval.nameMatched ? 'text-green-600' : 'text-red-600'}`}>
+                          {ocrEval.nameMatched ? 'Matched' : 'Not matched'}
                         </p>
                       </div>
                       <div>
                         <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Extracted DOB</p>
-                        <p className={`${darkMode ? 'text-gray-100' : 'text-gray-900'} font-medium`}>{selectedRequest.verification.idOcr.extracted?.dob || '—'}</p>
-                        <p className={`mt-1 text-xs ${selectedRequest.verification.idOcr.matched?.dob ? 'text-green-600' : 'text-red-600'}`}>
-                          {selectedRequest.verification.idOcr.matched?.dob ? 'Matched' : 'Not matched'}
+                        <p className={`${darkMode ? 'text-gray-100' : 'text-gray-900'} font-medium`}>{ocrEval.displayOcr.dob || '—'}</p>
+                        <p className={`mt-1 text-xs ${ocrEval.dobMatched ? 'text-green-600' : 'text-red-600'}`}>
+                          {ocrEval.dobMatched ? 'Matched' : 'Not matched'}
                         </p>
                       </div>
                     </div>
@@ -1012,6 +1176,8 @@ const StaffRequestManagement = ({ darkMode }) => {
                       <p className={`mt-3 text-xs ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Notes: {selectedRequest.verification.idOcr.notes}</p>
                     )}
                   </div>
+                    );
+                  })()
                 ) : (
                   <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>No OCR verification data.</p>
                 )}

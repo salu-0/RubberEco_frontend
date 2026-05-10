@@ -8,6 +8,8 @@ import {
   RefreshCw,
   ExternalLink 
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { getApiBaseUrl } from '../../utils/apiBaseUrl';
 
 const EmailVerificationAlert = ({ 
   isOpen, 
@@ -15,6 +17,7 @@ const EmailVerificationAlert = ({
   email, 
   onResendVerification 
 }) => {
+  const navigate = useNavigate();
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
 
@@ -23,7 +26,7 @@ const EmailVerificationAlert = ({
     
     setIsResending(true);
     try {
-      const response = await fetch('https://rubbereco-backend.onrender.com/api/auth/resend-verification', {
+      const response = await fetch(`${getApiBaseUrl()}/auth/resend-verification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -79,7 +82,7 @@ const EmailVerificationAlert = ({
               Verify Your Email
             </h2>
             <p className="text-gray-600">
-              We've sent a verification link to your email address
+              We've sent an OTP to your email address
             </p>
           </div>
 
@@ -108,7 +111,7 @@ const EmailVerificationAlert = ({
                 <span className="text-xs font-bold text-blue-600">2</span>
               </div>
               <p className="text-sm text-gray-700">
-                Click the "Verify Email" button in the email
+                Copy the 6-digit OTP from the email
               </p>
             </div>
             
@@ -117,7 +120,7 @@ const EmailVerificationAlert = ({
                 <span className="text-xs font-bold text-blue-600">3</span>
               </div>
               <p className="text-sm text-gray-700">
-                Return here and try logging in again
+                Paste the OTP on the verification page and verify
               </p>
             </div>
           </div>
@@ -157,6 +160,20 @@ const EmailVerificationAlert = ({
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
               >
                 Close
+              </button>
+            </div>
+
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => {
+                  const e = email ? encodeURIComponent(email) : '';
+                  navigate(`/verify-email-otp?email=${e}`);
+                }}
+                disabled={!email}
+                className="w-full bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Enter OTP
               </button>
             </div>
           </div>

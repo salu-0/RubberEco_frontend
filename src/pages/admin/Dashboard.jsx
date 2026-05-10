@@ -12,8 +12,6 @@ import {
   Search,
   User,
   LogOut,
-  Sun,
-  Moon,
   Leaf,
   Menu,
   Edit,
@@ -33,7 +31,8 @@ import {
   ArrowDownRight,
   TreePine,
   CalendarDays,
-  Package
+  Package,
+  ChevronRight
 } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import NotificationPanel from '../../components/Admin/NotificationPanel';
@@ -54,11 +53,12 @@ import NurseryInventory from './NurseryInventory';
 import PaymentsTable from './PaymentsTable';
 import Reports from './Reports';
 import { useNavigationGuard } from '../../hooks/useNavigationGuard';
+import { getApiBaseUrl } from '../../utils/apiBaseUrl';
 
 const Dashboard = () => {
   // All useState declarations at the top
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [payments, setPayments] = useState([]);
   const [paymentsLoading, setPaymentsLoading] = useState(false);
@@ -76,9 +76,9 @@ const Dashboard = () => {
     }
   }, [activeTab]);
 
-  // Force dark mode on component mount
+  // Lock admin UI to black + green night theme
   useEffect(() => {
-    setDarkMode(true);
+    // Theme intentionally fixed to dark mode
   }, []);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [searchQuery, setSearchQuery] = useState('');
@@ -111,11 +111,11 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   // API base URL
-  const API_BASE_URL = 'https://rubbereco-backend.onrender.com/api';
+  const API_BASE_URL = getApiBaseUrl();
 
   // Get auth token
   const getAuthToken = () => {
-    return localStorage.getItem('token') || 'dummy-token-for-testing';
+    return localStorage.getItem('token');
   };
 
   // Fetch dynamic counts from database
@@ -258,16 +258,72 @@ const Dashboard = () => {
   // Fetch pending staff requests count
   const fetchPendingStaffRequests = async () => {
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
-      const response = await fetch(`${backendUrl}/api/staff-requests/pending/count`);
+      const token = getAuthToken();
+      const authHeaders = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+      const plainHeaders = { 'Content-Type': 'application/json' };
 
-      if (response.ok) {
-        const result = await response.json();
-        setPendingStaffRequests(result.count || 0);
-      } else {
-        console.log('Error fetching pending staff requests count');
-        setPendingStaffRequests(0);
+      const tryFetchJson = async (url, headers) => {
+        try {
+          const res = await fetch(url, { headers });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch {
+          return null;
+        }
+      };
+
+      // 1) Direct count endpoint (best case)
+      const directCount =
+        await tryFetchJson(`${API_BASE_URL}/staff-requests/pending/count`, authHeaders) ||
+        await tryFetchJson(`${API_BASE_URL}/staff-requests/pending/count`, plainHeaders);
+
+      if (directCount && typeof directCount.count === 'number') {
+        setPendingStaffRequests(directCount.count);
+        return;
       }
+
+      // 2) Filtered endpoints for pending + under_review
+      const pendingList =
+        await tryFetchJson(`${API_BASE_URL}/staff-requests?status=pending&limit=200`, authHeaders) ||
+        await tryFetchJson(`${API_BASE_URL}/staff-requests?status=pending&limit=200`, plainHeaders);
+      const reviewList =
+        await tryFetchJson(`${API_BASE_URL}/staff-requests?status=under_review&limit=200`, authHeaders) ||
+        await tryFetchJson(`${API_BASE_URL}/staff-requests?status=under_review&limit=200`, plainHeaders);
+
+      const pendingFromFiltered =
+        (Array.isArray(pendingList?.data) ? pendingList.data.length : 0) +
+        (Array.isArray(reviewList?.data) ? reviewList.data.length : 0);
+
+      if (pendingFromFiltered > 0) {
+        setPendingStaffRequests(pendingFromFiltered);
+        return;
+      }
+
+      // 3) Unfiltered endpoint and compute pending-like statuses
+      const fullList =
+        await tryFetchJson(`${API_BASE_URL}/staff-requests?limit=200`, authHeaders) ||
+        await tryFetchJson(`${API_BASE_URL}/staff-requests?limit=200`, plainHeaders);
+
+      if (fullList) {
+        if (fullList?.stats && (typeof fullList.stats.pending === 'number' || typeof fullList.stats.under_review === 'number')) {
+          setPendingStaffRequests((fullList.stats.pending || 0) + (fullList.stats.under_review || 0));
+          return;
+        }
+
+        const requests = Array.isArray(fullList?.data) ? fullList.data : [];
+        const pendingCount = requests.filter(req => {
+          const status = String(req?.status || '').toLowerCase();
+          return status === 'pending' || status === 'under_review';
+        }).length;
+        setPendingStaffRequests(pendingCount);
+        return;
+      }
+
+      // Keep stable behavior when all endpoints fail
+      setPendingStaffRequests(0);
     } catch (error) {
       console.error('Error fetching pending staff requests count:', error);
       setPendingStaffRequests(0);
@@ -277,7 +333,11 @@ const Dashboard = () => {
   // Fetch pending land registrations count
   const fetchPendingLandRegistrations = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
+      if (!token) {
+        setPendingLandRegistrations(0);
+        return;
+      }
       const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/land-registration`, {
         headers: {
@@ -291,6 +351,9 @@ const Dashboard = () => {
         const pendingCount = (data.data || []).filter(land => land.status === 'pending').length;
         setPendingLandRegistrations(pendingCount);
         console.log('🏞️ Pending land registrations:', pendingCount);
+      } else if (response.status === 401) {
+        setPendingLandRegistrations(0);
+        console.warn('Unauthorized for land registrations; token may be expired');
       } else {
         console.log('Error fetching pending land registrations');
         setPendingLandRegistrations(0);
@@ -335,7 +398,11 @@ const Dashboard = () => {
   // Fetch pending leave requests count
   const fetchPendingLeaveRequests = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
+      if (!token) {
+        setPendingLeaveRequests(0);
+        return;
+      }
       const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://rubbereco-backend.onrender.com';
       const response = await fetch(`${backendUrl}/api/leave-requests`, {
         headers: {
@@ -349,6 +416,9 @@ const Dashboard = () => {
         const pendingCount = (data.data || []).filter(leave => leave.status === 'pending').length;
         setPendingLeaveRequests(pendingCount);
         console.log('📅 Pending leave requests:', pendingCount);
+      } else if (response.status === 401) {
+        setPendingLeaveRequests(0);
+        console.warn('Unauthorized for leave requests; token may be expired');
       } else {
         console.log('Error fetching pending leave requests');
         setPendingLeaveRequests(0);
@@ -725,6 +795,19 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Refresh sidebar badges quickly for near real-time notifications
+  useEffect(() => {
+    const badgeInterval = setInterval(() => {
+      fetchPendingStaffRequests();
+      fetchPendingBrokerRegistrations();
+      fetchPendingLandRegistrations();
+      fetchPendingLeaveRequests();
+      fetchPendingTappingRequests();
+    }, 30000);
+
+    return () => clearInterval(badgeInterval);
+  }, []);
+
   // Load service requests when Services tab is opened
   useEffect(() => {
     if (activeTab === 'services') {
@@ -931,22 +1014,24 @@ const Dashboard = () => {
   return (
     <div
       data-testid="admin-dashboard"
-      className={`h-screen flex overflow-hidden ${darkMode ? 'dark bg-gradient-to-br from-black via-gray-900 to-black' : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'}`}
-      style={{ backgroundColor: darkMode ? '#000000' : '#f9fafb' }}
+      className={`h-screen p-3 ${darkMode ? 'dark bg-slate-950' : 'bg-[#ecebff]'}`}
+      style={{ backgroundColor: darkMode ? '#020617' : '#f4f6fb' }}
     >
+      <div className={`w-full h-full flex overflow-hidden rounded-[24px] ${darkMode ? 'border border-slate-800' : 'border border-slate-200'} shadow-xl`}>
       {/* Sidebar */}
       <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-64 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
-        <div className={`flex flex-col h-full ${darkMode ? 'bg-gradient-to-b from-black to-gray-900 border-r border-green-500/20' : 'bg-white'} shadow-2xl backdrop-blur-sm`}>
+        <div className={`flex flex-col h-full ${darkMode ? 'bg-slate-900 border-r border-slate-800' : 'bg-[#eef1f7] border-r border-slate-200'} shadow-xl`}>
           {/* Logo */}
-          <div className="flex items-center justify-center h-16 px-4 bg-gradient-to-r from-green-600 to-emerald-600 shadow-lg">
+          <div className={`${darkMode ? 'bg-slate-900 border-b border-slate-800' : 'bg-[#eef1f7] border-b border-slate-200'} flex items-center justify-start h-16 px-5`}>
             <div className="flex items-center space-x-2">
-              <Leaf className="h-8 w-8 text-white drop-shadow-lg" />
-              <span className="text-xl font-bold text-white drop-shadow-lg">RubberEco Admin</span>
+              <Leaf className={`h-7 w-7 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
+              <span className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>RubberEco Admin</span>
             </div>
           </div>
 
           {/* Enhanced Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+          <nav className="flex-1 px-3 py-4 overflow-y-auto">
+            <div className={`${darkMode ? 'bg-slate-900 border border-slate-800' : 'bg-white border border-slate-200'} rounded-2xl p-2 space-y-1`}>
             {sidebarItems.map((item, index) => (
               <motion.button
                 key={item.id}
@@ -954,14 +1039,14 @@ const Dashboard = () => {
                 data-testid={`admin-sidebar-${item.id}`}
                 aria-current={activeTab === item.id ? 'page' : undefined}
                 onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center px-4 py-3 text-left rounded-xl transition-all duration-300 relative group ${
+                className={`w-full flex items-center px-3 py-3 text-left rounded-xl transition-all duration-300 relative group ${
                   activeTab === item.id
-                    ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg shadow-green-500/25 border border-green-500/30'
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md border border-emerald-400/30'
                     : darkMode
-                    ? 'text-gray-300 hover:bg-green-500/10 hover:text-green-400 hover:border hover:border-green-500/30'
-                    : 'text-gray-700 hover:bg-green-50 hover:text-green-600'
+                    ? 'text-gray-300 hover:bg-white/5 hover:text-green-300 hover:border hover:border-green-500/25'
+                    : 'text-slate-700 hover:bg-slate-50 hover:text-emerald-600'
                 }`}
-                whileHover={{ scale: 1.02, x: 4 }}
+                whileHover={{ scale: 1.015, x: 2 }}
                 whileTap={{ scale: 0.98 }}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -970,7 +1055,7 @@ const Dashboard = () => {
                 {/* Active indicator */}
                 {activeTab === item.id && (
                   <motion.div
-                    className="absolute left-0 top-0 bottom-0 w-1 bg-green-400 rounded-r-full shadow-lg shadow-green-400/50"
+                    className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-300 rounded-r-full"
                     layoutId="activeIndicator"
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   />
@@ -978,10 +1063,10 @@ const Dashboard = () => {
 
                 <div className={`p-2 rounded-lg mr-3 transition-all duration-300 ${
                   activeTab === item.id
-                    ? 'bg-white/20 shadow-lg'
+                    ? 'bg-white/20'
                     : darkMode
                     ? 'group-hover:bg-green-500/20'
-                    : 'group-hover:bg-green-100'
+                    : 'group-hover:bg-emerald-100'
                 }`}>
                   <item.icon className="h-5 w-5" />
                 </div>
@@ -992,45 +1077,40 @@ const Dashboard = () => {
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center ml-2 shadow-lg shadow-green-500/50 border border-green-400/30"
+                    className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center ml-2 border border-emerald-300/40 font-semibold"
                   >
                     {item.notificationCount > 99 ? '99+' : item.notificationCount}
                   </motion.div>
                 )}
 
+                <ChevronRight className={`h-4 w-4 ml-2 transition-all duration-200 ${
+                  activeTab === item.id ? 'text-white/90 translate-x-0.5' : (darkMode ? 'text-gray-500 group-hover:text-green-300' : 'text-gray-400')
+                }`} />
+
                 {/* Hover effect */}
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                   initial={false}
                 />
               </motion.button>
             ))}
+            </div>
           </nav>
 
           {/* User Profile */}
-          <div className={`p-4 border-t ${darkMode ? 'border-green-500/20' : 'border-gray-200'} bg-gradient-to-r ${darkMode ? 'from-green-900/20 to-emerald-900/20' : 'from-green-50 to-emerald-50'}`}>
+          <div className={`p-4 border-t ${darkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`}>
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-green-600 to-emerald-600 rounded-full flex items-center justify-center shadow-lg shadow-green-500/25">
+              <div className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full flex items-center justify-center">
                 <User className="h-6 w-6 text-white" />
               </div>
               <div className="flex-1">
                 <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   {JSON.parse(localStorage.getItem('user') || '{}').name || 'Admin User'}
                 </p>
-                <p className={`text-xs ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+                <p className={`text-xs ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
                   {JSON.parse(localStorage.getItem('user') || '{}').email || 'admin@rubbereco.com'}
                 </p>
               </div>
-              <button
-                onClick={handleLogout}
-                className={`p-2 rounded-lg transition-all duration-300 ${
-                  darkMode
-                    ? 'hover:bg-green-500/20 text-gray-400 hover:text-green-400 border border-transparent hover:border-green-500/30'
-                    : 'hover:bg-green-100 text-gray-600 hover:text-green-600'
-                } shadow-sm hover:shadow-md`}
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
             </div>
           </div>
         </div>
@@ -1039,9 +1119,9 @@ const Dashboard = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden lg:ml-0">
         {/* Enhanced Header */}
-        <header className={`${darkMode ? 'bg-gradient-to-r from-black to-gray-900 border-green-500/20' : 'bg-white border-gray-200'} border-b backdrop-blur-sm shadow-lg`}>
-          <div className="flex items-center justify-between px-6 py-4">
-            <div className="flex items-center space-x-4">
+        <header className={`${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} border-b shadow-sm`}>
+          <div className="flex items-center justify-between px-5 py-3 gap-4">
+            <div className="flex items-center space-x-3 min-w-[220px]">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className={`lg:hidden p-2 rounded-lg transition-all duration-200 ${
@@ -1060,6 +1140,19 @@ const Dashboard = () => {
               </div>
             </div>
 
+            <div className={`hidden md:flex items-center flex-1 max-w-xl rounded-xl px-3 py-2 border ${
+              darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
+            }`}>
+              <Search className={`h-4 w-4 mr-2 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search users, schedules, requests..."
+                className={`w-full bg-transparent outline-none text-sm ${darkMode ? 'text-slate-100 placeholder-slate-400' : 'text-slate-700 placeholder-slate-500'}`}
+              />
+            </div>
+
             <div className="flex items-center space-x-4">
               {/* Real-time Clock */}
               <div className={`hidden md:flex flex-col items-end ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
@@ -1070,24 +1163,6 @@ const Dashboard = () => {
                   {currentTime.toLocaleDateString()}
                 </div>
               </div>
-
-              {/* Enhanced Dark Mode Toggle */}
-              <motion.button
-                onClick={() => setDarkMode(!darkMode)}
-                className={`p-2 rounded-lg transition-colors ${
-                  darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
-                }`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <motion.div
-                  initial={false}
-                  animate={{ rotate: darkMode ? 180 : 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {darkMode ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
-                </motion.div>
-              </motion.button>
 
               {/* User Profile Dropdown */}
               <div className="relative">
@@ -1107,6 +1182,18 @@ const Dashboard = () => {
                   </div>
                 </motion.button>
               </div>
+
+              <button
+                onClick={handleLogout}
+                className={`hidden md:inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  darkMode
+                    ? 'bg-red-500/10 text-red-300 hover:bg-red-500/20 border border-red-500/30'
+                    : 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
+                }`}
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
+              </button>
             </div>
           </div>
         </header>
@@ -1115,7 +1202,7 @@ const Dashboard = () => {
         <main
           data-testid="admin-main"
           id="admin-dashboard-main"
-          className={`flex-1 overflow-y-auto p-6 ${darkMode ? 'bg-gradient-to-br from-black via-gray-900 to-black' : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'}`}
+          className={`flex-1 overflow-y-auto p-6 ${darkMode ? 'bg-slate-950' : 'bg-[#f4f6fb]'}`}
           style={{ height: 'calc(100vh - 80px)' }}
         >
 
@@ -1431,7 +1518,7 @@ const Dashboard = () => {
           )}
 
           {/* Performance Tracking Section */}
-          {activeTab === 'performance' && (
+          {activeTab === 'performance-legacy' && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1893,7 +1980,7 @@ const Dashboard = () => {
           {activeTab === 'reports' && <Reports darkMode={darkMode} />}
 
           {/* Other tab contents */}
-          {activeTab !== 'overview' && activeTab !== 'performance' && activeTab !== 'assign-tasks' && activeTab !== 'users' && activeTab !== 'staff' && activeTab !== 'staff-requests' && activeTab !== 'leave-management' && activeTab !== 'land-verification' && activeTab !== 'trainers' && activeTab !== 'brokers' && activeTab !== 'videos' && activeTab !== 'nursery' && activeTab !== 'inventory' && activeTab !== 'services' && activeTab !== 'payments' && activeTab !== 'reports' && (
+          {activeTab !== 'overview' && activeTab !== 'performance' && activeTab !== 'assign-tasks' && activeTab !== 'users' && activeTab !== 'staff' && activeTab !== 'staff-requests' && activeTab !== 'leave-management' && activeTab !== 'land-verification' && activeTab !== 'trainers' && activeTab !== 'brokers' && activeTab !== 'videos' && activeTab !== 'nursery' && activeTab !== 'inventory' && activeTab !== 'services' && activeTab !== 'schedules' && activeTab !== 'payments' && activeTab !== 'reports' && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1930,6 +2017,7 @@ const Dashboard = () => {
         pendingTappingRequests={pendingTappingRequests}
         pendingLandRegistrations={pendingLandRegistrations}
       />
+      </div>
     </div>
   );
 };

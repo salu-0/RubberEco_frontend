@@ -44,7 +44,6 @@ const FarmerMessages = ({ isOpen, onClose }) => {
   const [pollingInitialized, setPollingInitialized] = useState(false);
 
   useEffect(() => {
-    console.log('🚀 FarmerMessages component mounted, loading conversations...');
     loadConversations();
     initializeWebSocket();
     
@@ -74,7 +73,6 @@ const FarmerMessages = ({ isOpen, onClose }) => {
 
     setTimeout(() => {
       if (!websocketAvailable && connectionStatus === 'disconnected' && !pollingInitialized) {
-        console.log('WebSocket connection timeout, switching to polling mode');
         setConnectionStatus('failed');
         initializePolling();
       }
@@ -154,7 +152,6 @@ const FarmerMessages = ({ isOpen, onClose }) => {
       return;
     }
 
-    console.log('Initializing polling service for farmer...');
     setPollingInitialized(true);
 
     pollingService.on('newMessage', (message) => {
@@ -181,34 +178,9 @@ const FarmerMessages = ({ isOpen, onClose }) => {
   const loadConversations = async () => {
     try {
       setLoading(true);
-      console.log('🔄 Loading farmer conversations...');
-      
-      // Debug: Test the debug endpoint first
-      try {
-        const debugResponse = await fetch('https://rubbereco-backend.onrender.com/api/messages/debug', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        const debugData = await debugResponse.json();
-        console.log('🔍 Debug database info:', debugData);
-      } catch (debugError) {
-        console.log('🔍 Debug endpoint not available:', debugError.message);
-      }
       
       // Get conversations where farmer is the recipient
       const conversationsData = await messagingService.getFarmerConversations();
-      console.log('📊 Raw conversations data:', conversationsData);
-      
-      // If no conversations found, show debug info
-      if (conversationsData.length === 0) {
-        console.log('🔍 No conversations found from backend API');
-        console.log('🔍 This suggests the backend query logic needs to be fixed');
-        console.log('🔍 The issue is likely in the backend getFarmerConversations function');
-        console.log('🔍 Backend needs to be restarted to apply the debugging changes');
-      }
       
       const transformedConversations = conversationsData
         .filter(conv => conv.brokerId && conv.bidId) // Only bid-related conversations
@@ -232,24 +204,12 @@ const FarmerMessages = ({ isOpen, onClose }) => {
           isOnline: conv.isOnline || false
         }));
       
-      console.log('✅ Transformed conversations:', transformedConversations);
       setConversations(transformedConversations);
       if (transformedConversations.length > 0) {
         setSelectedConversation(transformedConversations[0]);
       }
     } catch (error) {
-      console.error('❌ Error loading farmer conversations:', error);
-      
-      // Temporary fallback: Show a message about the issue
-      console.log('🔍 Debugging info:');
-      console.log('- API call successful but returned empty array');
-      console.log('- This suggests the backend is not finding conversations');
-      console.log('- Possible causes:');
-      console.log('  1. No bids on farmer lots');
-      console.log('  2. No messages for existing bids');
-      console.log('  3. Data structure mismatch');
-      console.log('  4. Backend debugging not deployed');
-      
+      console.error('Error loading farmer conversations:', error);
       // Show empty state instead of mock data
       setConversations([]);
     } finally {

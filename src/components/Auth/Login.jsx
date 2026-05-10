@@ -9,14 +9,14 @@ import {
   ArrowRight,
   CheckCircle,
   AlertCircle,
-  Loader2,
-  Globe
+  Loader2
 } from 'lucide-react';
 import { supabase } from "../../supabaseClient";
 import Navbar from '../Navbar';
 import { useNavigationGuard } from '../../hooks/useNavigationGuard';
 import EmailVerificationAlert from './EmailVerificationAlert';
 import { useTranslation } from 'react-i18next';
+import { getApiBaseUrl } from '../../utils/apiBaseUrl';
 
 const Login = () => {
   // const { t } = useTranslation();
@@ -179,7 +179,7 @@ const Login = () => {
     setLoading(true);
     try {
       // First, try MongoDB backend authentication
-      const loginUrl = 'https://rubbereco-backend.onrender.com/api/auth/login';
+      const loginUrl = `${getApiBaseUrl()}/auth/login`;
       const response = await fetch(loginUrl, {
         method: 'POST',
         headers: {
@@ -602,7 +602,17 @@ const Login = () => {
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
-                  <Globe className="w-5 h-5" />
+                  <span
+                    className="w-6 h-6 inline-flex items-center justify-center rounded-full"
+                    aria-hidden="true"
+                  >
+                    <span
+                      className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-[#4285F4] via-[#EA4335] to-[#34A853]"
+                      style={{ lineHeight: '1' }}
+                    >
+                      G
+                    </span>
+                  </span>
                   <span>Continue with Google</span>
                 </>
               )}

@@ -150,7 +150,7 @@ const PricePrediction = () => {
   const chartData = formatChartData();
 
   return (
-    <section className="py-16 bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900">
+    <section className="py-16 bg-gradient-to-br from-emerald-50 via-white to-teal-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div 
@@ -159,14 +159,14 @@ const PricePrediction = () => {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <div className="inline-flex items-center gap-2 bg-emerald-500/20 backdrop-blur-sm px-4 py-2 rounded-full mb-4">
+          <div className="inline-flex items-center gap-2 bg-emerald-100 px-4 py-2 rounded-full mb-4">
             <Sparkles className="w-5 h-5 text-emerald-400" />
-            <span className="text-emerald-300 font-medium">AI-Powered Predictions</span>
+            <span className="text-emerald-700 font-medium">AI-Powered Predictions</span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             Market Price Forecast
           </h2>
-          <p className="text-xl text-emerald-100/80 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             SARIMA-powered predictions for rubber prices based on historical patterns and seasonal trends
           </p>
         </motion.div>
@@ -199,32 +199,32 @@ const PricePrediction = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
+          <div className="bg-white rounded-2xl p-5 border border-emerald-100 shadow-sm">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-blue-500/20 rounded-lg">
                 <Activity className="w-5 h-5 text-blue-400" />
               </div>
-              <span className="text-gray-300 text-sm">Avg Forecast</span>
+              <span className="text-gray-600 text-sm">Avg Forecast</span>
             </div>
-            <p className="text-2xl font-bold text-white">₹{forecastData?.statistics?.averagePrice?.toFixed(2)}</p>
-            <p className="text-xs text-gray-400 mt-1">Next {selectedTimeframe}</p>
+            <p className="text-2xl font-bold text-gray-900">₹{forecastData?.statistics?.averagePrice?.toFixed(2)}</p>
+            <p className="text-xs text-gray-500 mt-1">Next {selectedTimeframe}</p>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
+          <div className="bg-white rounded-2xl p-5 border border-emerald-100 shadow-sm">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-purple-500/20 rounded-lg">
                 <BarChart3 className="w-5 h-5 text-purple-400" />
               </div>
-              <span className="text-gray-300 text-sm">Volatility</span>
+              <span className="text-gray-600 text-sm">Volatility</span>
             </div>
-            <p className="text-2xl font-bold text-white">{forecastData?.statistics?.volatility?.toFixed(1)}%</p>
-            <p className="text-xs text-gray-400 mt-1">Price range variance</p>
+            <p className="text-2xl font-bold text-gray-900">{forecastData?.statistics?.volatility?.toFixed(1)}%</p>
+            <p className="text-xs text-gray-500 mt-1">Price range variance</p>
           </div>
         </motion.div>
 
         {/* Main Chart Section */}
         <motion.div 
-          className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 mb-8"
+          className="bg-white rounded-2xl p-6 border border-emerald-100 shadow-sm mb-8"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
@@ -232,11 +232,11 @@ const PricePrediction = () => {
           {/* Chart Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
-              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                 <Target className="w-5 h-5 text-emerald-400" />
                 Price Prediction Chart
               </h3>
-              <p className="text-gray-400 text-sm mt-1">SARIMA(1,1,1)(1,1,1,12) Model</p>
+              <p className="text-gray-500 text-sm mt-1">SARIMA(1,1,1)(1,1,1,12) Model</p>
             </div>
             
             <div className="flex flex-wrap items-center gap-3">
@@ -248,11 +248,11 @@ const PricePrediction = () => {
                   onChange={() => setShowConfidenceInterval(!showConfidenceInterval)}
                   className="w-4 h-4 text-emerald-500 rounded focus:ring-emerald-500"
                 />
-                <span className="text-sm text-gray-300">Show 95% CI</span>
+                <span className="text-sm text-gray-600">Show 95% CI</span>
               </label>
 
               {/* Timeframe Selector */}
-              <div className="flex bg-white/10 rounded-lg p-1">
+              <div className="flex bg-gray-100 rounded-lg p-1">
                 {['3M', '6M', '12M'].map(tf => (
                   <button
                     key={tf}
@@ -260,7 +260,7 @@ const PricePrediction = () => {
                     className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                       selectedTimeframe === tf 
                         ? 'bg-emerald-500 text-white shadow-lg' 
-                        : 'text-gray-300 hover:text-white hover:bg-white/10'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
                     }`}
                   >
                     {tf}
@@ -271,7 +271,7 @@ const PricePrediction = () => {
               {/* Refresh Button */}
               <button 
                 onClick={fetchPriceData}
-                className="p-2 text-gray-300 hover:text-emerald-400 hover:bg-white/10 rounded-lg transition-colors"
+                className="p-2 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
                 title="Refresh predictions"
               >
                 <RefreshCw className="w-5 h-5" />
@@ -293,17 +293,17 @@ const PricePrediction = () => {
                     <stop offset="95%" stopColor="#6366F1" stopOpacity={0.02}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis 
                   dataKey="monthLabel" 
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 12, fill: '#9CA3AF' }}
+                  tick={{ fontSize: 12, fill: '#6B7280' }}
                 />
                 <YAxis 
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 12, fill: '#9CA3AF' }}
+                  tick={{ fontSize: 12, fill: '#6B7280' }}
                   domain={['auto', 'auto']}
                   tickFormatter={(value) => `₹${value}`}
                 />
@@ -323,7 +323,7 @@ const PricePrediction = () => {
                       type="monotone"
                       dataKey="lowerCI"
                       stroke="none"
-                      fill="#1e293b"
+                      fill="#ffffff"
                       fillOpacity={1}
                     />
                   </>
@@ -354,19 +354,19 @@ const PricePrediction = () => {
           </div>
 
           {/* Chart Legend */}
-          <div className="flex flex-wrap items-center justify-center gap-6 mt-4 pt-4 border-t border-white/10">
+          <div className="flex flex-wrap items-center justify-center gap-6 mt-4 pt-4 border-t border-gray-100">
             <div className="flex items-center gap-2">
               <div className="w-4 h-1 bg-emerald-500 rounded"></div>
-              <span className="text-sm text-gray-400">Predicted Price</span>
+              <span className="text-sm text-gray-600">Predicted Price</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-1 bg-yellow-500 rounded" style={{ borderStyle: 'dashed' }}></div>
-              <span className="text-sm text-gray-400">Current Price</span>
+              <span className="text-sm text-gray-600">Current Price</span>
             </div>
             {showConfidenceInterval && (
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 bg-indigo-500/30 rounded"></div>
-                <span className="text-sm text-gray-400">95% Confidence</span>
+                <span className="text-sm text-gray-600">95% Confidence</span>
               </div>
             )}
           </div>
@@ -381,17 +381,17 @@ const PricePrediction = () => {
             transition={{ duration: 0.6, delay: 0.3 }}
           >
             {/* Market Outlook */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+            <div className="bg-white rounded-2xl p-6 border border-emerald-100 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
                 {getOutlookIcon(analysisData.analysis?.outlook)}
                 <div>
-                  <h4 className="font-semibold text-white">Market Outlook</h4>
-                  <p className="text-sm text-gray-400">Next 12 months</p>
+                  <h4 className="font-semibold text-gray-900">Market Outlook</h4>
+                  <p className="text-sm text-gray-500">Next 12 months</p>
                 </div>
               </div>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Outlook</span>
+                  <span className="text-gray-600">Outlook</span>
                   <span className={`font-bold ${
                     analysisData.analysis?.outlook === 'Bullish' ? 'text-green-400' :
                     analysisData.analysis?.outlook === 'Bearish' ? 'text-red-400' : 'text-gray-400'
@@ -400,7 +400,7 @@ const PricePrediction = () => {
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Expected Change</span>
+                  <span className="text-gray-600">Expected Change</span>
                   <span className={`font-medium ${
                     analysisData.analysis?.outlookChangePercent > 0 ? 'text-green-400' : 'text-red-400'
                   }`}>
@@ -408,7 +408,7 @@ const PricePrediction = () => {
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-400">YoY Change</span>
+                  <span className="text-gray-600">YoY Change</span>
                   <span className={`font-medium ${
                     analysisData.analysis?.yearOverYearChange > 0 ? 'text-green-400' : 'text-red-400'
                   }`}>
@@ -419,42 +419,42 @@ const PricePrediction = () => {
             </div>
 
             {/* Seasonality Insights */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+            <div className="bg-white rounded-2xl p-6 border border-emerald-100 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
                 <Calendar className="w-6 h-6 text-blue-400" />
                 <div>
-                  <h4 className="font-semibold text-white">Seasonal Patterns</h4>
-                  <p className="text-sm text-gray-400">Historical trends</p>
+                  <h4 className="font-semibold text-gray-900">Seasonal Patterns</h4>
+                  <p className="text-sm text-gray-500">Historical trends</p>
                 </div>
               </div>
               <div className="space-y-4">
                 <div className="bg-green-500/10 rounded-lg p-3">
                   <p className="text-xs text-green-400 mb-1">Best Month Historically</p>
-                  <p className="text-white font-semibold">{analysisData.analysis?.bestMonth?.month}</p>
+                  <p className="text-gray-900 font-semibold">{analysisData.analysis?.bestMonth?.month}</p>
                   <p className="text-green-400 text-sm">₹{analysisData.analysis?.bestMonth?.averagePrice}/kg avg</p>
                 </div>
                 <div className="bg-red-500/10 rounded-lg p-3">
                   <p className="text-xs text-red-400 mb-1">Lowest Month Historically</p>
-                  <p className="text-white font-semibold">{analysisData.analysis?.worstMonth?.month}</p>
+                  <p className="text-gray-900 font-semibold">{analysisData.analysis?.worstMonth?.month}</p>
                   <p className="text-red-400 text-sm">₹{analysisData.analysis?.worstMonth?.averagePrice}/kg avg</p>
                 </div>
               </div>
             </div>
 
             {/* AI Insights */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+            <div className="bg-white rounded-2xl p-6 border border-emerald-100 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
                 <Sparkles className="w-6 h-6 text-purple-400" />
                 <div>
-                  <h4 className="font-semibold text-white">AI Insights</h4>
-                  <p className="text-sm text-gray-400">Key observations</p>
+                  <h4 className="font-semibold text-gray-900">AI Insights</h4>
+                  <p className="text-sm text-gray-500">Key observations</p>
                 </div>
               </div>
               <div className="space-y-3">
                 {analysisData.insights?.map((insight, index) => (
-                  <div key={index} className="flex items-start gap-3 p-3 bg-white/5 rounded-lg">
+                  <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
                     <Info className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-gray-300">{insight.message}</p>
+                    <p className="text-sm text-gray-700">{insight.message}</p>
                   </div>
                 ))}
               </div>
@@ -464,12 +464,12 @@ const PricePrediction = () => {
 
         {/* Forecast Table */}
         <motion.div 
-          className="mt-8 bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10"
+          className="mt-8 bg-white rounded-2xl p-6 border border-emerald-100 shadow-sm"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
         >
-          <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
             <Clock className="w-5 h-5 text-emerald-400" />
             Detailed Price Forecast
           </h3>
@@ -477,33 +477,33 @@ const PricePrediction = () => {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left py-3 px-4 text-gray-400 font-medium">Month</th>
-                  <th className="text-right py-3 px-4 text-gray-400 font-medium">Predicted Price</th>
-                  <th className="text-right py-3 px-4 text-gray-400 font-medium hidden sm:table-cell">95% CI Range</th>
-                  <th className="text-center py-3 px-4 text-gray-400 font-medium">Trend</th>
-                  <th className="text-right py-3 px-4 text-gray-400 font-medium hidden md:table-cell">Change</th>
+                <tr className="border-b border-gray-100">
+                  <th className="text-left py-3 px-4 text-gray-600 font-medium">Month</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium">Predicted Price</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden sm:table-cell">95% CI Range</th>
+                  <th className="text-center py-3 px-4 text-gray-600 font-medium">Trend</th>
+                  <th className="text-right py-3 px-4 text-gray-600 font-medium hidden md:table-cell">Change</th>
                 </tr>
               </thead>
               <tbody>
                 {forecastData?.forecasts?.map((forecast, index) => (
                   <motion.tr 
                     key={index}
-                    className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
                     <td className="py-4 px-4">
-                      <span className="text-white font-medium">{forecast.monthName}</span>
+                      <span className="text-gray-900 font-medium">{forecast.monthName}</span>
                       <span className="text-gray-500 ml-2">{forecast.year}</span>
                     </td>
                     <td className="py-4 px-4 text-right">
                       <span className="text-emerald-400 font-bold">₹{forecast.predictedPrice?.toFixed(2)}</span>
-                      <span className="text-gray-500 text-sm">/kg</span>
+                      <span className="text-gray-600 text-sm">/kg</span>
                     </td>
                     <td className="py-4 px-4 text-right hidden sm:table-cell">
-                      <span className="text-gray-400 text-sm">
+                      <span className="text-gray-600 text-sm">
                         ₹{forecast.lowerCI?.toFixed(2)} - ₹{forecast.upperCI?.toFixed(2)}
                       </span>
                     </td>
@@ -517,8 +517,8 @@ const PricePrediction = () => {
                     </td>
                     <td className="py-4 px-4 text-right hidden md:table-cell">
                       <span className={`text-sm font-medium ${
-                        forecast.percentChange > 0 ? 'text-green-400' : 
-                        forecast.percentChange < 0 ? 'text-red-400' : 'text-gray-400'
+                        forecast.percentChange > 0 ? 'text-green-600' : 
+                        forecast.percentChange < 0 ? 'text-red-600' : 'text-gray-600'
                       }`}>
                         {forecast.percentChange > 0 ? '+' : ''}{forecast.percentChange}%
                       </span>
@@ -530,8 +530,8 @@ const PricePrediction = () => {
           </div>
 
           {/* Model Info */}
-          <div className="mt-6 pt-6 border-t border-white/10">
-            <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-gray-400">
+          <div className="mt-6 pt-6 border-t border-gray-100">
+            <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-gray-600">
               <div className="flex items-center gap-2">
                 <Info className="w-4 h-4" />
                 <span>Model: {forecastData?.model}</span>

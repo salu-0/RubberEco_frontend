@@ -48,10 +48,10 @@ export default function Cart() {
           </div>
           <div className="border rounded p-4 h-fit">
             <h2 className="font-medium mb-2">{t('cart.summary')}</h2>
-            <div className="flex justify-between text-sm"><span>{t('cart.subtotal')}</span><span>${totals.subtotal.toFixed(2)}</span></div>
-            <div className="flex justify-between text-sm"><span>{t('cart.shipping')}</span><span>${totals.shipping.toFixed(2)}</span></div>
-            <div className="flex justify-between text-sm"><span>{t('cart.tax')}</span><span>${totals.tax.toFixed(2)}</span></div>
-            <div className="flex justify-between font-semibold mt-2"><span>{t('cart.total')}</span><span>${totals.total.toFixed(2)}</span></div>
+            <div className="flex justify-between text-sm"><span>{t('cart.subtotal')}</span><span>₹{totals.subtotal.toFixed(2)}</span></div>
+            <div className="flex justify-between text-sm"><span>{t('cart.shipping')}</span><span>₹{totals.shipping.toFixed(2)}</span></div>
+            <div className="flex justify-between text-sm"><span>GST</span><span>₹{totals.tax.toFixed(2)}</span></div>
+            <div className="flex justify-between font-semibold mt-2"><span>{t('cart.total')}</span><span>₹{totals.total.toFixed(2)}</span></div>
             <button className="mt-4 w-full px-4 py-2 rounded bg-indigo-600 text-white" onClick={() => navigate('/checkout')}>{t('cart.checkout')}</button>
           </div>
         </div>
